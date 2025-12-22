@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { WeekPlan, FoodItem, DayPlan } from '../types';
+import { WeekPlan, FoodItem, DayPlan } from '@/types';
 import { ChevronLeft, ChevronRight, Plus, Pencil } from 'lucide-react';
 import { format, isSameDay, startOfDay, addDays } from 'date-fns';
 
@@ -10,7 +10,7 @@ interface DietCalendarProps {
     onWeekChange: (direction: 'prev' | 'next') => void;
 }
 
-import { MEAL_SLOTS } from '../data/meals';
+import { MEAL_SLOTS } from '@/data/meals';
 
 export const DietCalendar: React.FC<DietCalendarProps> = ({
     weekPlan,

@@ -1,4 +1,4 @@
-import { FoodItem } from '../types';
+import { FoodItem } from '@/types';
 import { Pencil, Plus, MoreVertical } from 'lucide-react';
 
 interface MealCardProps {

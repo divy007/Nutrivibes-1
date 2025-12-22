@@ -41,3 +41,29 @@ export interface WeekPlan {
     endDate: Date;
     days: DayPlan[];
 }
+
+// Authentication Interfaces
+
+export interface User {
+    _id: string;
+    email: string;
+    password: string;
+    role: "DIETICIAN" | "CLIENT";
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface APIResponse<T = unknown> {
+    success: boolean;
+    message: string;
+    data?: T;
+    error?: string;
+}
+
+export interface AuthResponse {
+    success: boolean;
+    message: string;
+    user?: Omit<User, 'password'>;
+    token?: string;
+}
