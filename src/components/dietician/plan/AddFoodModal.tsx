@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, X, Check, Plus } from 'lucide-react';
-import { FoodItem } from '../types';
-import { foodItems } from '../data/foodItems';
+import { FoodItem } from '@/types';
+import { foodItems } from '@/data/foodItems';
 
 interface AddFoodModalProps {
     isOpen: boolean;
@@ -135,46 +135,42 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                             autoFocus
                         />
                     </div>
-                    
+
                     {/* Diet Filter Buttons */}
                     <div className="flex gap-2">
                         <button
                             onClick={() => setDietFilter('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                dietFilter === 'all'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${dietFilter === 'all'
                                     ? 'bg-[#2d6a4f] text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setDietFilter('veg')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                dietFilter === 'veg'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${dietFilter === 'veg'
                                     ? 'bg-green-600 text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             Veg
                         </button>
                         <button
                             onClick={() => setDietFilter('non-veg')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                dietFilter === 'non-veg'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${dietFilter === 'non-veg'
                                     ? 'bg-red-600 text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             Non-Veg
                         </button>
                         <button
                             onClick={() => setDietFilter('vegan')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                dietFilter === 'vegan'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${dietFilter === 'vegan'
                                     ? 'bg-emerald-600 text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             Vegan
                         </button>
