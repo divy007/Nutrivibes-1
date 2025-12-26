@@ -7,6 +7,7 @@ interface MealCardProps {
     foodItems: FoodItem[];
     onEdit: () => void;
     onAddFood: () => void;
+    disabled?: boolean;
 }
 
 export const MealCard: React.FC<MealCardProps> = ({
@@ -14,12 +15,13 @@ export const MealCard: React.FC<MealCardProps> = ({
     time,
     foodItems,
     onEdit,
-    onAddFood
+    onAddFood,
+    disabled
 }) => {
     const hasFood = foodItems.length > 0;
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col w-full relative group min-h-[160px]">
+        <div className={`bg-white rounded-xl border border-slate-200 shadow-sm transition-all duration-200 flex flex-col w-full relative group min-h-[160px] ${disabled ? 'opacity-70 bg-slate-50/50' : 'hover:shadow-md'}`}>
             {/* Header */}
             <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-start">
                 <div className="flex flex-col">
@@ -30,12 +32,14 @@ export const MealCard: React.FC<MealCardProps> = ({
                         {time}
                     </span>
                 </div>
-                <button
-                    className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-50 transition-colors"
-                    aria-label="More options"
-                >
-                    <MoreVertical className="w-4 h-4" />
-                </button>
+                {!disabled && (
+                    <button
+                        className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-50 transition-colors"
+                        aria-label="More options"
+                    >
+                        <MoreVertical className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -46,10 +50,10 @@ export const MealCard: React.FC<MealCardProps> = ({
                             <li key={item.id} className="flex items-start text-sm">
                                 <span
                                     className="mr-2 mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: '#9c6644' }} // Warm Brown bullet
+                                    style={{ backgroundColor: disabled ? '#cbd5e1' : '#9c6644' }} // Grey if disabled, Warm Brown if active
                                 />
                                 <div className="text-slate-700 leading-snug flex-1 min-w-0">
-                                    <span className="font-medium break-words">{item.name}</span>
+                                    <span className={`font-medium break-words ${disabled ? 'text-slate-400' : ''}`}>{item.name}</span>
                                 </div>
                             </li>
                         ))}
@@ -62,19 +66,27 @@ export const MealCard: React.FC<MealCardProps> = ({
             </div>
 
             {/* Footer / Actions */}
-            <div className="px-4 py-3 bg-[#fdfbf7] border-t border-slate-100 mt-auto rounded-b-xl">
+            <div className={`px-4 py-3 border-t border-slate-100 mt-auto rounded-b-xl ${disabled ? 'bg-slate-50' : 'bg-[#fdfbf7]'}`}>
                 {hasFood ? (
                     <button
-                        onClick={onEdit}
-                        className="w-full flex items-center justify-center gap-2 text-sm font-medium text-slate-600 hover:text-[#9c6644] transition-colors py-1.5 border border-slate-200 hover:border-[#ccd5ae] rounded-lg bg-white"
+                        onClick={disabled ? undefined : onEdit}
+                        disabled={disabled}
+                        className={`w-full flex items-center justify-center gap-2 text-sm font-medium transition-colors py-1.5 border rounded-lg ${disabled
+                                ? 'bg-slate-100/50 text-slate-400 border-slate-100 cursor-not-allowed'
+                                : 'text-slate-600 hover:text-[#9c6644] border-slate-200 hover:border-[#ccd5ae] bg-white'
+                            }`}
                     >
                         <Pencil className="w-4 h-4" />
                         Edit Food
                     </button>
                 ) : (
                     <button
-                        onClick={onAddFood}
-                        className="w-full flex items-center justify-center gap-2 text-sm font-medium text-[#9c6644] hover:text-[#8B4513] transition-colors py-1.5 border border-slate-200 hover:border-[#ccd5ae] rounded-lg bg-white group-hover:scale-[1.02] transform duration-200 shadow-sm"
+                        onClick={disabled ? undefined : onAddFood}
+                        disabled={disabled}
+                        className={`w-full flex items-center justify-center gap-2 text-sm font-medium transition-colors py-1.5 border rounded-lg ${disabled
+                                ? 'bg-slate-100/50 text-slate-400 border-slate-100 cursor-not-allowed'
+                                : 'text-[#9c6644] hover:text-[#8B4513] border-slate-200 hover:border-[#ccd5ae] bg-white group-hover:scale-[1.02] transform duration-200 shadow-sm'
+                            }`}
                     >
                         <Plus className="w-4 h-4" />
                         Add Food

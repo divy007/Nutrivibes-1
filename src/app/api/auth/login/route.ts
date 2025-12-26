@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
+import Client from '@/models/Client';
 import { generateToken } from '@/lib/auth';
 
 const loginSchema = z.object({
@@ -49,18 +50,35 @@ export async function POST(req: Request) {
             );
         }
 
+        let isProfileComplete = false;
+        if (user.role === 'CLIENT') {
+            const client = await Client.findOne({ userId: user._id });
+            isProfileComplete = client?.isProfileComplete || false;
+        }
+
         // Generate token
-        const token = generateToken(user);
+        const token = generateToken(user, isProfileComplete);
 
         // Remove password from response
         const userResponse = user.toJSON();
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             message: 'Login successful',
-            user: userResponse,
+            user: { ...userResponse, isProfileComplete },
             token,
         });
+
+        // Set HTTP-only cookie for middleware
+        response.cookies.set('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+        });
+
+        return response;
 
     } catch (error) {
         console.error('Login error:', error);

@@ -1,49 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { ClientInfo } from '@/types';
-import { Download, ChevronDown, FileText, FileSpreadsheet } from 'lucide-react';
+import {
+    Download,
+    ChevronDown,
+    FileText,
+    FileSpreadsheet,
+    Pencil,
+    Plus,
+    Clock,
+    Trash2,
+    ExternalLink,
+    Phone
+} from 'lucide-react';
 
 interface ClientHeaderProps {
     clientInfo: ClientInfo;
     onClientInfoChange: (info: ClientInfo) => void;
-    onExportPDF: () => void;
-    onExportExcel: () => void;
 }
-
-const PREFERENCE_OPTIONS = [
-    "Vegetarian",
-    "Non-Vegetarian",
-    "Eggetarian",
-    "Vegan",
-    "Mixed: Veg & Non-Veg",
-    "Other"
-];
 
 export const ClientHeader: React.FC<ClientHeaderProps> = ({
     clientInfo,
-    onClientInfoChange,
-    onExportPDF,
-    onExportExcel
+    onClientInfoChange
 }) => {
-    const [isExportOpen, setIsExportOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsExportOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleChange = (field: keyof ClientInfo, value: string) => {
-        onClientInfoChange({
-            ...clientInfo,
-            [field]: value
-        });
-    };
 
     const getInitials = (name: string) => {
         return name
@@ -54,72 +32,75 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             .toUpperCase() || 'CLI';
     };
 
-    return (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6 relative">
-            {/* Export Dropdown - Top Right Corner */}
-            <div className="absolute top-4 right-4 z-10" ref={dropdownRef}>
-                <button
-                    onClick={() => setIsExportOpen(!isExportOpen)}
-                    className="px-4 py-2 text-sm font-medium text-[#1b4332] bg-[#e9edc9] border border-[#ccd5ae] rounded-lg hover:bg-[#d4e09b] transition-colors flex items-center gap-2"
-                >
-                    <Download className="w-4 h-4" />
-                    Export
-                    <ChevronDown className="w-4 h-4" />
-                </button>
-
-                {isExportOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 py-1 z-20 animate-in fade-in zoom-in-95 duration-150">
-                        <button
-                            onClick={() => { onExportPDF(); setIsExportOpen(false); }}
-                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                        >
-                            <FileText className="w-4 h-4 text-red-500" />
-                            Export to PDF
-                        </button>
-                        <button
-                            onClick={() => { onExportExcel(); setIsExportOpen(false); }}
-                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                        >
-                            <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                            Export to Excel
-                        </button>
-                    </div>
+    const DetailItem = ({ label, value, icon: Icon, editable = true }: { label: string, value: string | number | undefined, icon?: any, editable?: boolean }) => (
+        <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">{label}</span>
+            <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-slate-700">{value || 'N/A'}</span>
+                {editable && (
+                    <button className="text-orange-500 hover:text-orange-600">
+                        <Pencil size={12} strokeWidth={3} />
+                    </button>
                 )}
             </div>
+        </div>
+    );
 
-            {/* Profile Section */}
-            <div className="flex items-start gap-5 flex-1 w-full max-w-2xl pr-32">
-                {/* Avatar */}
-                <div className="w-16 h-16 rounded-full bg-[#e9edc9] flex items-center justify-center text-[#1b4332] font-bold text-xl border-4 border-white shadow-sm ring-1 ring-[#ccd5ae] shrink-0">
-                    {getInitials(clientInfo.name)}
+    return (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col">
+            {/* Top Bar: Basic Info + Detailed Metrics */}
+            <div className="p-4 flex items-center gap-6">
+                {/* Profile Summary */}
+                <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
+                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg border-2 border-white shadow-sm ring-1 ring-orange-200 shrink-0">
+                        {getInitials(clientInfo.name)}
+                    </div>
+                    <div className="flex flex-col">
+                        <h2 className="text-lg font-bold text-slate-800 leading-tight">{clientInfo.name}</h2>
+                        <span className="text-xs text-slate-400">{clientInfo.email}</span>
+                    </div>
                 </div>
 
-                <div className="flex flex-col gap-3 flex-1">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Client Name</label>
-                        <input
-                            type="text"
-                            value={clientInfo.name}
-                            onChange={(e) => handleChange('name', e.target.value)}
-                            className="text-2xl font-bold text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-[#2d6a4f] focus:outline-none bg-transparent transition-colors w-full placeholder-slate-300"
-                            placeholder="Enter Client Name"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</label>
-                        <div className="relative">
-                            <select
-                                value={clientInfo.preferences}
-                                onChange={(e) => handleChange('preferences', e.target.value)}
-                                className="text-sm text-slate-600 border-b border-transparent hover:border-slate-300 focus:border-[#2d6a4f] focus:outline-none bg-transparent transition-colors w-full placeholder-slate-300 appearance-none cursor-pointer py-1"
-                            >
-                                <option value="" disabled>Select dietary preference</option>
-                                {PREFERENCE_OPTIONS.map(option => (
-                                    <option key={option} value={option}>{option}</option>
-                                ))}
-                            </select>
+                {/* Metrics Horizontal Scroll/Grid */}
+                <div className="flex-1 flex items-center overflow-x-auto py-1 custom-scrollbar">
+                    <DetailItem label="Id" value={clientInfo.id} editable={false} />
+                    <DetailItem label="Age" value={clientInfo.age} />
+                    <DetailItem label="Gender" value={clientInfo.gender} />
+                    <DetailItem label="Height" value={clientInfo.height ? `${clientInfo.height}cm` : undefined} />
+                    <DetailItem label="Weight" value={clientInfo.weight ? `${clientInfo.weight}kg` : undefined} />
+                    <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">BMI</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`text-sm font-bold ${clientInfo.height && clientInfo.weight ? 'text-orange-600' : 'text-slate-400'}`}>
+                                {(() => {
+                                    if (clientInfo.height && clientInfo.weight) {
+                                        const h = clientInfo.height / 100;
+                                        return (clientInfo.weight / (h * h)).toFixed(1);
+                                    }
+                                    return 'N/A';
+                                })()}
+                            </span>
                         </div>
+                    </div>
+                    <DetailItem label="Phone" value={clientInfo.phone} />
+                    <DetailItem label="Plan" value={clientInfo.plan} editable={false} />
+                    <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Status</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase self-start">
+                            {clientInfo.status || 'ACTIVE'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sub Bar: Filters / Info */}
+            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-400">Diet Preference:</span>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                            {clientInfo.preferences}
+                        </span>
                     </div>
                 </div>
             </div>

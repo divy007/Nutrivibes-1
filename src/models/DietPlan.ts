@@ -5,12 +5,11 @@ const DietPlanSchema = new mongoose.Schema({
     weekStartDate: { type: Date, required: true },
     days: [{
         date: Date,
+        status: { type: String, enum: ['NO_DIET', 'NOT_SAVED', 'PUBLISHED'], default: 'NO_DIET' },
         meals: [{
             time: String,
-            items: [{
-                foodId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodItem' },
-                portion: String
-            }]
+            mealNumber: Number,
+            foodItems: [mongoose.Schema.Types.Mixed]
         }]
     }]
 }, { timestamps: true });

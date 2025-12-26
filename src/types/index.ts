@@ -8,9 +8,15 @@ export interface FoodItem {
     description?: string;
     cuisine?: string;
     dietPref?: string;
+    quantity?: string;
     isThyroidFriendly?: boolean;
     isWeightLossFriendly?: boolean;
     isDiabetesFriendly?: boolean;
+}
+
+export interface MealTiming {
+    mealNumber: number;
+    time: string;
 }
 
 export interface MealSlot {
@@ -22,16 +28,22 @@ export interface MealSlot {
 export interface DayPlan {
     date: Date;
     meals: MealSlot[];
+    status?: 'NO_DIET' | 'NOT_SAVED' | 'PUBLISHED';
 }
 
 export interface ClientInfo {
+    id: string;
+    clientId?: string;
     name: string;
+    email?: string;
     age?: number;
     gender?: string;
     weight?: number; // in kg
     height?: number; // in cm
-    preferences: string;
     phone?: string;
+    preferences: string;
+    plan?: string;
+    status?: string;
 }
 
 export interface WeekPlan {

@@ -12,14 +12,16 @@ interface TokenPayload extends JwtPayload {
     userId: string;
     email: string;
     role: string;
+    isProfileComplete?: boolean;
 }
 
-export const generateToken = (user: IUser): string => {
+export const generateToken = (user: IUser, isProfileComplete?: boolean): string => {
     return jwt.sign(
         {
             userId: user._id,
             email: user.email,
             role: user.role,
+            isProfileComplete,
         },
         JWT_SECRET,
         {
@@ -39,7 +41,22 @@ export const verifyToken = (token: string): TokenPayload | null => {
 
 export const getAuthUser = async (request: Request): Promise<IUser | null> => {
     try {
-        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        // Try to get token from Authorization header first
+        let token = request.headers.get('Authorization')?.replace('Bearer ', '');
+
+        // If not in header, try to get from cookies
+        if (!token) {
+            // Extract cookies from the request
+            const cookieHeader = request.headers.get('cookie');
+            if (cookieHeader) {
+                const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+                    const [key, value] = cookie.trim().split('=');
+                    acc[key] = value;
+                    return acc;
+                }, {} as Record<string, string>);
+                token = cookies['token'];
+            }
+        }
 
         if (!token) {
             return null;
