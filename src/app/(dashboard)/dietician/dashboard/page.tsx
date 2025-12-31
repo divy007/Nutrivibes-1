@@ -21,6 +21,7 @@ interface Stats {
   newClients: number;
   pausedClients: number;
   expiredClients: number;
+  todayFollowUps: { name: string; color: string }[];
 }
 
 export default function DieticianDashboard() {
@@ -42,11 +43,13 @@ export default function DieticianDashboard() {
   }, []);
 
   return (
-    <div className="bg-slate-50 min-h-full">
+    <div className="bg-[#FAF9F6] min-h-full">
       {/* Top Banner */}
-      <div className="bg-[#6d59a3] text-white px-6 py-2 flex items-center justify-center gap-4 text-sm font-medium">
+      <div className="bg-brand-sage text-white px-6 py-2 flex items-center justify-center gap-4 text-sm font-medium">
         <span>Check out the new Home Page to manage your Today's tasks.</span>
-        <button className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition-colors">View My Tasks</button>
+        <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition-colors cursor-pointer">
+          View My Tasks
+        </Link>
       </div>
 
       <div className="p-6 flex flex-col lg:flex-row gap-6 max-w-[1800px] mx-auto">
@@ -57,10 +60,18 @@ export default function DieticianDashboard() {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard title="Active Clients" count={stats?.activeClients ?? 0} icon={<Users className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
-            <SummaryCard title="New Clients (Last 15 days)" count={stats?.newClients ?? 0} icon={<UserPlus className="text-blue-500" />} color="border-blue-500" loading={loading} />
-            <SummaryCard title="Paused Clients" count={stats?.pausedClients ?? 0} icon={<PauseCircle className="text-rose-400" />} color="border-rose-400" loading={loading} />
-            <SummaryCard title="Expired Clients (Last 15 days)" count={stats?.expiredClients ?? 0} icon={<Clock className="text-indigo-400" />} color="border-indigo-400" loading={loading} />
+            <Link href="/dietician/clients?status=ACTIVE">
+              <SummaryCard title="Active Clients" count={stats?.activeClients ?? 0} icon={<Users className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
+            </Link>
+            <Link href="/dietician/clients?status=NEW">
+              <SummaryCard title="New Clients (Last 7 days)" count={stats?.newClients ?? 0} icon={<UserPlus className="text-brand-sage" />} color="border-brand-sage" loading={loading} />
+            </Link>
+            <Link href="/dietician/clients?status=PAUSED">
+              <SummaryCard title="Paused Clients" count={stats?.pausedClients ?? 0} icon={<PauseCircle className="text-rose-400" />} color="border-rose-400" loading={loading} />
+            </Link>
+            <Link href="/dietician/clients?status=DELETED">
+              <SummaryCard title="Expired Clients (Deleted)" count={stats?.expiredClients ?? 0} icon={<Clock className="text-brand-earth" />} color="border-brand-earth" loading={loading} />
+            </Link>
           </div>
 
           {/* Today's Task Section */}
@@ -69,8 +80,8 @@ export default function DieticianDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               {/* Counselling Card */}
-              <div className="bg-white rounded-lg border border-slate-200 p-6 flex flex-col">
-                <h3 className="text-sm font-bold text-rose-500 mb-4">Today's Counselling</h3>
+              <div className="bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col soft-shadow">
+                <h3 className="text-sm font-black text-brand-earth mb-4">Today's Counselling</h3>
                 <div className="space-y-1 mb-6">
                   <div className="text-xs font-bold text-slate-600">Total Counselling: <span className="text-slate-900">0</span></div>
                   <div className="text-xs font-bold text-slate-600">Total Counselling Left: <span className="text-slate-900">0</span></div>
@@ -81,92 +92,84 @@ export default function DieticianDashboard() {
               </div>
 
               {/* Follow Ups Card */}
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="bg-white rounded-[24px] border border-slate-100 p-6 soft-shadow">
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-sm font-bold text-[#6d59a3]">Today's Follow Up</h3>
+                  <h3 className="text-sm font-black text-brand-sage">Today's Follow Up</h3>
                   <div className="text-right">
-                    <div className="text-[10px] font-bold text-slate-400">Total Followups: 17</div>
-                    <div className="text-[10px] font-bold text-slate-400">Total Followups Left: 17</div>
+                    <div className="text-[10px] font-bold text-slate-400">Total Followups: {stats?.todayFollowUps?.length ?? 0}</div>
+                    <div className="text-[10px] font-bold text-slate-400">Total Followups Left: {stats?.todayFollowUps?.length ?? 0}</div>
                   </div>
                 </div>
                 <table className="w-full text-[10px]">
                   <thead>
                     <tr className="text-slate-400 font-bold uppercase border-b border-slate-100">
                       <th className="py-2 text-left">Name</th>
-                      <th className="py-2 text-left">Plan</th>
                       <th className="py-2 text-center">Diet Color</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {[
-                      { name: 'Alisha Pradeep (#503392)', plan: 'DM Core - 6 Months', color: 'bg-amber-400' },
-                      { name: 'Abhishek (#503392)', plan: 'Cure & Reverse - 9 Months', color: 'bg-amber-400' },
-                      { name: 'Kayser Bhat (#503392)', plan: 'Cure & Reverse - 3 Months', color: 'bg-amber-400' },
-                    ].map((row, i) => (
+                    {(stats?.todayFollowUps || []).map((row, i) => (
                       <tr key={i}>
                         <td className="py-2 font-bold text-slate-700">{row.name}</td>
-                        <td className="py-2 text-slate-500">{row.plan}</td>
                         <td className="py-2"><div className={`w-3 h-3 rounded-full mx-auto ${row.color}`}></div></td>
                       </tr>
                     ))}
+                    {/* Empty State */}
+                    {(!stats?.todayFollowUps || stats.todayFollowUps.length === 0) && (
+                      <tr>
+                        <td colSpan={2} className="py-8 text-center text-slate-400 italic">
+                          No follow ups scheduled for today
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
-                <button className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
+                <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
                   View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
-                </button>
+                </Link>
               </div>
 
               {/* Diet's Pending Card */}
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="bg-white rounded-[24px] border border-slate-100 p-6 soft-shadow">
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-sm font-bold text-emerald-600">Diet's Pending</h3>
+                  <h3 className="text-sm font-black text-brand-sage">Diet's Pending</h3>
                   <div className="text-right">
-                    <div className="text-[10px] font-bold text-slate-400">Total Diets Pending: 26</div>
-                    <div className="text-[10px] font-bold text-emerald-600">Yellow: 17 <span className="text-rose-500">Red: 8</span> <span className="text-slate-900">Black: 1</span></div>
+                    <div className="text-[10px] font-bold text-slate-400">Total Diets Pending: 0</div>
+                    <div className="text-[10px] font-bold text-emerald-600">Yellow: 0 <span className="text-rose-500">Red: 0</span> <span className="text-slate-900">Black: 0</span></div>
                   </div>
                 </div>
                 <table className="w-full text-[10px]">
                   <thead>
                     <tr className="text-slate-400 font-bold uppercase border-b border-slate-100">
                       <th className="py-2 text-left">Name</th>
-                      <th className="py-2 text-left">Plan</th>
                       <th className="py-2 text-center">Diet Color</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {[
-                      { name: 'Sarita (#490446524)', plan: 'WM Core - 6 Months', color: 'bg-slate-900' },
-                      { name: 'Kritika (#492591292)', plan: 'WM Core - 9 Months', color: 'bg-rose-500' },
-                      { name: 'Niki (#492662285)', plan: 'Cure & Reverse - 6 Months', color: 'bg-rose-500' },
-                    ].map((row, i) => (
+                    {[].map((row: any, i) => (
                       <tr key={i}>
                         <td className="py-2 font-bold text-slate-700">{row.name}</td>
-                        <td className="py-2 text-slate-500">{row.plan}</td>
                         <td className="py-2"><div className={`w-3 h-3 rounded-full mx-auto ${row.color}`}></div></td>
                       </tr>
                     ))}
+                    {/* Empty State */}
+                    <tr>
+                      <td colSpan={2} className="py-8 text-center text-slate-400 italic">
+                        No pending diets
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
-                <button className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
+                <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
                   View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
-                </button>
+                </Link>
               </div>
 
             </div>
           </div>
 
-          {/* Opportunities Section */}
-          <div className="space-y-4">
-            <h2 className="text-base font-bold text-slate-700">Opportunities</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <OpportunityCard title="Renewal" label="Top users for renewals: 0" color="text-rose-500" />
-              <OpportunityCard title="Reactivation Opportunities" label="Top Reactivation Opportunities: 0" color="text-blue-500" />
-              <OpportunityCard title="Ask for Referral Opportunities" label="Top users for referrals: 27" color="text-emerald-600" isReferral />
-            </div>
-          </div>
 
         </div>
-
       </div>
     </div>
   );
@@ -174,64 +177,23 @@ export default function DieticianDashboard() {
 
 function SummaryCard({ title, count, icon, color, loading }: { title: string, count: number, icon: any, color: string, loading?: boolean }) {
   return (
-    <div className={`bg-white rounded-lg p-5 border-l-4 ${color} shadow-sm flex items-center justify-between min-h-[100px]`}>
-      <div className="bg-slate-50 p-3 rounded-full">
+    <div className={`bg-white rounded-[24px] p-6 border border-slate-100 soft-shadow flex items-center justify-between min-h-[110px] relative overflow-hidden group hover:scale-[1.02] transition-all`}>
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.replace('border-', 'bg-')}`}></div>
+      <div className="bg-brand-cream/50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
         {icon}
       </div>
       <div className="text-right">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</div>
+        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</div>
         {loading ? (
           <div className="flex justify-end pt-1">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+            <Loader2 className="w-6 h-6 animate-spin text-slate-200" />
           </div>
         ) : (
-          <div className="text-3xl font-bold text-slate-700">{count}</div>
+          <div className="text-3xl font-black text-brand-forest">{count}</div>
         )}
       </div>
     </div>
   );
 }
 
-function OpportunityCard({ title, label, color, isReferral = false }: { title: string, label: string, color: string, isReferral?: boolean }) {
-  return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
-      <div className="space-y-1">
-        <h3 className={`text-xs font-bold uppercase tracking-widest ${color}`}>{title}</h3>
-        <div className="text-[10px] font-bold text-slate-400">{label}</div>
-      </div>
 
-      {isReferral && (
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr className="text-slate-400 border-b border-slate-100">
-              <th className="py-2 text-left">Name</th>
-              <th className="py-2 text-left">Plan</th>
-              <th className="py-2 text-center">Avg CSAT</th>
-              <th className="py-2 text-center">DP</th>
-              <th className="py-2 text-center">RSP</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50 font-medium">
-            {[
-              { name: 'Udita (#492539871)', plan: 'WM Core - 6 Months', csat: '5.00', dp: 182, rsp: 1 },
-              { name: 'Jaykumar (#492337735)', plan: 'WM Core - 9 Months', csat: '4.67', dp: 175, rsp: 0 },
-              { name: 'Chaitali (#492529503)', plan: 'Live Classes - 3 Months', csat: '4.71', dp: 275, rsp: 1 },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="py-2 text-slate-700">{row.name}</td>
-                <td className="py-2 text-slate-500">{row.plan}</td>
-                <td className="py-2 text-center text-slate-500">{row.csat}</td>
-                <td className="py-2 text-center text-slate-500">{row.dp}</td>
-                <td className="py-2 text-center text-slate-500">{row.rsp}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      <button className="text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
-        View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
-      </button>
-    </div>
-  );
-}

@@ -110,13 +110,17 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-50 animate-in fade-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="flex justify-end p-4 pb-0">
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between p-6 border-b border-slate-50">
+                    <div className="w-10" /> {/* Spacer to center title */}
+                    <h2 className="text-xl font-bold text-slate-800">Add Food</h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100 shadow-sm"
+                    >
                         <X size={20} />
                     </button>
                 </div>
-
-                <h2 className="text-xl font-bold text-slate-800 text-center -mt-8 mb-6">Add Food</h2>
 
                 {/* Body - Two Columns */}
                 <div className="flex-1 overflow-hidden flex p-6 gap-8">

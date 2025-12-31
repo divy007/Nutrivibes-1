@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuthToken } from '@/lib/api-client';
+import { getAuthToken, setAuthToken, clearAuthToken, decodeToken } from '@/lib/api-client';
 
 interface User {
     userId: string;
     email: string;
+    name?: string;
     role: 'DIETICIAN' | 'CLIENT';
     isProfileComplete?: boolean;
 }
@@ -23,27 +24,31 @@ export function useAuth(requireAuth: boolean = true) {
         setIsAuthenticated(hasToken);
 
         if (hasToken) {
-            try {
-                // Decode token payload
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
+            // Decode to find role
+            const payload = decodeToken(token) as User;
+            setUser(payload);
 
-                const payload = JSON.parse(jsonPayload) as User;
-                setUser(payload);
+            // Repair session if relevant cookie is missing
+            if (payload && payload.role) {
+                let cookieName = '';
+                if (payload.role === 'DIETICIAN') cookieName = 'token_dietician';
+                else if (payload.role === 'CLIENT') cookieName = 'token_client';
 
-                if (!requireAuth) {
-                    // Redirect if already logged in (e.g. visiting /login)
-                    if (payload.role === 'CLIENT') {
-                        router.push(payload.isProfileComplete ? '/client/dashboard' : '/client/profile');
-                    } else {
-                        router.push('/dietician/dashboard');
+                if (cookieName) {
+                    const cookieMatch = document.cookie.match(new RegExp(`(^|;)\\s*${cookieName}\\s*=\\s*([^;]+)`));
+                    if (!cookieMatch) {
+                        setAuthToken(token); // This will set the correct cookie
                     }
                 }
-            } catch (error) {
-                console.error('Failed to decode token:', error);
+            }
+
+            if (!requireAuth) {
+                // Redirect if already logged in (e.g. visiting /login)
+                if (payload?.role === 'CLIENT') {
+                    router.push(payload.isProfileComplete ? '/client/dashboard' : '/client/profile');
+                } else {
+                    router.push('/dietician/dashboard');
+                }
             }
         }
 
@@ -53,5 +58,12 @@ export function useAuth(requireAuth: boolean = true) {
         }
     }, [requireAuth, router]);
 
-    return { isAuthenticated, isLoading: isAuthenticated === null, user };
+    const logout = () => {
+        clearAuthToken();
+        setIsAuthenticated(false);
+        setUser(null);
+        router.push('/login');
+    };
+
+    return { isAuthenticated, isLoading: isAuthenticated === null, user, logout };
 }

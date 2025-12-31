@@ -1,29 +1,13 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, Info, ChevronRight, User } from 'lucide-react';
-
-interface Client {
-    _id: string;
-    clientId?: string;
-    name: string;
-    email: string;
-    phone?: string;
-    dob?: string;
-    gender?: string;
-    city?: string;
-    state?: string;
-    height?: number;
-    weight?: number;
-    status: string;
-    preferences?: string;
-}
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
 
-export default function ClientProfilePage() {
+export default function ClientSummaryPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
     const router = useRouter();
 
@@ -83,20 +67,20 @@ export default function ClientProfilePage() {
                             <h2 className="text-xl font-bold text-slate-800">{client.name}</h2>
                             <p className="text-sm text-slate-400 font-medium">{client.id}</p>
                             <div className="mt-4 flex flex-col gap-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Ovo Vegetarian</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{client.preferences || 'No Preferences Set'}</span>
                                 <div className="mt-2">
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tighter">Opted Live Session</span>
+                                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tighter">{client.status}</span>
                                 </div>
-                                <span className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">N/A</span>
+                                <span className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{client.phone || 'No Phone'}</span>
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                            <button className="text-orange-500 hover:bg-orange-50 p-1 rounded transition-colors">
+                            <button onClick={() => router.push(`/dietician/clients/${client._id}/profile/edit`)} className="text-orange-500 hover:bg-orange-50 p-1 rounded transition-colors">
                                 <Pencil size={16} />
                             </button>
-                            <span className="text-[10px] font-bold text-slate-300">UK</span>
+                            <span className="text-[10px] font-bold text-slate-300">{client.state || 'N/A'}</span>
                             <div className="mt-auto">
-                                <span className="text-xs font-bold text-slate-400">Reading</span>
+                                <span className="text-xs font-bold text-slate-400">{client.city || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -145,7 +129,7 @@ export default function ClientProfilePage() {
                                         <Utensils size={20} />
                                     </div>
                                     <div>
-                                        <div className="text-lg font-bold text-slate-700">N/A</div>
+                                        <div className="text-lg font-bold text-slate-700">{client.idealWeight ? `${client.idealWeight} Kg` : 'N/A'}</div>
                                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Target Weight</div>
                                     </div>
                                 </div>
@@ -164,13 +148,17 @@ export default function ClientProfilePage() {
 
                     {/* Medical Conditions */}
                     <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Medical Condition</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Dietary Preferences / Conditions</h3>
                         <div className="flex flex-wrap gap-2">
-                            {['Thyroid', 'Diabetes / Pre-Diabetes', 'Cholesterol', 'PCOD / PCOS'].map(tag => (
-                                <span key={tag} className={`px-3 py-1 rounded-full text-[10px] font-bold border ${tag === 'Thyroid' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                                    {tag}
-                                </span>
-                            ))}
+                            {client.preferences && client.preferences !== 'N/A' ? (
+                                client.preferences.split(',').map(tag => (
+                                    <span key={tag} className="px-3 py-1 rounded-full text-[10px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-600">
+                                        {tag.trim()}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-xs text-slate-400 italic">No conditions or preferences listed</span>
+                            )}
                         </div>
                     </div>
 
@@ -237,24 +225,35 @@ export default function ClientProfilePage() {
                     {/* Persona Details Card */}
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                         <div className="p-4 border-b border-slate-100">
-                            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Persona Details</h3>
+                            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Assessment Profile</h3>
                         </div>
                         <div className="p-6 space-y-6">
                             <div>
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Persona</h4>
-                                <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold">
-                                    <div className="w-4 h-4 rounded-sm border border-emerald-200 flex items-center justify-center bg-emerald-50">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Overall Risk Level</h4>
+                                <div className={`flex items-center gap-2 ${client.assessment ? 'text-emerald-600' : 'text-slate-400'} text-xs font-bold`}>
+                                    <div className={`w-4 h-4 rounded-sm border ${client.assessment ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'} flex items-center justify-center`}>
                                         <ChevronRight size={10} className="rotate-45" />
                                     </div>
-                                    Want To Lose Weight
+                                    {client.assessment?.riskLevel || 'Assessment Pending'}
                                 </div>
                             </div>
-                            {['Diet', 'Mind', 'Yoga', 'Exercise'].map(type => (
-                                <div key={type}>
-                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{type} Language</h4>
-                                    <span className="text-xs font-bold text-rose-400">N/A</span>
-                                </div>
-                            ))}
+
+                            {[
+                                { key: 'eat', label: 'Diet Performance' },
+                                { key: 'lifestyle', label: 'Lifestyle Score' },
+                                { key: 'mind', label: 'Mental Wellness' },
+                                { key: 'exercise', label: 'Physical Activity' }
+                            ].map(item => {
+                                const score = client.assessment?.categoryScores?.[item.key as keyof typeof client.assessment.categoryScores];
+                                return (
+                                    <div key={item.key}>
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{item.label}</h4>
+                                        <span className={`text-xs font-bold ${score !== undefined ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                            {score !== undefined ? `${score}/10` : 'No Data'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 

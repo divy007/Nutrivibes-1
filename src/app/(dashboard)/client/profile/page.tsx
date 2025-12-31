@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api-client';
+import { api, getAuthToken, setAuthToken } from '@/lib/api-client';
 import { Loader2, Save } from 'lucide-react';
 import { INDIAN_STATES, getCitiesByState } from '@/lib/indian-locations';
 
@@ -106,12 +106,14 @@ export default function ClientProfilePage() {
             };
 
             console.log('Sending update payload:', updatePayload);
+            const token = getAuthToken();
+            console.log('Client Profile Page - Auth Token:', token);
 
             const response = await fetch('/api/clients/me', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                 },
                 body: JSON.stringify(updatePayload),
             });
@@ -128,7 +130,7 @@ export default function ClientProfilePage() {
             // Check for new token in response header
             const newToken = response.headers.get('X-New-Token');
             if (newToken) {
-                localStorage.setItem('auth_token', newToken);
+                setAuthToken(newToken);
             }
 
             if (updatedProfile.isProfileComplete) {
@@ -149,8 +151,15 @@ export default function ClientProfilePage() {
 
     if (loading) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#1b4332]" />
+            <div className="flex h-screen items-center justify-center bg-white">
+                <div className="text-center space-y-4">
+                    <img
+                        src="/brand-logo.png"
+                        alt="NutriVibes"
+                        className="h-20 w-auto mx-auto animate-pulse"
+                    />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-sage mx-auto" />
+                </div>
             </div>
         );
     }
@@ -160,8 +169,8 @@ export default function ClientProfilePage() {
     return (
         <div className="max-w-3xl mx-auto p-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-[#1b4332]">Complete Your Profile</h1>
-                <p className="text-gray-500 mt-2">Please verify your details to continue.</p>
+                <h1 className="text-4xl font-black text-brand-forest tracking-tight">Complete Your Profile</h1>
+                <p className="text-slate-500 font-medium italic mt-2">Please verify your details to continue.</p>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border p-6 space-y-6">
@@ -326,18 +335,18 @@ export default function ClientProfilePage() {
                     </div>
 
                     {/* Calculated BMI Display */}
-                    <div className="md:col-span-2 p-4 bg-orange-50 rounded-lg border border-orange-100 flex items-center justify-between">
+                    <div className="md:col-span-2 p-6 bg-brand-cream rounded-[24px] border border-brand-clay/20 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center text-orange-700 font-bold">
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-earth font-black shadow-sm">
                                 BMI
                             </div>
                             <div>
-                                <div className="text-sm font-bold text-gray-700">Calculated Body Mass Index</div>
-                                <div className="text-xs text-gray-500">Based on your height and weight</div>
+                                <div className="text-sm font-black text-brand-forest">Calculated Body Mass Index</div>
+                                <div className="text-xs text-brand-sage font-bold">Based on your current height and weight</div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-2xl font-black text-orange-600">
+                            <div className="text-3xl font-black text-brand-earth">
                                 {(() => {
                                     let h = 0;
                                     let w = 0;
@@ -372,7 +381,7 @@ export default function ClientProfilePage() {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-[#1b4332] hover:bg-[#143225] text-white px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-brand-sage hover:bg-brand-forest text-white px-10 py-3 rounded-xl font-black flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-brand-sage/20 active:scale-95"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         Save & Continue

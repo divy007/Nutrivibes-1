@@ -83,7 +83,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         </div>
                     </div>
                     <DetailItem label="Phone" value={clientInfo.phone} />
-                    <DetailItem label="Plan" value={clientInfo.plan} editable={false} />
+
                     <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Status</span>
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase self-start">

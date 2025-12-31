@@ -15,21 +15,44 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
     const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const calculateAge = (dob: string | Date | undefined) => {
+        if (!dob) return undefined;
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
     const fetchClient = async () => {
         try {
-            const data = await api.get<any>(`/api/clients/${id}`);
+            const [data, assessmentData] = await Promise.all([
+                api.get<any>(`/api/clients/${id}`),
+                api.get<any>(`/api/clients/${id}/health-assessment`).catch(() => null)
+            ]);
+
             setClientInfo({
                 id: data.clientId || `#${data._id.slice(-8)}`,
+                _id: data._id,
                 name: data.name,
                 email: data.email,
-                age: data.age,
+                age: data.age || calculateAge(data.dob),
                 gender: data.gender,
                 height: data.height,
                 weight: data.weight,
+                idealWeight: data.idealWeight,
                 phone: data.phone,
-                preferences: data.preferences,
-                plan: data.plan,
-                status: data.status || 'ACTIVE'
+                dob: data.dob,
+                city: data.city,
+                state: data.state,
+                preferences: (data.dietaryPreferences && data.dietaryPreferences.length > 0)
+                    ? data.dietaryPreferences.join(', ')
+                    : 'N/A',
+                status: data.status || 'ACTIVE',
+                assessment: assessmentData
             });
         } catch (error) {
             console.error('Failed to fetch client:', error);

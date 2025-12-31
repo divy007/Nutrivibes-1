@@ -12,8 +12,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     try {
         const dietPlan = await DietPlan.findOne({
             clientId: id,
-            weekStartDate: { $gte: new Date(startDate) }
-        }).populate('days.meals.items.foodId');
+            weekStartDate: {
+                $gte: new Date(startDate),
+                $lt: new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000) // Within the same day
+            }
+        });
 
         return NextResponse.json(dietPlan || { success: true, message: 'No plan found' });
     } catch (error) {

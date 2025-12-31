@@ -10,10 +10,18 @@ export interface IClient extends Document {
     state?: string;
     height?: number;
     weight?: number;
+    chest?: number;
+    arms?: number;
+    waist?: number;
+    hips?: number;
+    thigh?: number;
+    idealWeight?: number;
     targetCalories?: number;
     dietStartDate?: Date;
     notes?: string;
-    status: 'NEW' | 'ACTIVE' | 'INACTIVE';
+    mealTimings?: { mealNumber: number; time: string }[];
+    status: 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
+    pausedUntil?: Date;
     isProfileComplete: boolean;
     dieticianId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
@@ -30,11 +38,22 @@ const ClientSchema = new Schema(
         state: { type: String },
         height: { type: Number },
         weight: { type: Number },
+        chest: { type: Number },
+        arms: { type: Number },
+        waist: { type: Number },
+        hips: { type: Number },
+        thigh: { type: Number },
+        idealWeight: { type: Number },
         dietaryPreferences: { type: [String], default: [] },
         targetCalories: { type: Number },
         dietStartDate: { type: Date },
         notes: { type: String },
-        status: { type: String, enum: ['NEW', 'ACTIVE', 'INACTIVE'], default: 'NEW' },
+        mealTimings: [{
+            mealNumber: Number,
+            time: String
+        }],
+        status: { type: String, enum: ['NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
+        pausedUntil: { type: Date },
         isProfileComplete: { type: Boolean, default: false },
         dieticianId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

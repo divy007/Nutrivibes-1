@@ -5,6 +5,7 @@ import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
 
 export async function GET(req: Request) {
+    console.log('GET /api/clients/me hit');
     await connectDB();
     try {
         const user = await getAuthUser(req);
@@ -77,7 +78,7 @@ export async function PATCH(req: Request) {
         const response = NextResponse.json(client);
 
         // Update the token cookie
-        response.cookies.set('token', newToken, {
+        response.cookies.set('token_client', newToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',

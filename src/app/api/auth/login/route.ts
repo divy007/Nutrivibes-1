@@ -11,6 +11,7 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: Request) {
+    console.log('POST /api/auth/login hit');
     try {
         await connectDB();
 
@@ -70,10 +71,13 @@ export async function POST(req: Request) {
         });
 
         // Set HTTP-only cookie for middleware
-        response.cookies.set('token', token, {
+        // Set HTTP-only cookie for middleware with namespacing
+        const cookieName = user.role === 'DIETICIAN' ? 'token_dietician' : 'token_client';
+
+        response.cookies.set(cookieName, token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 7, // 7 days
             path: '/',
         });

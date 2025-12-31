@@ -11,6 +11,7 @@ interface LoginResponse {
     token: string;
     user: {
         role: 'DIETICIAN' | 'CLIENT';
+        isProfileComplete?: boolean;
     };
 }
 
@@ -66,7 +67,7 @@ export default function LoginForm() {
                 if (response.user.role === 'DIETICIAN') {
                     router.push('/dietician/dashboard');
                 } else {
-                    router.push('/client/profile');
+                    router.push(response.user.isProfileComplete ? '/client/dashboard' : '/client/profile');
                 }
             }
         } catch (err) {
@@ -81,10 +82,17 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
-            <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-[#1b4332]">Welcome to Nutrivibes!</h1>
-                <p className="text-gray-500">Sign in to continue</p>
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-6 border border-slate-100">
+            <div className="text-center space-y-4">
+                <div className="flex justify-center mb-2">
+                    <img
+                        src="/brand-logo.png"
+                        alt="NutriVibes Logo"
+                        className="h-28 w-auto object-contain"
+                    />
+                </div>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">Welcome back!</h1>
+                <p className="text-slate-500 font-medium italic">Sign in to continue your wellness journey</p>
             </div>
 
             {error && (
@@ -97,15 +105,15 @@ export default function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-[#1b4332] flex items-center gap-2">
+                        <label className="text-sm font-medium text-brand-forest flex items-center gap-2">
                             <Mail className="w-4 h-4" />
                             Email Address
                         </label>
                         <div className="group relative">
-                            <HelpCircle className="w-4 h-4 text-gray-400 cursor-help transition-colors hover:text-[#1b4332]" />
-                            <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-[#1b4332] text-white text-[10px] rounded shadow-lg z-20">
+                            <HelpCircle className="w-4 h-4 text-gray-400 cursor-help transition-colors hover:text-brand-forest" />
+                            <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-brand-forest text-white text-[10px] rounded shadow-lg z-20">
                                 Please enter a valid email format (e.g., name@domain.com)
-                                <div className="absolute top-full right-1 border-4 border-transparent border-t-[#1b4332]"></div>
+                                <div className="absolute top-full right-1 border-4 border-transparent border-t-brand-forest"></div>
                             </div>
                         </div>
                     </div>
@@ -115,7 +123,7 @@ export default function LoginForm() {
                             value={email}
                             onChange={(e) => handleInputChange(e, setEmail)}
                             onBlur={handleEmailBlur}
-                            className="w-full px-4 py-2 text-[#1b4332] border border-[#1b4332]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] focus:border-transparent transition-all placeholder-[#1b4332]/50"
+                            className="w-full px-4 py-2 text-brand-forest border border-brand-forest/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-forest focus:border-transparent transition-all placeholder-brand-forest/50"
                             placeholder="you@example.com"
                             required
                         />
@@ -124,15 +132,15 @@ export default function LoginForm() {
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-[#1b4332] flex items-center gap-2">
+                        <label className="text-sm font-medium text-brand-forest flex items-center gap-2">
                             <Lock className="w-4 h-4" />
                             Password
                         </label>
                         <div className="group relative">
-                            <HelpCircle className="w-4 h-4 text-gray-400 cursor-help transition-colors hover:text-[#1b4332]" />
-                            <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-[#1b4332] text-white text-[10px] rounded shadow-lg z-20">
+                            <HelpCircle className="w-4 h-4 text-gray-400 cursor-help transition-colors hover:text-brand-forest" />
+                            <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-brand-forest text-white text-[10px] rounded shadow-lg z-20">
                                 Password must be at least 6 characters
-                                <div className="absolute top-full right-1 border-4 border-transparent border-t-[#1b4332]"></div>
+                                <div className="absolute top-full right-1 border-4 border-transparent border-t-brand-forest"></div>
                             </div>
                         </div>
                     </div>
@@ -141,14 +149,14 @@ export default function LoginForm() {
                             type={showPassword ? 'text' : 'password'}
                             value={password}
                             onChange={(e) => handleInputChange(e, setPassword)}
-                            className="w-full px-4 py-2 text-[#1b4332] border border-[#1b4332]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] focus:border-transparent transition-all pr-10 placeholder-[#1b4332]/50"
+                            className="w-full px-4 py-2 text-brand-forest border border-brand-forest/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-forest focus:border-transparent transition-all pr-10 placeholder-brand-forest/50"
                             placeholder="••••••••"
                             required
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1b4332] transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-forest transition-colors"
                         >
                             {showPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -162,7 +170,7 @@ export default function LoginForm() {
                 <button
                     type="submit"
                     disabled={loading || !isFormValid}
-                    className="w-full bg-[#1b4332] hover:bg-[#143225] text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-6 cursor-pointer"
+                    className="w-full bg-brand-forest hover:bg-brand-sage text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-6 cursor-pointer"
                 >
                     {loading ? (
                         <>

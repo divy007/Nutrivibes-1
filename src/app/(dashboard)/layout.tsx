@@ -18,10 +18,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Show loading state while checking auth
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-[#fdfbf7]">
-                <div className="text-center">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
-                    <p className="mt-4 text-slate-600">Loading...</p>
+            <div className="flex h-screen items-center justify-center bg-white">
+                <div className="text-center space-y-4">
+                    <img
+                        src="/brand-logo.png"
+                        alt="NutriVibes"
+                        className="h-20 w-auto mx-auto animate-pulse"
+                    />
+                    <div className="flex items-center justify-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                        <div className="h-1 w-1 bg-orange-500 rounded-full animate-bounce" />
+                        Loading...
+                    </div>
                 </div>
             </div>
         );
@@ -29,8 +36,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex flex-col h-screen bg-slate-50">
-            <TopHeader user={user} />
-            <main className="flex-1 overflow-hidden">
+            {/* Show TopHeader for all authenticated users */}
+            {user && <TopHeader user={user} />}
+            <main className="flex-1 overflow-hidden bg-[#FCFCF9]">
                 <div className="h-full overflow-auto">
                     {children}
                 </div>

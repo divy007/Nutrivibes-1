@@ -7,9 +7,7 @@ import {
     Filter,
     ChevronDown,
     Play,
-    CheckCircle2,
-    Clock,
-    MoreVertical
+    Clock
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { CounsellingFlow } from '@/components/dietician/clients/CounsellingFlow';
@@ -24,9 +22,14 @@ export default function CounsellingPage() {
     };
 
     const handleFinishFlow = async (formData: any) => {
+        console.log('Starting handleFinishFlow', formData);
         try {
-            if (!client) return;
-            await api.patch(`/api/clients/${client.id}`, {
+            if (!client) {
+                console.error('No client data found!');
+                return;
+            }
+            console.log('Sending PATCH request to', `/api/clients/${client._id}`);
+            const response = await api.patch(`/api/clients/${client._id}`, {
                 status: 'ACTIVE',
                 age: formData.age,
                 height: formData.height,
@@ -34,12 +37,14 @@ export default function CounsellingPage() {
                 gender: formData.gender.toLowerCase(),
                 dietStartDate: formData.dietStartDate
             });
+            console.log('PATCH response:', response);
 
             setShowFlow(false);
             // Refresh global client data to update header and other views
             await refreshClient();
         } catch (error) {
             console.error('Failed to save counselling data:', error);
+            alert(`Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -121,7 +126,7 @@ export default function CounsellingPage() {
                                     <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(), 'dd MMM yyyy')}</td>
                                     <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(), 'hh:mm a')}</td>
                                     <td className="px-4 py-4 text-sm text-slate-600">Diet</td>
-                                    <td className="px-4 py-4 text-sm text-slate-600">Dt Mansi Anajwala</td>
+                                    <td className="px-4 py-4 text-sm text-slate-600">Assigned Coach</td>
                                     <td className="px-4 py-4">
                                         <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">New</span>
                                     </td>
@@ -142,25 +147,9 @@ export default function CounsellingPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                <tr className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="px-4 py-4 text-sm text-slate-600 text-center font-medium">1</td>
-                                    <td className="px-4 py-4 text-sm text-slate-600 font-bold">15 Dec 2025</td>
-                                    <td className="px-4 py-4 text-sm text-slate-600 font-bold">11:00 AM</td>
-                                    <td className="px-4 py-4 text-sm text-slate-600">Diet</td>
-                                    <td className="px-4 py-4 text-sm text-slate-600">Dt Mansi Anajwala</td>
-                                    <td className="px-4 py-4">
-                                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Regular</span>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs uppercase bg-green-50 px-2 py-1 rounded w-fit">
-                                            <CheckCircle2 size={12} strokeWidth={3} />
-                                            Completed
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-center">
-                                        <button className="text-slate-300 hover:text-slate-600 p-2 transition-colors">
-                                            <MoreVertical size={18} />
-                                        </button>
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 italic">
+                                        No historical counselling sessions found.
                                     </td>
                                 </tr>
                             )}

@@ -32,7 +32,8 @@ export interface DayPlan {
 }
 
 export interface ClientInfo {
-    id: string;
+    id: string; // Friendly ID or fallback
+    _id: string; // MongoDB ID for API calls
     clientId?: string;
     name: string;
     email?: string;
@@ -40,10 +41,29 @@ export interface ClientInfo {
     gender?: string;
     weight?: number; // in kg
     height?: number; // in cm
+    idealWeight?: number;
     phone?: string;
+    dob?: string | Date;
+    city?: string;
+    state?: string;
+    country?: string;
+    timeZone?: string;
+    dietStatus?: string;
+    createdAt?: string;
+    dietStartDate?: string;
     preferences: string;
-    plan?: string;
+    mealTimings?: MealTiming[];
     status?: string;
+    assessment?: {
+        categoryScores: {
+            eat: number;
+            lifestyle: number;
+            mind: number;
+            exercise: number;
+        };
+        totalScore: number;
+        riskLevel: string;
+    };
 }
 
 export interface WeekPlan {
