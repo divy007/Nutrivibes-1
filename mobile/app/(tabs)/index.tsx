@@ -178,10 +178,6 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.content}>
-          <MealLogCard
-            logs={mealLogs}
-            onAdd={() => setIsMealModalOpen(true)}
-          />
 
           <View style={styles.row}>
             <View style={styles.col}>
@@ -211,25 +207,12 @@ export default function DashboardScreen() {
             onUpdateClick={() => setIsMeasurementModalOpen(true)}
           />
 
-          {/* Wellness Audit CTA mirroring the web design */}
-          <View
-            style={[styles.auditCard, { backgroundColor: theme.brandForest }]}
-          >
-            <View style={styles.auditInfo}>
-              <View style={styles.auditBadge}>
-                <Activity size={12} color="#FFF" />
-                <Text style={styles.auditBadgeText}>Wellness Audit</Text>
-              </View>
-              <Text style={styles.auditTitle}>Concerned About weight?</Text>
-              <Text style={styles.auditSub}>Take our 2-minute 'Health Audit' to uncover metabolic barriers.</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.auditAction}
-              onPress={() => router.push('/(tabs)/audit')}
-            >
-              <Text style={styles.auditButtonText}>Start Audit</Text>
-            </TouchableOpacity>
-          </View>
+
+          <MealLogCard
+            logs={mealLogs}
+            onAdd={() => setIsMealModalOpen(true)}
+          />
+
         </View>
       </ScrollView>
 

@@ -27,7 +27,7 @@ export default function MealLogCard({ logs, onAdd }: MealLogCardProps) {
                 <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '10' }]}>
                     <Utensils size={20} color={theme.brandSage} />
                 </View>
-                <Text style={[styles.label, { color: theme.brandForest }]}>Nutrition Score</Text>
+                <Text style={[styles.label, { color: theme.brandForest }]}>Meal Logs</Text>
                 <TouchableOpacity
                     style={[styles.addButton, { backgroundColor: theme.brandSage }]}
                     onPress={onAdd}
@@ -36,16 +36,6 @@ export default function MealLogCard({ logs, onAdd }: MealLogCardProps) {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.scoreContainer}>
-                <View style={styles.scoreCircle}>
-                    <Text style={[styles.scoreValue, { color: theme.brandForest }]}>85</Text>
-                    <Text style={styles.scoreLabel}>Daily Score</Text>
-                </View>
-                <View style={styles.stats}>
-                    <Text style={styles.statsText}>You've logged <Text style={{ fontWeight: '900', color: theme.brandForest }}>{logs.length}</Text> meals today.</Text>
-                    <Text style={styles.statsSub}>Keep up the consistency!</Text>
-                </View>
-            </View>
 
             <View style={styles.mealList}>
                 {categories.map((cat) => {
