@@ -8,7 +8,7 @@ const protectedRoutes = {
     '/client': ['CLIENT'],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check if the current path needs protection
