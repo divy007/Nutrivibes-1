@@ -68,7 +68,11 @@ export const apiRequest = async <T>(
         } else {
             const text = await response.text();
             if (!response.ok) {
-                throw new Error(text || `Error ${response.status}: ${response.statusText}`);
+                // If it's HTML, it's likely a 404/500 page from Vercel/Next.js
+                if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error(`Error ${response.status}: The requested page could not be found or the server returned an error page.`);
+                }
+                throw new Error(text.substring(0, 200) || `Error ${response.status}: ${response.statusText}`);
             }
             return text as unknown as T;
         }

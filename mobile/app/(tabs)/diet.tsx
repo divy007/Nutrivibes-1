@@ -31,12 +31,9 @@ export default function DietPlanScreen() {
 
     useEffect(() => {
         if (user) {
-            if (user.dietStartDate) {
-                const startDate = new Date(user.dietStartDate);
-                if (!isNaN(startDate.getTime())) {
-                    setSelectedDate(startDate);
-                }
-            }
+            // We fetch the plan for the current week starting today.
+            // The dietician-set start date is respected because the API 
+            // will return 'NO_DIET' for days before the diet actually begins.
             fetchDietPlan();
         }
     }, [user]);
@@ -88,8 +85,26 @@ export default function DietPlanScreen() {
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: theme.brandForest }]}>Daily Nutrition</Text>
-                <Text style={styles.subtitle}>{format(selectedDate, 'MMMM yyyy')}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View>
+                        <Text style={[styles.title, { color: theme.brandForest }]}>Daily Nutrition</Text>
+                        <Text style={styles.subtitle}>{format(selectedDate, 'MMMM yyyy')}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TouchableOpacity
+                            onPress={() => setSelectedDate(prev => addDays(prev, -7))}
+                            style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
+                        >
+                            <ChevronLeft size={20} color={theme.brandForest} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setSelectedDate(prev => addDays(prev, 7))}
+                            style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
+                        >
+                            <ChevronRight size={20} color={theme.brandForest} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
 
             <View style={styles.calendarStrip}>
@@ -211,4 +226,11 @@ const styles = StyleSheet.create({
     foodName: { fontSize: 14, fontWeight: '700' },
     foodPortion: { fontSize: 12, color: '#94a3b8', fontWeight: '500' },
     emptyText: { fontSize: 13, fontStyle: 'italic', color: '#cbd5e1' },
+    navButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });

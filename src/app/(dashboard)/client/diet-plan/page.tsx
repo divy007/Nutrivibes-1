@@ -31,30 +31,13 @@ export default function ClientDietPlanPage() {
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(new Date());
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Fetch client profile to get diet start date
+    // Initialize view to the current week
     useEffect(() => {
-        const initializeView = async () => {
-            try {
-                const profile = await api.get<any>('/api/clients/me');
-                if (profile && profile.dietStartDate) {
-                    const startDate = new Date(profile.dietStartDate);
-                    // Check if startDate is valid
-                    if (!isNaN(startDate.getTime())) {
-                        setCurrentWeekStart(startDate);
-                    } else {
-                        // Fallback to Monday of current week
-                        setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-                    }
-                } else {
-                    // Fallback to Monday of current week
-                    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-                }
-            } catch (error) {
-                console.error('Failed to fetch client profile:', error);
-                setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-            } finally {
-                setIsInitialLoad(false);
-            }
+        const initializeView = () => {
+            // Point to Monday of current week by default
+            const today = new Date();
+            setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 1 }));
+            setIsInitialLoad(false);
         };
 
         if (user) {
