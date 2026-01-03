@@ -34,7 +34,7 @@ export default function DashboardScreen() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const theme = (Colors as any)[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
   const fetchData = useCallback(async () => {
@@ -70,9 +70,10 @@ export default function DashboardScreen() {
     fetchData();
   };
 
-  const currentWeight = profile?.weight || 0;
+  // Logic to determine weight values
+  const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : (profile?.weight || 0);
   const startWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : currentWeight;
-  const idealWeight = profile?.idealWeight || currentWeight;
+  const idealWeight = profile?.idealWeight || (profile?.weight || 0);
 
   const handleAddWater = async () => {
     try {
