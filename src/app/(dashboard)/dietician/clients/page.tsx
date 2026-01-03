@@ -53,16 +53,21 @@ const PauseModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: 
 export default function ClientsPage() {
     const searchParams = useSearchParams();
     const initialStatus = searchParams.get('status') || 'ACTIVE';
+    const initialSearch = searchParams.get('q') || '';
 
     const [clients, setClients] = useState<ClientInfo[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [statusFilter, setStatusFilter] = useState(initialStatus);
 
     useEffect(() => {
         const status = searchParams.get('status');
         if (status) {
             setStatusFilter(status);
+        }
+        const q = searchParams.get('q');
+        if (q !== null) {
+            setSearchTerm(q);
         }
     }, [searchParams]);
     const [pauseModalState, setPauseModalState] = useState<{ isOpen: boolean, clientId: string | null }>({ isOpen: false, clientId: null });
@@ -89,8 +94,12 @@ export default function ClientsPage() {
     }, []);
 
     const filteredClients = clients.filter(client => {
-        const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (client.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch =
+            client.name.toLowerCase().includes(lowerSearch) ||
+            (client.email || '').toLowerCase().includes(lowerSearch) ||
+            (client.phone || '').includes(searchTerm) ||
+            (client.clientId || '').toLowerCase().includes(lowerSearch);
 
         if (!matchesSearch) return false;
 

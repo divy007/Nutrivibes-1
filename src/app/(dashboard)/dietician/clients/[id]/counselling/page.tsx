@@ -7,7 +7,8 @@ import {
     Filter,
     ChevronDown,
     Play,
-    Clock
+    Clock,
+    Check
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { CounsellingFlow } from '@/components/dietician/clients/CounsellingFlow';
@@ -29,14 +30,59 @@ export default function CounsellingPage() {
                 return;
             }
             console.log('Sending PATCH request to', `/api/clients/${client._id}`);
-            const response = await api.patch(`/api/clients/${client._id}`, {
+            const payload = {
                 status: 'ACTIVE',
+                // Basic info updates
                 age: formData.age,
                 height: formData.height,
                 weight: formData.weight,
                 gender: formData.gender.toLowerCase(),
-                dietStartDate: formData.dietStartDate
-            });
+                dietStartDate: formData.dietStartDate,
+
+                // Detailed Counselling Profile
+                counsellingProfile: {
+                    // Demographics
+                    country: formData.country,
+                    heightUnit: formData.heightUnit,
+                    weightUnit: formData.weightUnit,
+                    maritalStatus: formData.maritalStatus,
+                    workType: formData.workType,
+                    shiftType: formData.shiftType,
+                    staying: formData.staying,
+                    placeOfWork: formData.placeOfWork,
+
+                    // Medical
+                    medicalConditions: formData.medicalConditions,
+                    otherMedicalCondition: formData.otherMedicalCondition,
+                    deficiencies: formData.deficiencies,
+                    otherDeficiency: formData.otherDeficiency,
+                    surgeries: formData.surgeries,
+                    otherSurgery: formData.otherSurgery,
+                    medications: formData.medications,
+                    medicalReport: formData.medicalReport ? formData.medicalReport.name : null, // Handle file properly if needed
+
+                    // Lifestyle
+                    smoking: formData.smoking,
+                    cigarettesPerDay: formData.cigarettesPerDay,
+                    alcohol: formData.alcohol,
+                    alcoholTypes: formData.alcoholTypes,
+                    alcoholFrequency: formData.alcoholFrequency,
+                    stressLevel: formData.stressLevel,
+                    emotionalEating: formData.emotionalEating,
+
+                    // Dietary
+                    previousDiets: formData.previousDiets,
+                    noMeatDays: formData.noMeatDays,
+                    fastDays: formData.fastDays,
+                    cheatMeals: formData.cheatMeals,
+
+                    // Goals
+                    medicalGoal: formData.medicalGoal,
+                    loseWeightReasons: formData.loseWeightReasons
+                }
+            };
+
+            const response = await api.patch(`/api/clients/${client._id}`, payload);
             console.log('PATCH response:', response);
 
             setShowFlow(false);
@@ -63,9 +109,11 @@ export default function CounsellingPage() {
                     onClose={() => setShowFlow(false)}
                     onFinish={handleFinishFlow}
                     initialData={{
+                        ...client?.counsellingProfile,
                         age: client?.age,
                         height: client?.height,
-                        weight: client?.weight
+                        weight: client?.weight,
+                        gender: client?.gender
                     }}
                 />
             </div>
@@ -119,8 +167,34 @@ export default function CounsellingPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {/* If client is NEW, show a pending row */}
-                            {client?.status === 'NEW' ? (
+                            {/* If client has a counselling profile, show it as completed */}
+                            {client?.counsellingProfile ? (
+                                <tr className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="px-4 py-4 text-sm text-slate-600 text-center font-medium">1</td>
+                                    <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(client.updatedAt || Date.now()), 'dd MMM yyyy')}</td>
+                                    <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(client.updatedAt || Date.now()), 'hh:mm a')}</td>
+                                    <td className="px-4 py-4 text-sm text-slate-600">Diet</td>
+                                    <td className="px-4 py-4 text-sm text-slate-600">Assigned Coach</td>
+                                    <td className="px-4 py-4">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Completed</span>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs uppercase bg-emerald-50 px-2 py-1 rounded w-fit">
+                                            <Check className="w-3 h-3" />
+                                            Active
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-4 text-center">
+                                        <button
+                                            onClick={handleStartCounselling}
+                                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                                        >
+                                            <Play size={12} fill="currentColor" />
+                                            Restart
+                                        </button>
+                                    </td>
+                                </tr>
+                            ) : client?.status === 'NEW' ? (
                                 <tr className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-4 py-4 text-sm text-slate-600 text-center font-medium">1</td>
                                     <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(), 'dd MMM yyyy')}</td>

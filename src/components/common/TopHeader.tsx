@@ -38,8 +38,27 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
     const router = useRouter();
     const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
     const profileRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Sync search query from URL
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    useEffect(() => {
+        if (searchParams) {
+            const q = searchParams.get('q');
+            if (q) setSearchQuery(q);
+        }
+    }, [pathname]); // naive sync
+
+    const handleSearch = (query: string) => {
+        // If empty, maybe clear? But user might want to see all.
+        // Navigate to client list with query
+        if (user?.role === 'DIETICIAN') {
+            router.push(`/dietician/clients?q=${encodeURIComponent(query)}`);
+        }
+    };
 
     const handleSignOut = () => {
         clearAuthToken();
@@ -165,6 +184,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                     <input
                         type="text"
                         placeholder="Search by ID, Name, Contact..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleSearch(searchQuery);
+                            }
+                        }}
                         className="bg-white/10 border border-white/10 rounded-full pl-11 pr-4 py-2 text-sm w-[300px] focus:outline-none focus:ring-2 focus:ring-brand-sage focus:bg-white focus:text-slate-800 transition-all placeholder:text-slate-400"
                     />
                 </div>

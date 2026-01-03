@@ -19,10 +19,33 @@ export interface IClient extends Document {
     targetCalories?: number;
     dietStartDate?: Date;
     notes?: string;
+    followUpHistory?: {
+        date: Date;
+        notes: string;
+        updatedAt: Date;
+    }[];
     mealTimings?: { mealNumber: number; time: string }[];
     status: 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
     pausedUntil?: Date;
     isProfileComplete: boolean;
+    counsellingProfile?: {
+        medicalConditions?: string[];
+        medications?: string;
+        bloodReport?: string;
+        familyHistory?: string;
+        dietaryPreferences?: string;
+        allergies?: string;
+        stapleFood?: string;
+        alcoholFrequency?: string;
+        smokingFrequency?: string;
+        sleepTime?: string;
+        wakeTime?: string;
+        occupation?: string;
+        stressLevel?: string;
+        exerciseType?: string;
+        exerciseFrequency?: string;
+        exerciseDuration?: string;
+    };
     dieticianId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
 }
@@ -48,6 +71,11 @@ const ClientSchema = new Schema(
         targetCalories: { type: Number },
         dietStartDate: { type: Date },
         notes: { type: String },
+        followUpHistory: [{
+            date: { type: Date, default: Date.now },
+            notes: String,
+            updatedAt: { type: Date, default: Date.now }
+        }],
         mealTimings: [{
             mealNumber: Number,
             time: String
@@ -55,10 +83,68 @@ const ClientSchema = new Schema(
         status: { type: String, enum: ['NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
         pausedUntil: { type: Date },
         isProfileComplete: { type: Boolean, default: false },
+        counsellingProfile: {
+            medicalConditions: [String],
+            otherMedicalCondition: String,
+            medications: [{
+                type: String,
+                name: String,
+                dosage: String,
+                unit: String,
+                frequency: String,
+                freqUnit: String
+            }],
+            medicalReport: String, // Store URL or Filename
+            // Demographics & Lifestyle
+            country: String,
+            heightUnit: String,
+            weightUnit: String,
+            maritalStatus: String,
+            workType: String,
+            shiftType: String,
+            staying: String,
+            placeOfWork: String,
+            smoking: String,
+            cigarettesPerDay: String,
+            alcohol: String,
+            alcoholTypes: [String],
+            alcoholFrequency: String,
+            // Medical & Health
+            deficiencies: [String],
+            otherDeficiency: String,
+            surgeries: [String],
+            otherSurgery: String,
+            stressLevel: String,
+            medicalGoal: String,
+            loseWeightReasons: [String],
+            emotionalEating: String,
+            // Dietary
+            previousDiets: [String],
+            noMeatDays: [String],
+            fastDays: [String],
+            cheatMeals: String,
+            // Previous fields that might be useful
+            bloodReport: String,
+            familyHistory: String,
+            dietaryPreferences: String,
+            allergies: String,
+            stapleFood: String,
+            sleepTime: String,
+            wakeTime: String,
+            occupation: String, // mapped to workType? or keep separate?
+            exerciseType: String,
+            exerciseFrequency: String,
+            exerciseDuration: String
+        },
         dieticianId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     },
     { timestamps: true }
 );
+
+// Force model refresh for schema changes in development
+if (process.env.NODE_ENV === 'development' && mongoose.models.Client) {
+    delete (mongoose as any).models.Client;
+}
 
 export default mongoose.models.Client || mongoose.model<IClient>('Client', ClientSchema);

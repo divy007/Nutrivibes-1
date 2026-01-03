@@ -36,6 +36,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dashboard',
+          headerShown: false,
           tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />

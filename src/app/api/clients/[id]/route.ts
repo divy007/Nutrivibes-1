@@ -25,6 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             new: true,
             runValidators: true,
         });
+
         if (!client) {
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }

@@ -52,7 +52,9 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                     ? data.dietaryPreferences.join(', ')
                     : 'N/A',
                 status: data.status || 'ACTIVE',
-                assessment: assessmentData
+                updatedAt: data.updatedAt,
+                assessment: assessmentData,
+                counsellingProfile: data.counsellingProfile
             });
         } catch (error) {
             console.error('Failed to fetch client:', error);

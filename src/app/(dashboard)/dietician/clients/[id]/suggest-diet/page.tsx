@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, use, useRef } from 'react';
 import { format, addDays, addWeeks, subWeeks, startOfWeek } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft,
     ChevronRight,
@@ -21,14 +22,19 @@ import {
     ArrowUpToLine,
     ArrowDownToLine,
     X,
-    ClipboardPaste
+    ClipboardPaste,
+    Eye
 } from 'lucide-react';
+
 import { MealCard } from '@/components/dietician/plan/MealCard';
 import { AddFoodModal } from '@/components/dietician/plan/AddFoodModal';
 import { UpdateMealTimingsModal } from '@/components/dietician/plan/UpdateMealTimingsModal';
 import { WeekPlan, ClientInfo, FoodItem, DayPlan, MealSlot, MealTiming } from '@/types';
 import { exportToPDF, exportToExcel } from '@/utils/export';
 import { api } from '@/lib/api-client';
+import { CounsellingDrawer } from '@/components/dietician/client/CounsellingDrawer';
+import { FollowUpNotesSection } from '@/components/dietician/client/FollowUpNotesSection';
+import { FollowUpHistoryDrawer } from '@/components/dietician/client/FollowUpHistoryDrawer';
 
 const DEFAULT_MEAL_TIMINGS: MealTiming[] = [
     { mealNumber: 1, time: '06:30' },
@@ -42,6 +48,13 @@ const DEFAULT_MEAL_TIMINGS: MealTiming[] = [
 
 export default function SuggestDietPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+
+    // --- State ---
+    const [isCounsellingOpen, setIsCounsellingOpen] = useState(false);
+    const [isNotesOpen, setIsNotesOpen] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isSavingNotes, setIsSavingNotes] = useState(false);
+
 
     // --- State ---
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
@@ -81,7 +94,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         savedTimings.some((t, i) => t.time !== currentTimings[i]?.time || t.mealNumber !== currentTimings[i]?.mealNumber);
 
                     if (isDifferent) {
-                        // If it's different, we might need to update state, 
+                        // If it's different, we might need to update state,
                         // but if state is already longer (has 8) and saved is shorter (has 7), we keep 8.
                         if (savedTimings.length >= currentTimings.length) {
                             setMealTimings(savedTimings);
@@ -148,7 +161,9 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     phone: data.phone,
                     preferences: data.dietaryPreferences?.join(', ') || 'None',
                     mealTimings: data.mealTimings,
-                    status: data.status
+                    status: data.status,
+                    counsellingProfile: data.counsellingProfile,
+                    followUpHistory: data.followUpHistory || []
                 };
                 if (data.mealTimings && data.mealTimings.length > 0) {
                     setMealTimings(data.mealTimings);
@@ -624,6 +639,28 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+    const handleSaveFollowUpNotes = async (data: { notes: string }) => {
+        setIsSavingNotes(true);
+        try {
+            await api.post(`/api/clients/${id}/follow-up`, data);
+
+            // Re-fetch client data to update history
+            const updatedData = await api.get<any>(`/api/clients/${id}`);
+            setClientInfo(prev => prev ? {
+                ...prev,
+                followUpHistory: updatedData.followUpHistory || []
+            } : null);
+
+            setIsNotesOpen(false);
+            alert('Notes saved to history');
+        } catch (error) {
+            console.error('Failed to save notes:', error);
+            alert('Failed to save notes');
+        } finally {
+            setIsSavingNotes(false);
+        }
+    };
+
     if (loading || !weekPlan) {
         return (
             <div className="flex h-full items-center justify-center p-20">
@@ -725,6 +762,25 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                 </button>
                             )}
 
+                            <button
+                                onClick={() => setIsCounsellingOpen(true)}
+                                className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                            >
+                                <Eye size={14} />
+                                Counselling
+                            </button>
+
+                            <button
+                                onClick={() => setIsNotesOpen(!isNotesOpen)}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-sm border ${isNotesOpen
+                                    ? 'bg-orange-50 text-orange-600 border-orange-200'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                <Plus size={14} />
+                                {isNotesOpen ? 'Hide Notes' : 'Add Notes'}
+                            </button>
+
                             <div className="relative" ref={actionRef}>
                                 <button
                                     onClick={() => setIsActionOpen(!isActionOpen)}
@@ -771,6 +827,40 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
                 </div>
+
+                {/* Follow Up Notes Section */}
+                <AnimatePresence>
+                    {isNotesOpen && (
+                        <FollowUpNotesSection
+                            onSave={handleSaveFollowUpNotes}
+                            isSaving={isSavingNotes}
+                            onShowHistory={() => setIsHistoryOpen(true)}
+                        />
+                    )}
+                </AnimatePresence>
+
+                {/* Render Drawer */}
+                <CounsellingDrawer
+                    isOpen={isCounsellingOpen}
+                    onClose={() => setIsCounsellingOpen(false)}
+                    clientId={id}
+                    clientData={clientInfo}
+                    onUpdate={() => {
+                        const fetchClient = async () => {
+                            try {
+                                const data = await api.get<any>(`/api/clients/${id}`);
+                                setClientInfo(prev => prev ? { ...prev, counsellingProfile: data.counsellingProfile } : null);
+                            } catch (e) { console.error('Failed to refresh data'); }
+                        };
+                        fetchClient();
+                    }}
+                />
+
+                <FollowUpHistoryDrawer
+                    isOpen={isHistoryOpen}
+                    onClose={() => setIsHistoryOpen(false)}
+                    history={clientInfo?.followUpHistory || []}
+                />
 
                 {/* Planner Grid */}
                 <div className="overflow-x-auto pb-4 custom-scrollbar">

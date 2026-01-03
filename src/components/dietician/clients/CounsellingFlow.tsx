@@ -13,26 +13,7 @@ import {
 interface CounsellingFlowProps {
     onClose: () => void;
     onFinish: (data: any) => void;
-    initialData?: {
-        gender?: string;
-        maritalStatus?: string;
-        age?: number;
-        country?: string;
-        state?: string;
-        city?: string;
-        height?: number;
-        weight?: number;
-        workType?: string;
-        shiftType?: string;
-        staying?: string;
-        placeOfWork?: string;
-        smoking?: string;
-        alcohol?: string;
-        medicalConditions?: string[];
-        stressLevel?: string;
-        medicalGoal?: string;
-        emotionalEating?: string;
-    };
+    initialData?: any;
 }
 
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -145,34 +126,34 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         city: initialData?.city || 'Mumbai',
         height: initialData?.height || '',
         weight: initialData?.weight || '',
-        heightUnit: 'Cm',
-        weightUnit: 'Kg',
+        heightUnit: initialData?.heightUnit || 'Cm',
+        weightUnit: initialData?.weightUnit || 'Kg',
         workType: initialData?.workType || '',
         shiftType: initialData?.shiftType || '',
         staying: initialData?.staying || '',
         placeOfWork: initialData?.placeOfWork || '',
         smoking: initialData?.smoking || 'Never',
-        cigarettesPerDay: '',
+        cigarettesPerDay: initialData?.cigarettesPerDay || '',
         alcohol: initialData?.alcohol || 'Never',
-        alcoholFrequency: 'Weekly',
-        alcoholTypes: [] as string[],
-        medicalConditions: initialData?.medicalConditions || [],
-        otherMedicalCondition: '',
-        deficiencies: [] as string[],
-        otherDeficiency: '',
-        surgeries: [] as string[],
-        otherSurgery: '',
-        medications: [] as any[],
+        alcoholFrequency: initialData?.alcoholFrequency || 'Weekly',
+        alcoholTypes: initialData?.alcoholTypes || [] as string[],
+        medicalConditions: initialData?.medicalConditions || [] as string[],
+        otherMedicalCondition: initialData?.otherMedicalCondition || '',
+        deficiencies: initialData?.deficiencies || [] as string[],
+        otherDeficiency: initialData?.otherDeficiency || '',
+        surgeries: initialData?.surgeries || [] as string[],
+        otherSurgery: initialData?.otherSurgery || '',
+        medications: initialData?.medications || [] as any[],
         medicalReport: null as File | null,
         stressLevel: initialData?.stressLevel || 'Low',
         medicalGoal: initialData?.medicalGoal || 'Weight Loss',
-        loseWeightReasons: [] as string[],
+        loseWeightReasons: initialData?.loseWeightReasons || [] as string[],
         emotionalEating: initialData?.emotionalEating || 'No',
-        previousDiets: [] as string[],
-        noMeatDays: [] as string[],
-        fastDays: [] as string[],
-        cheatMeals: 'No',
-        dietStartDate: new Date().toISOString().split('T')[0]
+        previousDiets: initialData?.previousDiets || [] as string[],
+        noMeatDays: initialData?.noMeatDays || [] as string[],
+        fastDays: initialData?.fastDays || [] as string[],
+        cheatMeals: initialData?.cheatMeals || 'No',
+        dietStartDate: initialData?.dietStartDate || new Date().toISOString().split('T')[0]
     });
 
     const totalSteps = 31;
@@ -587,7 +568,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                     <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto py-8">
                         <h2 className="text-xl font-bold text-slate-800 text-center">Medicine or Supplement</h2>
                         <div className="w-full space-y-4">
-                            {formData.medications.map((med, idx) => (
+                            {formData.medications.map((med: any, idx: number) => (
                                 <div key={idx} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center group">
                                     <div>
                                         <div className="text-xs font-bold text-orange-500 uppercase">{med.type}</div>
@@ -595,7 +576,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                         <div className="text-sm text-slate-500">{med.dosage} {med.unit}, {med.frequency} times a {med.freqUnit}</div>
                                     </div>
                                     <button
-                                        onClick={() => setFormData({ ...formData, medications: formData.medications.filter((_, i) => i !== idx) })}
+                                        onClick={() => setFormData({ ...formData, medications: formData.medications.filter((_: any, i: number) => i !== idx) })}
                                         className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all font-bold text-xs uppercase"
                                     >
                                         Remove

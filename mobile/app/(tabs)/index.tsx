@@ -7,6 +7,7 @@ import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Activity, Bell, User as UserIcon, LogOut } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import WeightTracker from '@/components/dashboard/WeightTracker';
 import WaterTracker from '@/components/dashboard/WaterTracker';
@@ -34,6 +35,7 @@ export default function DashboardScreen() {
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
 
   const fetchData = useCallback(async () => {
     try {
@@ -123,7 +125,11 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.brandSage} />
         }
@@ -241,7 +247,7 @@ export default function DashboardScreen() {
         onClose={() => setIsMealModalOpen(false)}
         onSave={handleSaveMeal}
       />
-    </View>
+    </View >
   );
 }
 
@@ -251,7 +257,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 24, // Padding handled by contentContainer style dynamically
   },
   loadingContainer: {
     flex: 1,

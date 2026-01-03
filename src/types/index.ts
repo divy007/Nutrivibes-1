@@ -50,10 +50,18 @@ export interface ClientInfo {
     timeZone?: string;
     dietStatus?: string;
     createdAt?: string;
+    updatedAt?: string;
     dietStartDate?: string;
     preferences: string;
     mealTimings?: MealTiming[];
     status?: string;
+    counsellingProfile?: any;
+    followUpHistory?: {
+        _id?: string;
+        date: string | Date;
+        notes: string;
+        updatedAt: string | Date;
+    }[];
     assessment?: {
         categoryScores: {
             eat: number;
