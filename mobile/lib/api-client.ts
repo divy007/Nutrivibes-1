@@ -60,10 +60,21 @@ export const apiRequest = async <T>(
         const response = await fetch(url, config);
         clearTimeout(timeoutId);
 
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data: any;
+
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            if (!response.ok) {
+                throw new Error(text || `Error ${response.status}: ${response.statusText}`);
+            }
+            return text as unknown as T;
+        }
 
         if (!response.ok) {
-            throw new Error(data.message || data.error || 'API request failed');
+            throw new Error(data.message || data.error || `Error ${response.status}: ${response.statusText}`);
         }
 
         return data as T;
@@ -73,6 +84,10 @@ export const apiRequest = async <T>(
             throw new Error('Request timed out. Please check if the server is reachable.');
         }
         if (error instanceof Error) {
+            // Provide a more descriptive error for JSON parse failures
+            if (error.message.includes('JSON Parse error')) {
+                throw new Error('Received an invalid response from the server. This usually means the API URL is incorrect or the server is down.');
+            }
             throw error;
         }
         throw new Error('An unknown error occurred');
