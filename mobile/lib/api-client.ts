@@ -6,7 +6,7 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 // NOTE: In production, this should be an environment variable.
 // For Expo Go, use your computer's local IP (e.g., http://192.168.x.x:3000)
 // For emulator, http://10.0.2.2:3000 (Android) or http://localhost:3000 (iOS)
-const BASE_URL = 'https://nutrivibes-1.vercel.app';
+const BASE_URL = 'https://nutrivibesbymansi.vercel.app';
 
 export const setAuthToken = async (token: string): Promise<void> => {
     await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);

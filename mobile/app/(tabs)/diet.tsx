@@ -24,32 +24,22 @@ export default function DietPlanScreen() {
     const [loading, setLoading] = useState(true);
 
     const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
+    const theme = (Colors as any)[colorScheme ?? 'light'];
 
     const weekStart = React.useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate]);
     const weekDays = React.useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)), [weekStart]);
 
     useEffect(() => {
         if (user) {
-            initializeWithProfile();
-        }
-    }, [user]);
-
-    const initializeWithProfile = async () => {
-        try {
-            const profile = await api.get<any>('/api/clients/me');
-            if (profile && profile.dietStartDate) {
-                const startDate = new Date(profile.dietStartDate);
+            if (user.dietStartDate) {
+                const startDate = new Date(user.dietStartDate);
                 if (!isNaN(startDate.getTime())) {
                     setSelectedDate(startDate);
                 }
             }
-        } catch (error) {
-            console.error('Failed to sync diet start date:', error);
-        } finally {
             fetchDietPlan();
         }
-    };
+    }, [user]);
 
     // Re-fetch only when the user intentionally changes the week (by changing selectedDate)
     // We filter this to avoid double fetching on init, but for simplicity, useEffect dependency on weekStart is fine.

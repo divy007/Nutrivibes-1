@@ -142,6 +142,10 @@ const ClientSchema = new Schema(
     { timestamps: true }
 );
 
+// Index for faster lookups
+ClientSchema.index({ userId: 1 });
+ClientSchema.index({ dieticianId: 1 });
+
 // Force model refresh for schema changes in development
 if (process.env.NODE_ENV === 'development' && mongoose.models.Client) {
     delete (mongoose as any).models.Client;

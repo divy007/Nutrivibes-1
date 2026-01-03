@@ -14,4 +14,7 @@ const DietPlanSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
+// Index for faster lookups
+DietPlanSchema.index({ clientId: 1, weekStartDate: 1 });
+
 export default mongoose.models.DietPlan || mongoose.model('DietPlan', DietPlanSchema);

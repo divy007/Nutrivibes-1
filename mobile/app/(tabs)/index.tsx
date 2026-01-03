@@ -39,18 +39,12 @@ export default function DashboardScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [profileData, weightData, waterIntake, meals, measurements] = await Promise.all([
-        api.get('/api/clients/me'),
-        api.get('/api/clients/me/weight-logs'),
-        api.get('/api/clients/me/water-intake'),
-        api.get('/api/clients/me/meal-logs'),
-        api.get('/api/clients/me/measurement-logs'),
-      ]);
-      setProfile(profileData);
-      setWeightLogs(weightData as any[]);
-      setWaterData(waterIntake);
-      setMealLogs(meals as any[]);
-      setMeasurementLogs(measurements as any[]);
+      const data = await api.get<any>('/api/clients/me/dashboard');
+      setProfile(data.profile);
+      setWeightLogs(data.weightLogs || []);
+      setWaterData(data.waterData);
+      setMealLogs(data.mealLogs || []);
+      setMeasurementLogs(data.measurementLogs || []);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
