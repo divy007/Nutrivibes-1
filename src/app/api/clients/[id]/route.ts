@@ -21,6 +21,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     try {
         const body = await req.json();
+
+        // Auto-calculate Ideal Weight if height is updated and idealWeight is missing
+        if (body.height && !body.idealWeight) {
+            const heightInM = body.height / 100;
+            body.idealWeight = parseFloat((22 * heightInM * heightInM).toFixed(1));
+        }
+
         const client = await Client.findByIdAndUpdate(id, body, {
             new: true,
             runValidators: true,

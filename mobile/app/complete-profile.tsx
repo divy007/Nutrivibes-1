@@ -25,7 +25,8 @@ export default function CompleteProfileScreen() {
         age: '',
         city: '',
         state: '',
-        gender: '' as 'male' | 'female' | 'other' | ''
+        gender: '' as 'male' | 'female' | 'other' | '',
+        preferences: ''
     });
 
     useEffect(() => {
@@ -44,7 +45,8 @@ export default function CompleteProfileScreen() {
                 age: data.age?.toString() || '',
                 city: data.city || '',
                 state: data.state || '',
-                gender: data.gender || ''
+                gender: data.gender || '',
+                preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : ''
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -57,6 +59,10 @@ export default function CompleteProfileScreen() {
     const handleSave = async () => {
         if (!formData.gender) {
             Alert.alert('Missing Information', 'Please select your gender');
+            return;
+        }
+        if (!formData.preferences) {
+            Alert.alert('Missing Information', 'Please select your diet preference');
             return;
         }
         if (!formData.name || !formData.age || !formData.height || !formData.weight) {
@@ -72,9 +78,11 @@ export default function CompleteProfileScreen() {
                 height: parseFloat(formData.height) || undefined,
                 weight: parseFloat(formData.weight) || undefined,
                 age: parseInt(formData.age) || undefined,
+                dob: formData.age ? new Date(new Date().getFullYear() - parseInt(formData.age), 0, 1) : undefined,
                 city: formData.city,
                 state: formData.state,
                 gender: formData.gender,
+                dietaryPreferences: [formData.preferences],
                 isProfileComplete: true // Mark profile as complete
             });
 
@@ -106,6 +114,25 @@ export default function CompleteProfileScreen() {
                 { color: formData.gender === value ? '#fff' : '#64748b' }
             ]}>{label}</Text>
             {formData.gender === value && <Check size={16} color="#fff" />}
+        </TouchableOpacity>
+    );
+
+    const DietOption = ({ value, label }: { value: string, label: string }) => (
+        <TouchableOpacity
+            style={[
+                styles.genderOption,
+                {
+                    backgroundColor: formData.preferences === value ? theme.brandSage : '#f8fafc',
+                    borderColor: formData.preferences === value ? theme.brandForest : '#f1f5f9'
+                }
+            ]}
+            onPress={() => setFormData({ ...formData, preferences: value })}
+        >
+            <Text style={[
+                styles.genderLabel,
+                { color: formData.preferences === value ? '#fff' : '#64748b' }
+            ]}>{label}</Text>
+            {formData.preferences === value && <Check size={16} color="#fff" />}
         </TouchableOpacity>
     );
 
@@ -149,6 +176,20 @@ export default function CompleteProfileScreen() {
                                 <GenderOption value="male" label="Male" />
                                 <GenderOption value="female" label="Female" />
                                 <GenderOption value="other" label="Other" />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Diet Preference *</Text>
+                            <View style={{ gap: 8 }}>
+                                <View style={{ flexDirection: 'row', gap: 12 }}>
+                                    <DietOption value="Vegetarian" label="Vegetarian" />
+                                    <DietOption value="Eggetarian" label="Eggetarian" />
+                                </View>
+                                <View style={{ flexDirection: 'row', gap: 12 }}>
+                                    <DietOption value="Vegan" label="Vegan" />
+                                    <DietOption value="Non-Vegetarian" label="Non-Veg" />
+                                </View>
                             </View>
                         </View>
 

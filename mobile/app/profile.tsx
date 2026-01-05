@@ -23,7 +23,8 @@ export default function ProfileScreen() {
         age: '',
         city: '',
         state: '',
-        gender: '' as 'male' | 'female' | 'other' | ''
+        gender: '' as 'male' | 'female' | 'other' | '',
+        preferences: '' // Single selection logic for UI
     });
 
     useEffect(() => {
@@ -39,10 +40,12 @@ export default function ProfileScreen() {
                 phone: data.phone || '',
                 height: data.height?.toString() || '',
                 weight: data.weight?.toString() || '',
-                age: data.age?.toString() || '',
+                age: data.dob ? new Date().getFullYear() - new Date(data.dob).getFullYear() : (data.age?.toString() || ''),
                 city: data.city || '',
                 state: data.state || '',
-                gender: data.gender || ''
+                gender: data.gender || '',
+                // backend returns array, we take first item or join, but for Persona strict logic we take first
+                preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : ''
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -62,7 +65,10 @@ export default function ProfileScreen() {
                 weight: parseFloat(formData.weight) || undefined,
                 city: formData.city,
                 state: formData.state,
-                gender: formData.gender
+                gender: formData.gender,
+                // Calculate DOB from Age (approximate to Jan 1st of the birth year)
+                dob: formData.age ? new Date(new Date().getFullYear() - parseInt(formData.age), 0, 1) : undefined,
+                dietaryPreferences: formData.preferences ? [formData.preferences] : []
             });
             Alert.alert('Success', 'Profile updated successfully');
         } catch (error) {
@@ -80,6 +86,24 @@ export default function ProfileScreen() {
             </View>
         );
     }
+
+    const DietOption = ({ value, label }: { value: string, label: string }) => (
+        <TouchableOpacity
+            style={[
+                styles.genderOption,
+                {
+                    backgroundColor: formData.preferences === value ? theme.brandSage : '#f8fafc',
+                    borderColor: formData.preferences === value ? theme.brandForest : '#f1f5f9'
+                }
+            ]}
+            onPress={() => setFormData({ ...formData, preferences: value })}
+        >
+            <Text style={[
+                styles.genderLabel,
+                { color: formData.preferences === value ? '#fff' : '#64748b', fontSize: 12 }
+            ]}>{label}</Text>
+        </TouchableOpacity>
+    );
 
     return (
         <KeyboardAvoidingView
@@ -149,6 +173,20 @@ export default function ProfileScreen() {
                                             <Text style={{ textTransform: 'capitalize', fontWeight: 'bold', color: theme.text }}>{g}</Text>
                                         </TouchableOpacity>
                                     ))}
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Diet Preference</Text>
+                            <View style={{ gap: 8 }}>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <DietOption value="Vegetarian" label="Vegetarian" />
+                                    <DietOption value="Eggetarian" label="Eggetarian" />
+                                </View>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <DietOption value="Vegan" label="Vegan" />
+                                    <DietOption value="Non-Vegetarian" label="Non-Veg" />
                                 </View>
                             </View>
                         </View>
@@ -334,5 +372,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '900',
         letterSpacing: 0.5,
+    },
+    genderOption: {
+        flex: 1,
+        height: 48,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    genderLabel: {
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

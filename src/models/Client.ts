@@ -62,6 +62,7 @@ const ClientSchema = new Schema(
         gender: { type: String, enum: ['male', 'female', 'other'] },
         city: { type: String },
         state: { type: String },
+        age: { type: Number },
         height: { type: Number },
         weight: { type: Number },
         chest: { type: Number },

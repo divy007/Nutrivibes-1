@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const params = useParams();
     const id = params.id as string;
-    const { clientInfo, loading } = useClientData();
+    const { clientInfo, loading, updateClientLocal } = useClientData();
 
     if (loading) {
         return (
@@ -34,7 +34,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="p-4 bg-white border-b border-slate-200">
                 <ClientHeader
                     clientInfo={clientInfo}
-                    onClientInfoChange={() => { }}
+                    onClientInfoChange={updateClientLocal}
                 />
             </div>
 

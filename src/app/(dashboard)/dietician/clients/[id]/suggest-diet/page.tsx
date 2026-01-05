@@ -640,8 +640,79 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+    // --- Validation Logic ---
+    const validateDiet = (daysToValidate: DayPlan[]): { valid: boolean; error?: string } => {
+        if (!clientInfo) return { valid: true };
+
+        // 1. Diet Preference Validation
+        const preference = clientInfo.preferences; // "Vegan", "Vegetarian", "Non-Vegetarian", etc.
+
+        // Define forbidden sets based on preference
+        // "Vegan" -> Forbid Non-Veg, Vegetarian (Dairy)
+        // "Vegetarian", "Eggetarian" -> Forbid Non-Veg (Wait, Eggetarian allows Eggs which are usually flagged Non-Veg or Egg? Our data has 'Non-Vegetarian', 'Vegetarian', 'Vegan'. )
+        // Let's look at recipe data: "dietPref": "Vegan" | "Vegetarian" | "Non-Vegetarian"
+
+        const forbiddenTypes: string[] = [];
+        if (preference.includes('Vegan')) {
+            forbiddenTypes.push('Non-Vegetarian', 'Vegetarian'); // Strict Vegan
+        } else if (preference.includes('Vegetarian')) {
+            forbiddenTypes.push('Non-Vegetarian');
+        } else if (preference.includes('Eggetarian')) {
+            forbiddenTypes.push('Non-Vegetarian'); // Assuming recipes are tagged strict Non-Veg for meat
+        }
+
+        // 2. Allergy Validation
+        const allergies = clientInfo.counsellingProfile?.allergies
+            ? clientInfo.counsellingProfile.allergies.toLowerCase().split(',').map((a: string) => a.trim())
+            : [];
+
+        for (const day of daysToValidate) {
+            for (const meal of day.meals) {
+                for (const food of meal.foodItems) {
+                    // Check Diet Preference
+                    if (forbiddenTypes.length > 0 && food.dietPref && forbiddenTypes.includes(food.dietPref)) {
+                        // Exception: If client is Eggitarian and food is "Vegetarian", it's fine. 
+                        // But if food is Non-Veg it's bad.
+                        // My logic above adds 'Non-Vegetarian' to forbidden for Vegetarian/Eggetarian.
+                        // So checking forbiddenTypes.includes(food.dietPref) works.
+
+                        // Double check: Vegan forbids Vegetarian (Dairy/Honey).
+                        return {
+                            valid: false,
+                            error: `Diet Persona Conflict: Client is '${preference}' but diet contains '${food.name}' which is '${food.dietPref}'.`
+                        };
+                    }
+
+                    // Check Allergies
+                    // Simple string matching: if allergy word appears in food name
+                    if (allergies.length > 0) {
+                        const foodName = food.name.toLowerCase();
+                        for (const allergy of allergies) {
+                            if (allergy && foodName.includes(allergy)) {
+                                return {
+                                    valid: false,
+                                    error: `Allergy Alert: Client is allergic to '${allergy}' but diet contains '${food.name}'.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return { valid: true };
+    };
+
     const handlePublishDay = async (dayIndex: number) => {
         if (!weekPlan) return;
+
+        // Validate before publishing
+        const validation = validateDiet([weekPlan.days[dayIndex]]);
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
         const newDays = [...weekPlan.days];
         newDays[dayIndex] = { ...newDays[dayIndex], status: 'PUBLISHED' };
 
@@ -693,6 +764,17 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
     const handleSaveAndPublish = async () => {
         if (!weekPlan) return;
+
+        // Identify days that will be published (status changed to PUBLISHED)
+        const daysToPublish = weekPlan.days.filter(day => day.meals.some(m => m.foodItems.length > 0));
+
+        // Validate all days that are being published
+        const validation = validateDiet(daysToPublish);
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
         const newDays = weekPlan.days.map(day => ({
             ...day,
             status: day.meals.some(m => m.foodItems.length > 0) ? 'PUBLISHED' as const : day.status

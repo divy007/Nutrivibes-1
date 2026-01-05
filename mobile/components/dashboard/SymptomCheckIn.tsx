@@ -44,8 +44,6 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
                 <Text style={[styles.label, { color: theme.brandForest }]}>Daily Check-in</Text>
             </View>
 
-            <Text style={[styles.questionLabel, { color: theme.brandForest }]}>How are you feeling today?</Text>
-
             <View style={styles.symptomGrid}>
                 {SYMPTOMS.map(symptom => {
                     const isSelected = selectedSymptoms.includes(symptom.id);
@@ -117,12 +115,6 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
 const styles = StyleSheet.create({
     card: {
         padding: 24,
-        borderRadius: 32,
-        borderWidth: 1,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
         shadowRadius: 12,
         elevation: 2,
     },
@@ -143,12 +135,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '900',
         letterSpacing: 0.5,
-    },
-    questionLabel: {
-        fontSize: 14,
-        fontWeight: '700',
-        marginBottom: 16,
-        opacity: 0.8,
     },
     symptomGrid: {
         flexDirection: 'row',

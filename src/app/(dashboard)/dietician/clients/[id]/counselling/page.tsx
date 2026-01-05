@@ -238,8 +238,8 @@ export default function CounsellingPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {/* If client has a counselling profile, show it as completed */}
-                            {client?.counsellingProfile ? (
+                            {/* ONLY show as completed if status is ACTIVE (meaning counselling finished) OR manually marked done */}
+                            {client?.status === 'ACTIVE' && client?.counsellingProfile ? (
                                 <tr className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-4 py-4 text-sm text-slate-600 text-center font-medium">1</td>
                                     <td className="px-4 py-4 text-sm text-slate-600 font-bold">{format(new Date(client.updatedAt || Date.now()), 'dd MMM yyyy')}</td>

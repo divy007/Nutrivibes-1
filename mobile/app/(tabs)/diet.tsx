@@ -7,6 +7,8 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, Clock } from 'lucide-react-native';
+import * as ScreenCapture from 'expo-screen-capture';
+import { useIsFocused } from '@react-navigation/native';
 
 const MEAL_SLOTS = [
     { time: '07:00 AM', name: 'Early Morning' },
@@ -22,6 +24,18 @@ export default function DietPlanScreen() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekPlan, setWeekPlan] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const isFocused = useIsFocused();
+
+    useEffect(() => {
+        if (isFocused) {
+            ScreenCapture.preventScreenCaptureAsync();
+        } else {
+            ScreenCapture.allowScreenCaptureAsync();
+        }
+        return () => {
+            ScreenCapture.allowScreenCaptureAsync();
+        };
+    }, [isFocused]);
 
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];

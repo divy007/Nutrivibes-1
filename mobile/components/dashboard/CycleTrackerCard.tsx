@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Heart, Calendar, ChevronRight, Info } from 'lucide-react-native';
+import { Calendar, ChevronRight, Info, Activity, Clock } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -26,21 +26,26 @@ export const CycleTrackerCard = ({ status, onLogPress }: Props) => {
 
     if (!status) {
         return (
-            <TouchableOpacity
-                style={[styles.container, { backgroundColor: theme.cardBackground }]}
-                onPress={onLogPress}
-            >
+            <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
                 <View style={styles.header}>
-                    <View style={styles.iconContainer}>
-                        <Heart size={20} color={theme.brandForest} />
+                    <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '10' }]}>
+                        <Calendar size={20} color={theme.brandSage} />
                     </View>
-                    <View style={styles.headerText}>
-                        <Text style={[styles.title, { color: theme.brandForest }]}>Women's Health</Text>
-                        <Text style={styles.subtitle}>Track your cycle for better insights</Text>
-                    </View>
-                    <ChevronRight size={20} color="#64748b" />
+                    <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
                 </View>
-            </TouchableOpacity>
+
+                <View style={styles.emptyStateContent}>
+                    <Text style={[styles.emptyTitle, { color: theme.text }]}>No Data Yet</Text>
+                    <Text style={styles.emptySubtitle}>Track your cycle to get insights and tips tailored to your body.</Text>
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.updateButton, { backgroundColor: theme.brandSage }]}
+                    onPress={onLogPress}
+                >
+                    <Text style={styles.updateButtonText}>Log Period</Text>
+                </TouchableOpacity>
+            </View>
         );
     }
 
@@ -51,103 +56,123 @@ export const CycleTrackerCard = ({ status, onLogPress }: Props) => {
         LUTEAL: '#f59e0b', // Amber
     };
 
-    const currentPhaseColor = phaseColors[status.phase] || theme.brandForest;
+    const currentPhaseColor = phaseColors[status.phase] || theme.brandSage;
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.cardBackground }]}>
+        <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
+            {/* Header */}
             <View style={styles.header}>
-                <View style={[styles.iconContainer, { backgroundColor: `${currentPhaseColor}15` }]}>
+                <View style={[styles.iconContainer, { backgroundColor: currentPhaseColor + '15' }]}>
                     <Calendar size={20} color={currentPhaseColor} />
                 </View>
-                <View style={styles.headerText}>
-                    <View style={styles.phaseBadgeRow}>
-                        <Text style={[styles.title, { color: theme.brandForest }]}>{status.phaseInfo.title}</Text>
-                        <View style={[styles.badge, { backgroundColor: `${currentPhaseColor}20` }]}>
-                            <Text style={[styles.badgeText, { color: currentPhaseColor }]}>Day {status.dayOfCycle}</Text>
-                        </View>
-                    </View>
-                    <Text style={styles.subtitle}>{status.daysUntilNextPeriod} days until next cycle</Text>
-                </View>
-                <TouchableOpacity onPress={onLogPress}>
-                    <Text style={[styles.logButton, { color: theme.brandForest }]}>Log</Text>
-                </TouchableOpacity>
+                <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
             </View>
 
-            <View style={[styles.tipCard, { backgroundColor: theme.background }]}>
+            {/* Main Content: Day X & Phase */}
+            <View style={styles.mainContent}>
+                <View>
+                    <Text style={[styles.dayValue, { color: theme.text }]}>Day {status.dayOfCycle}</Text>
+                    <Text style={[styles.phaseName, { color: currentPhaseColor }]}>{status.phaseInfo.title}</Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: currentPhaseColor + '15' }]}>
+                    <Clock size={14} color={currentPhaseColor} />
+                    <Text style={[styles.badgeText, { color: currentPhaseColor }]}>
+                        {status.daysUntilNextPeriod} days left
+                    </Text>
+                </View>
+            </View>
+
+            {/* Content/Tip Section */}
+            <View style={styles.infoContainer}>
                 <View style={styles.tipHeader}>
                     <Info size={14} color={theme.brandForest} />
                     <Text style={[styles.tipTitle, { color: theme.brandForest }]}>Nutrition Tip</Text>
                 </View>
-                <Text style={styles.tipText}>{status.phaseInfo.nutritionTip}</Text>
+                <Text style={[styles.tipText, { color: theme.text }]}>{status.phaseInfo.nutritionTip}</Text>
             </View>
 
-            <Text style={styles.description}>{status.phaseInfo.description}</Text>
+            <View style={[styles.divider, { backgroundColor: theme.brandSage + '10' }]} />
+
+            {/* Footer with Description */}
+            <View style={styles.footer}>
+                <Text style={styles.description}>{status.phaseInfo.description}</Text>
+            </View>
+
+            <TouchableOpacity
+                style={[styles.updateButton, { backgroundColor: theme.brandSage }]}
+                onPress={onLogPress}
+            >
+                <Text style={styles.updateButtonText}>Log Period</Text>
+            </TouchableOpacity>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 16,
+    card: {
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 15,
+        shadowRadius: 12,
         elevation: 2,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
+        marginBottom: 20,
     },
     iconContainer: {
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#f1f5f9',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerText: {
-        flex: 1,
-    },
-    phaseBadgeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    title: {
+    label: {
         fontSize: 16,
-        fontWeight: '800',
-        letterSpacing: -0.5,
+        fontWeight: '900',
+        letterSpacing: 0.5,
     },
-    subtitle: {
-        fontSize: 12,
-        color: '#64748b',
-        fontWeight: '600',
-        marginTop: 2,
+    mainContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    dayValue: {
+        fontSize: 42,
+        fontWeight: '900',
+        letterSpacing: -1,
+        lineHeight: 42,
+    },
+    phaseName: {
+        fontSize: 14,
+        fontWeight: '800',
+        marginTop: 4,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     badge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     badgeText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: '800',
-        textTransform: 'uppercase',
     },
-    logButton: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    tipCard: {
-        marginTop: 16,
-        padding: 12,
-        borderRadius: 12,
-        gap: 4,
+    infoContainer: {
+        backgroundColor: 'rgba(0,0,0,0.02)',
+        padding: 16,
+        borderRadius: 16,
+        gap: 8,
     },
     tipHeader: {
         flexDirection: 'row',
@@ -158,17 +183,58 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '800',
         textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     tipText: {
-        fontSize: 13,
-        color: '#475569',
-        lineHeight: 18,
+        fontSize: 14,
+        lineHeight: 20,
         fontWeight: '500',
     },
-    description: {
-        fontSize: 11,
-        color: '#94a3b8',
-        marginTop: 12,
-        fontStyle: 'italic',
+    divider: {
+        height: 1,
+        marginVertical: 16,
     },
+    footer: {
+        marginBottom: 8,
+    },
+    description: {
+        fontSize: 13,
+        color: '#94a3b8',
+        fontStyle: 'italic',
+        lineHeight: 18,
+    },
+    updateButton: {
+        marginTop: 12,
+        height: 54,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    updateButtonText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '900',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    emptyStateContent: {
+        alignItems: 'center',
+        paddingVertical: 20,
+        gap: 8,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#94a3b8',
+        textAlign: 'center',
+        lineHeight: 20,
+    }
 });

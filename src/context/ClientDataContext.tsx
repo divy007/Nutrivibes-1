@@ -34,6 +34,13 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                 api.get<any>(`/api/clients/${id}/health-assessment`).catch(() => null)
             ]);
 
+            console.log('Client Value Debug:', {
+                id: data.clientId,
+                ageInDB: data.age,
+                dobInDB: data.dob,
+                calculatedAge: calculateAge(data.dob)
+            });
+
             setClientInfo({
                 id: data.clientId || `#${data._id.slice(-8)}`,
                 _id: data._id,
@@ -50,7 +57,7 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                 state: data.state,
                 preferences: (data.dietaryPreferences && data.dietaryPreferences.length > 0)
                     ? data.dietaryPreferences.join(', ')
-                    : 'N/A',
+                    : '',
                 status: data.status || 'ACTIVE',
                 updatedAt: data.updatedAt,
                 assessment: assessmentData,

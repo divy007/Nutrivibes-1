@@ -87,7 +87,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
             dropdown: [
                 { name: 'Client List', href: '/dietician/clients' },
                 { name: 'Add New Client', href: '/dietician/clients/new' },
-                { name: 'Follow-ups', href: '/dietician/followups' },
+                { name: 'Follow-ups', href: '/dietician/clients?status=FOLLOW_UPS' },
             ]
         },
     ];

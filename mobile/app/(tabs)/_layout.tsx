@@ -48,6 +48,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="plans"
+        options={{
+          title: 'Plans',
+          tabBarIcon: ({ color }) => <Calendar size={24} color={color} />, // Using Calendar for now or change to something like List
+        }}
+      />
+      <Tabs.Screen
         name="diet"
         options={{
           title: 'Diet Plan',

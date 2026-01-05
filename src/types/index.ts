@@ -52,11 +52,13 @@ export interface ClientInfo {
     createdAt?: string;
     updatedAt?: string;
     dietStartDate?: string;
+    counselingDate?: string | Date;
     cycleLength?: number;
     averagePeriodDuration?: number;
     preferences: string;
     mealTimings?: MealTiming[];
     status?: string;
+    hasFollowUpToday?: boolean;
     counsellingProfile?: any;
     followUpHistory?: {
         _id?: string;

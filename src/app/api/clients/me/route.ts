@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
+import WeightLog from '@/models/WeightLog';
 import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
 
@@ -49,9 +50,18 @@ export async function PATCH(req: Request) {
             updateFields.weight
         );
 
+        // Auto-calculate Ideal Weight (Target Weight) using BMI 22 if height is changed/present
+        let idealWeight = updateFields.idealWeight;
+        if (!idealWeight && updateFields.height) {
+            const heightInM = updateFields.height / 100;
+            // BMI 22 is generally considered the middle of healthy range
+            idealWeight = parseFloat((22 * heightInM * heightInM).toFixed(1));
+        }
+
         const updateData = {
             ...updateFields,
             isProfileComplete,
+            idealWeight,
         };
 
         console.log('Updating client with data:', updateData);
@@ -68,6 +78,21 @@ export async function PATCH(req: Request) {
         if (!client) {
             console.error('Client profile not found for userId:', user._id);
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
+        }
+
+        // AUTO-LOG WEIGHT: If weight was updated in the profile, create a history log
+        if (updateFields.weight) {
+            try {
+                await WeightLog.create({
+                    clientId: client._id,
+                    weight: updateFields.weight,
+                    unit: 'kg', // Defaulting to kg as per schema
+                    date: new Date()
+                });
+            } catch (logError) {
+                console.error('Failed to auto-create weight log during profile update:', logError);
+                // Non-blocking error
+            }
         }
 
         console.log('Client updated successfully:', client._id);

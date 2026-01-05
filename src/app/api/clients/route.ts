@@ -59,9 +59,26 @@ export async function GET(req: Request) {
                 dietStatus = 'red';
             }
 
+            // Check for Follow-Up Today
+            const FollowUp = (await import('@/models/FollowUp')).default;
+            const startOfDay = new Date(today);
+            startOfDay.setUTCHours(0, 0, 0, 0);
+            const endOfDay = new Date(today);
+            endOfDay.setUTCHours(23, 59, 59, 999);
+
+            const followUpToday = await FollowUp.findOne({
+                clientId: client._id,
+                date: {
+                    $gte: startOfDay,
+                    $lte: endOfDay
+                },
+                status: 'Pending'
+            }).select('_id').lean();
+
             return {
                 ...client,
-                dietStatus
+                dietStatus,
+                hasFollowUpToday: !!followUpToday
             };
         }));
 

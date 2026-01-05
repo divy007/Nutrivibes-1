@@ -114,17 +114,11 @@ export default function ClientsPage() {
         }
 
         if (statusFilter === 'FOLLOWUP_TODAY') {
-            if (!client.dietStartDate) return false;
-            const startDate = new Date(client.dietStartDate);
-            const followUpDate = new Date(startDate);
-            followUpDate.setDate(startDate.getDate() + 7);
+            return !!client.hasFollowUpToday;
+        }
 
-            const today = new Date();
-            return (
-                followUpDate.getDate() === today.getDate() &&
-                followUpDate.getMonth() === today.getMonth() &&
-                followUpDate.getFullYear() === today.getFullYear()
-            );
+        if (statusFilter === 'FOLLOW_UPS') {
+            return !!client.hasFollowUpToday;
         }
 
         if (statusFilter === 'NEEDS_DIET') {
@@ -286,7 +280,7 @@ export default function ClientsPage() {
                         <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Status: {statusFilter}</span>
                         <div className="flex items-center gap-2">
                             {/* Filter Chips - Could expand this later */}
-                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW', 'NEEDS_DIET'] as const).map(status => (
+                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW', 'NEEDS_DIET', 'FOLLOW_UPS'] as const).map(status => (
                                 <button
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
@@ -297,7 +291,8 @@ export default function ClientsPage() {
                                 >
                                     {status === 'NEW' ? 'New (7 Days)' :
                                         status === 'NEEDS_DIET' ? 'Needs Diet Today' :
-                                            status.charAt(0) + status.slice(1).toLowerCase()}
+                                            status === 'FOLLOW_UPS' ? 'Follow-ups Today' :
+                                                status.charAt(0) + status.slice(1).toLowerCase()}
                                 </button>
                             ))}
 
@@ -406,9 +401,15 @@ export default function ClientsPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button className="text-[10px] font-bold text-amber-500 uppercase tracking-widest hover:text-amber-600 flex items-center justify-center gap-1 mx-auto">
-                                                FOLLOWUP <ChevronDown size={12} className="-rotate-90" />
-                                            </button>
+                                            {client.hasFollowUpToday ? (
+                                                <button className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-600 flex items-center justify-center gap-1 mx-auto animate-pulse">
+                                                    FOLLOWUP DUE
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center block">
+                                                    -
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -440,6 +441,6 @@ export default function ClientsPage() {
                 onClose={() => setPauseModalState({ isOpen: false, clientId: null })}
                 onConfirm={handleConfirmPause}
             />
-        </div>
+        </div >
     );
 }
