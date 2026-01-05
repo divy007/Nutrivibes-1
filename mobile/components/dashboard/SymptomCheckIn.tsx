@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Smile, Frown, Meh, AlertCircle, Zap, Ghost } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Smile, Frown, Meh, AlertCircle, Zap, Ghost, HeartPulse } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -36,8 +36,15 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.cardBackground }]}>
-            <Text style={[styles.title, { color: theme.brandForest }]}>How are you feeling today?</Text>
+        <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
+            <View style={styles.header}>
+                <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '10' }]}>
+                    <HeartPulse size={20} color={theme.brandSage} />
+                </View>
+                <Text style={[styles.label, { color: theme.brandForest }]}>Daily Check-in</Text>
+            </View>
+
+            <Text style={[styles.questionLabel, { color: theme.brandForest }]}>How are you feeling today?</Text>
 
             <View style={styles.symptomGrid}>
                 {SYMPTOMS.map(symptom => {
@@ -47,7 +54,7 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
                             key={symptom.id}
                             style={[
                                 styles.symptomButton,
-                                { backgroundColor: isSelected ? theme.brandSage : theme.background },
+                                { backgroundColor: isSelected ? theme.brandSage : theme.background, borderColor: isSelected ? theme.brandSage : theme.brandSage + '20' },
                                 isSelected && styles.selectedButton
                             ]}
                             onPress={() => toggleSymptom(symptom.id)}
@@ -69,14 +76,17 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
             </View>
 
             <View style={styles.energySection}>
-                <Text style={styles.label}>Energy Level: {energyLevel}/5</Text>
+                <Text style={styles.sectionLabel}>Energy Level: {energyLevel}/5</Text>
                 <View style={styles.energyGrid}>
                     {[1, 2, 3, 4, 5].map(level => (
                         <TouchableOpacity
                             key={level}
                             style={[
                                 styles.energyButton,
-                                { backgroundColor: energyLevel === level ? theme.brandForest : theme.background }
+                                {
+                                    backgroundColor: energyLevel === level ? theme.brandForest : theme.background,
+                                    borderColor: energyLevel === level ? theme.brandForest : theme.brandSage + '20'
+                                }
                             ]}
                             onPress={() => setEnergyLevel(level)}
                         >
@@ -92,7 +102,7 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
             </View>
 
             <TouchableOpacity
-                style={[styles.saveButton, { backgroundColor: theme.brandForest }]}
+                style={[styles.saveButton, { backgroundColor: theme.brandSage }]}
                 onPress={() => onSave(selectedSymptoms, energyLevel)}
                 disabled={isSaving}
             >
@@ -105,75 +115,102 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        borderRadius: 24,
-        padding: 20,
+    card: {
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
         marginBottom: 16,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 15,
+        shadowRadius: 12,
         elevation: 2,
     },
-    title: {
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 20,
+    },
+    iconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    label: {
         fontSize: 16,
-        fontWeight: '800',
+        fontWeight: '900',
+        letterSpacing: 0.5,
+    },
+    questionLabel: {
+        fontSize: 14,
+        fontWeight: '700',
         marginBottom: 16,
-        letterSpacing: -0.5,
+        opacity: 0.8,
     },
     symptomGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
-        marginBottom: 20,
+        marginBottom: 24,
     },
     symptomButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
         borderRadius: 12,
-        gap: 6,
+        gap: 8,
         borderWidth: 1,
-        borderColor: 'transparent',
     },
     selectedButton: {
-        borderColor: 'rgba(255,255,255,0.2)',
+        borderColor: 'transparent',
     },
     symptomLabel: {
         fontSize: 12,
         fontWeight: '700',
     },
     energySection: {
-        marginBottom: 20,
+        marginBottom: 24,
     },
-    label: {
+    sectionLabel: {
         fontSize: 12,
         fontWeight: '700',
         color: '#64748b',
-        marginBottom: 8,
+        marginBottom: 12,
         textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     energyGrid: {
         flexDirection: 'row',
-        gap: 8,
+        gap: 10,
     },
     energyButton: {
         flex: 1,
-        height: 40,
-        borderRadius: 10,
+        height: 44,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
     },
     saveButton: {
-        height: 48,
-        borderRadius: 14,
+        height: 54,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
     },
     saveButtonText: {
         color: '#fff',
-        fontSize: 15,
-        fontWeight: '800',
+        fontSize: 14,
+        fontWeight: '900',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
     },
 });

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle } from 'lucide-react-native';
+import { User, Phone, Ruler, Weight, UserCircle, Check } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function ProfileScreen() {
+export default function CompleteProfileScreen() {
     const router = useRouter();
+    const { login } = useAuth(); // We might need to refresh user state
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -53,6 +55,15 @@ export default function ProfileScreen() {
     };
 
     const handleSave = async () => {
+        if (!formData.gender) {
+            Alert.alert('Missing Information', 'Please select your gender');
+            return;
+        }
+        if (!formData.name || !formData.age || !formData.height || !formData.weight) {
+            Alert.alert('Missing Information', 'Please fill in all required fields');
+            return;
+        }
+
         setSaving(true);
         try {
             await api.patch('/api/clients/me', {
@@ -60,18 +71,43 @@ export default function ProfileScreen() {
                 phone: formData.phone,
                 height: parseFloat(formData.height) || undefined,
                 weight: parseFloat(formData.weight) || undefined,
+                age: parseInt(formData.age) || undefined,
                 city: formData.city,
                 state: formData.state,
-                gender: formData.gender
+                gender: formData.gender,
+                isProfileComplete: true // Mark profile as complete
             });
-            Alert.alert('Success', 'Profile updated successfully');
+
+            // Refresh auth state or navigate
+            // The useAuth hook should detect the change if we re-fetch, 
+            // but simpler is to just navigate to tabs which will re-check
+            router.replace('/(tabs)');
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Failed to update profile');
+            console.error('Failed to update profile:', error);
+            Alert.alert('Error', 'Failed to complete profile');
         } finally {
             setSaving(false);
         }
     };
+
+    const GenderOption = ({ value, label }: { value: string, label: string }) => (
+        <TouchableOpacity
+            style={[
+                styles.genderOption,
+                {
+                    backgroundColor: formData.gender === value ? theme.brandSage : '#f8fafc',
+                    borderColor: formData.gender === value ? theme.brandForest : '#f1f5f9'
+                }
+            ]}
+            onPress={() => setFormData({ ...formData, gender: value as any })}
+        >
+            <Text style={[
+                styles.genderLabel,
+                { color: formData.gender === value ? '#fff' : '#64748b' }
+            ]}>{label}</Text>
+            {formData.gender === value && <Check size={16} color="#fff" />}
+        </TouchableOpacity>
+    );
 
     if (loading) {
         return (
@@ -88,24 +124,14 @@ export default function ProfileScreen() {
         >
             <View style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ArrowLeft size={24} color={theme.text} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Profile</Text>
-                    <View style={{ width: 40 }} />
+                    <Text style={[styles.headerTitle, { color: theme.brandForest }]}>Complete Profile</Text>
+                    <Text style={styles.headerSubtitle}>Please complete your profile to continue</Text>
                 </View>
 
                 <ScrollView contentContainerStyle={styles.content}>
-                    <View style={styles.avatarSection}>
-                        <View style={[styles.avatarContainer, { backgroundColor: theme.brandSage }]}>
-                            <Text style={styles.avatarText}>{formData.name?.[0]?.toUpperCase() || 'U'}</Text>
-                        </View>
-                        <Text style={[styles.emailText, { color: '#94a3b8' }]}>{formData.email}</Text>
-                    </View>
-
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Full Name</Text>
+                            <Text style={styles.label}>Full Name *</Text>
                             <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                 <User size={20} color="#94a3b8" />
                                 <TextInput
@@ -118,37 +144,55 @@ export default function ProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Gender</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <UserCircle size={20} color="#94a3b8" />
-                                <View style={{ flexDirection: 'row', gap: 16, flex: 1 }}>
-                                    {['male', 'female', 'other'].map((g) => (
-                                        <TouchableOpacity
-                                            key={g}
-                                            onPress={() => setFormData({ ...formData, gender: g as any })}
-                                            style={{
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                gap: 4,
-                                                opacity: formData.gender === g ? 1 : 0.5
-                                            }}
-                                        >
-                                            <View style={{
-                                                width: 16,
-                                                height: 16,
-                                                borderRadius: 8,
-                                                borderWidth: 2,
-                                                borderColor: theme.brandForest,
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                {formData.gender === g && (
-                                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.brandForest }} />
-                                                )}
-                                            </View>
-                                            <Text style={{ textTransform: 'capitalize', fontWeight: 'bold', color: theme.text }}>{g}</Text>
-                                        </TouchableOpacity>
-                                    ))}
+                            <Text style={styles.label}>Gender *</Text>
+                            <View style={styles.genderRow}>
+                                <GenderOption value="male" label="Male" />
+                                <GenderOption value="female" label="Female" />
+                                <GenderOption value="other" label="Other" />
+                            </View>
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.label}>Age *</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <View style={{ width: 20 }} />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.age}
+                                        onChangeText={(t) => setFormData({ ...formData, age: t })}
+                                        placeholder="Age"
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.label}>Height (cm) *</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Ruler size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.height}
+                                        onChangeText={(t) => setFormData({ ...formData, height: t })}
+                                        placeholder="0"
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.label}>Weight (kg) *</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Weight size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.weight}
+                                        onChangeText={(t) => setFormData({ ...formData, weight: t })}
+                                        placeholder="0"
+                                        keyboardType="numeric"
+                                    />
                                 </View>
                             </View>
                         </View>
@@ -167,35 +211,6 @@ export default function ProfileScreen() {
                             </View>
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Height (cm)</Text>
-                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <Ruler size={20} color="#94a3b8" />
-                                    <TextInput
-                                        style={[styles.input, { color: theme.text }]}
-                                        value={formData.height}
-                                        onChangeText={(t) => setFormData({ ...formData, height: t })}
-                                        placeholder="0"
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-                            </View>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Weight (kg)</Text>
-                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <Weight size={20} color="#94a3b8" />
-                                    <TextInput
-                                        style={[styles.input, { color: theme.text }]}
-                                        value={formData.weight}
-                                        onChangeText={(t) => setFormData({ ...formData, weight: t })}
-                                        placeholder="0"
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-                            </View>
-                        </View>
-
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Location</Text>
                             <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
@@ -208,20 +223,19 @@ export default function ProfileScreen() {
                                 />
                             </View>
                         </View>
-
                     </View>
                 </ScrollView>
 
                 <View style={[styles.footer, { borderTopColor: '#f1f5f9' }]}>
                     <TouchableOpacity
-                        style={[styles.saveButton, { backgroundColor: theme.brandSage }]}
+                        style={[styles.saveButton, { backgroundColor: theme.brandForest }]}
                         onPress={handleSave}
                         disabled={saving}
                     >
                         {saving ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
+                            <Text style={styles.saveButtonText}>Complete Setup</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -239,49 +253,21 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
+        paddingHorizontal: 24,
+        paddingTop: 80,
         paddingBottom: 20,
     },
-    backButton: {
-        padding: 8,
-        borderRadius: 12,
-    },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 28,
         fontWeight: '900',
+        marginBottom: 8,
+    },
+    headerSubtitle: {
+        fontSize: 16,
+        color: '#64748b',
     },
     content: {
         padding: 24,
-    },
-    avatarSection: {
-        alignItems: 'center',
-        marginBottom: 32,
-    },
-    avatarContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
-    },
-    avatarText: {
-        fontSize: 40,
-        fontWeight: '900',
-        color: '#FFF',
-    },
-    emailText: {
-        fontSize: 14,
-        fontWeight: '600',
     },
     form: {
         gap: 20,
@@ -314,6 +300,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 20,
     },
+    genderRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    genderOption: {
+        flex: 1,
+        height: 48,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    genderLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
     footer: {
         padding: 24,
         borderTopWidth: 1,
@@ -325,14 +329,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     saveButtonText: {
         color: '#FFF',
         fontSize: 16,
         fontWeight: '900',
         letterSpacing: 0.5,
+        textTransform: 'uppercase',
     },
 });

@@ -8,15 +8,86 @@ import {
     ChevronDown,
     Play,
     Clock,
-    Check
+    Check,
+    Calendar
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { CounsellingFlow } from '@/components/dietician/clients/CounsellingFlow';
 import { useClientData } from '@/context/ClientDataContext';
 
+const ScheduleModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (date: Date) => void }) => {
+    const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        if (!date || !time) {
+            alert('Please select both date and time');
+            return;
+        }
+        const scheduledDate = new Date(`${date}T${time}`);
+        onSave(scheduledDate);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl w-full max-w-md p-6">
+                <h3 className="text-xl font-bold mb-4">Schedule Counseling</h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                        <input
+                            type="date"
+                            className="w-full px-4 py-2 border rounded-lg"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Time</label>
+                        <input
+                            type="time"
+                            className="w-full px-4 py-2 border rounded-lg"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                    <button onClick={onClose} className="px-4 py-2 text-slate-600 font-bold">Cancel</button>
+                    <button
+                        onClick={handleSave}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg font-bold"
+                    >
+                        Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function CounsellingPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
     const [showFlow, setShowFlow] = useState(false);
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+    const handleScheduleSave = async (date: Date) => {
+        try {
+            if (!client) return;
+            // Use the generic update endpoint
+            await api.patch(`/api/clients/${client._id}`, {
+                counselingDate: date
+            });
+            await refreshClient();
+            setShowScheduleModal(false);
+        } catch (error) {
+            console.error('Failed to schedule:', error);
+            alert('Failed to schedule session');
+        }
+    };
 
     const handleStartCounselling = () => {
         setShowFlow(true);
@@ -211,13 +282,39 @@ export default function CounsellingPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-center">
-                                        <button
-                                            onClick={handleStartCounselling}
-                                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2 mx-auto"
-                                        >
-                                            <Play size={12} fill="currentColor" />
-                                            Start
-                                        </button>
+                                        <div className="flex items-center justify-center gap-2">
+                                            {client.counselingDate ? (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-xs font-bold text-orange-600 mb-1">
+                                                        Scheduled: {format(new Date(client.counselingDate), 'MMM d, h:mm a')}
+                                                    </span>
+                                                    <button
+                                                        onClick={handleStartCounselling}
+                                                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                                                    >
+                                                        <Play size={12} fill="currentColor" />
+                                                        Start Now
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => setShowScheduleModal(true)}
+                                                        className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center gap-2"
+                                                    >
+                                                        <Calendar size={12} />
+                                                        Schedule
+                                                    </button>
+                                                    <button
+                                                        onClick={handleStartCounselling}
+                                                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                                                    >
+                                                        <Play size={12} fill="currentColor" />
+                                                        Start Now
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (

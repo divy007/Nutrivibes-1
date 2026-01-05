@@ -1,12 +1,17 @@
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 
 const AUTH_TOKEN_KEY = 'auth_token_client';
 
-// NOTE: In production, this should be an environment variable.
-// For Expo Go, use your computer's local IP (e.g., http://192.168.x.x:3000)
-// For emulator, http://10.0.2.2:3000 (Android) or http://localhost:3000 (iOS)
+// ============================================
+// API CONFIGURATION
+// ============================================
+// Change this URL based on your needs:
+// - Production: https://nutrivibesbymansi.vercel.app
+// - Local Dev: http://192.168.29.232:3000 (use your Mac's IP)
+// ============================================
 const BASE_URL = 'https://nutrivibesbymansi.vercel.app';
+
+console.log('🌐 API URL:', BASE_URL);
 
 export const setAuthToken = async (token: string): Promise<void> => {
     await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
@@ -55,6 +60,9 @@ export const apiRequest = async <T>(
     // Ensure endpoint starts with /
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${BASE_URL}${path}`;
+
+    // Debug: Log the request
+    console.log(`📡 API Request: ${config.method || 'GET'} ${url}`);
 
     try {
         const response = await fetch(url, config);

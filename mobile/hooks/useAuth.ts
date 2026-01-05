@@ -22,7 +22,7 @@ export function useAuth() {
             if (token) {
                 setMobileToken(token); // Ensure api client has it
                 // In a real app, you would validate the token or fetch user profile here
-                const profile = await api.get('/api/clients/me');
+                const profile: any = await api.get('/api/clients/me');
                 console.log('Profile fetched successfully:', profile?.name);
                 setUser(profile);
             }
@@ -47,7 +47,11 @@ export function useAuth() {
         } else if (user && segments[0] === 'login') {
             console.log('Redirecting to dashboard');
             // Redirect to home if authenticated and trying to access login
-            router.replace('/(tabs)');
+            if (!user.isProfileComplete) {
+                router.replace('/complete-profile' as any);
+            } else {
+                router.replace('/(tabs)' as any);
+            }
         }
     }, [user, loading, segments]);
 
@@ -55,12 +59,16 @@ export function useAuth() {
         console.log('useAuth login start');
         await setMobileToken(token);
         try {
-            const profile = await api.get('/api/clients/me');
+            const profile: any = await api.get('/api/clients/me');
             console.log('useAuth profile fetched:', profile?.name);
             setUser(profile);
             // Explicitly replace if the effect doesn't catch it fast enough
             console.log('useAuth replacing route to tabs');
-            router.replace('/(tabs)');
+            if (profile && !profile.isProfileComplete) {
+                router.replace('/complete-profile' as any);
+            } else {
+                router.replace('/(tabs)' as any);
+            }
         } catch (err) {
             console.error('useAuth login sync failed:', err);
             throw err;
