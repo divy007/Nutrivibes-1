@@ -18,6 +18,8 @@ export interface IClient extends Document {
     idealWeight?: number;
     targetCalories?: number;
     dietStartDate?: Date;
+    cycleLength?: number; // default 28
+    averagePeriodDuration?: number; // default 5
     notes?: string;
     followUpHistory?: {
         date: Date;
@@ -70,6 +72,8 @@ const ClientSchema = new Schema(
         dietaryPreferences: { type: [String], default: [] },
         targetCalories: { type: Number },
         dietStartDate: { type: Date },
+        cycleLength: { type: Number, default: 28 },
+        averagePeriodDuration: { type: Number, default: 5 },
         notes: { type: String },
         followUpHistory: [{
             date: { type: Date, default: Date.now },

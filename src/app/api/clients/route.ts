@@ -3,6 +3,8 @@ import { connectDB as dbConnect } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import { getAuthUser } from '@/lib/auth';
 import User from '@/models/User';
+import { normalizeDateUTC } from '@/lib/date-utils';
+import { addDays, format } from 'date-fns';
 
 export async function GET(req: Request) {
     await dbConnect();
@@ -14,31 +16,22 @@ export async function GET(req: Request) {
 
         const clients = await Client.find({ dieticianId: user._id }).lean();
 
-        const DietPlan = (await import('@/models/DietPlan')).default;
-        const { startOfDay, addDays, format } = await import('date-fns');
-
-        const today = startOfToday();
+        const today = normalizeDateUTC();
         const tomorrow = addDays(today, 1);
         const dayAfterTomorrow = addDays(today, 2);
 
         const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
-
         const targetDates = [formatDate(today), formatDate(tomorrow), formatDate(dayAfterTomorrow)];
-
-        function startOfToday() {
-            const d = new Date();
-            d.setHours(0, 0, 0, 0);
-            return d;
-        }
 
         const enhancedClients = await Promise.all(clients.map(async (client: any) => {
             // Find diet plans that might contain our target dates
             // We search for plans where at least one day matches our needs
+            const DietPlan = (await import('@/models/DietPlan')).default;
             const plans = await DietPlan.find({
                 clientId: client._id,
                 'days.date': {
-                    $gte: addDays(today, -7), // Catch the current week plan
-                    $lte: addDays(today, 14) // And maybe next
+                    $gte: addDays(today, -7),
+                    $lte: addDays(today, 14)
                 }
             }).lean();
 

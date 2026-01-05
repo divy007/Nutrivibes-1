@@ -12,10 +12,17 @@ import {
     CheckCircle2,
     CalendarClock,
     StickyNote,
-    Loader2
+    Loader2,
+    TrendingDown,
+    TrendingUp,
+    Droplets,
+    Zap,
+    AlertCircle,
+    ArrowRight
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FollowUp {
     _id: string;
@@ -29,6 +36,12 @@ interface FollowUp {
     meetLink?: string;
     status: 'Pending' | 'Completed' | 'Rescheduled';
     notes?: string;
+    summary?: {
+        weightDiff: string | null;
+        waterConsistency: number | null;
+        avgEnergy: string | null;
+        logCount: number;
+    };
 }
 
 const NotesModal = ({ isOpen, onClose, onSave, initialNotes }: { isOpen: boolean, onClose: () => void, onSave: (notes: string) => void, initialNotes: string }) => {
@@ -137,11 +150,25 @@ export default function FollowUpsPage() {
         if (!rescheduleModal.fuId) return;
         try {
             const updated = await api.patch<FollowUp>(`/api/clients/${clientId}/follow-ups/${rescheduleModal.fuId}`, { date, status: 'Rescheduled' });
-            setFollowUps(prev => prev.map(fu => fu._id === rescheduleModal.fuId ? updated : fu));
+            setFollowUps(prev => prev.map(fu => fu._id === rescheduleModal.fuId ? updated : fu).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
             setRescheduleModal({ isOpen: false, fuId: null, date: '' });
         } catch (error) {
             console.error('Failed to reschedule:', error);
             alert('Failed to reschedule');
+        }
+    };
+
+    const handlePostpone = async (fuId: string, currentDate: string) => {
+        try {
+            const nextDay = addDays(new Date(currentDate), 1).toISOString();
+            const updated = await api.patch<FollowUp>(`/api/clients/${clientId}/follow-ups/${fuId}`, {
+                date: nextDay,
+                status: 'Rescheduled'
+            });
+            setFollowUps(prev => prev.map(fu => fu._id === fuId ? updated : fu).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        } catch (error) {
+            console.error('Failed to postpone:', error);
+            alert('Failed to postpone follow-up');
         }
     };
 
@@ -222,124 +249,173 @@ export default function FollowUpsPage() {
                 </button>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-200">
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">S.No</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Timing</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Category</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Assigned Coach</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Join Meet</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 min-h-[200px]">
-                            {followUps.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 italic">
-                                        No follow-ups found for this client.
-                                    </td>
-                                </tr>
-                            ) : (
-                                followUps.map((fu, index) => (
-                                    <tr key={fu._id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-400 text-center">{index + 1}</td>
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-700">
-                                            {format(new Date(fu.date), 'dd-MMM-yyyy')}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-medium text-slate-600 uppercase italic underline underline-offset-4 decoration-slate-200 decoration-1">
-                                            {fu.timing}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-600">
-                                            <div className="flex flex-col gap-0.5">
-                                                <span>{fu.category}</span>
-                                                {fu.notes && (
-                                                    <span className="text-[10px] font-medium text-slate-400 truncate max-w-[120px] flex items-center gap-1">
-                                                        <StickyNote size={10} /> {fu.notes}
+            {/* Timeline View */}
+            <div className="relative pl-8 ml-4">
+                {/* Vertical Line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-100 rounded-full" />
+
+                <div className="space-y-12">
+                    {followUps.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400 italic bg-white rounded-xl border border-dashed border-slate-200">
+                            No follow-ups found for this client.
+                        </div>
+                    ) : (
+                        followUps.map((fu, index) => {
+                            const isPast = isBefore(new Date(fu.date), startOfDay(new Date())) && fu.status === 'Pending';
+                            const isToday = format(new Date(fu.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+                            return (
+                                <motion.div
+                                    key={fu._id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="relative"
+                                >
+                                    {/* Timeline Dot */}
+                                    <div className={`absolute -left-[36px] top-6 w-5 h-5 rounded-full border-4 border-white shadow-sm z-10 ${fu.status === 'Completed' ? 'bg-emerald-500' :
+                                        isPast ? 'bg-rose-500' :
+                                            isToday ? 'bg-orange-500' : 'bg-slate-300'
+                                        }`} />
+
+                                    {/* Card */}
+                                    <div className={`bg-white rounded-2xl border transition-all duration-300 ${isPast ? 'border-rose-100 shadow-rose-50/50' :
+                                        isToday ? 'border-orange-100 shadow-orange-50/50 scale-[1.02]' :
+                                            'border-slate-100 shadow-sm'
+                                        } p-6 shadow-xl`}>
+                                        <div className="flex flex-col lg:flex-row gap-6">
+                                            {/* LEFT: Timing & Status */}
+                                            <div className="lg:w-48 space-y-2">
+                                                <div className="flex items-center gap-2 text-slate-400">
+                                                    <Calendar size={14} />
+                                                    <span className="text-xs font-bold uppercase tracking-widest">
+                                                        {format(new Date(fu.date), 'dd MMM yyyy')}
                                                     </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-slate-400">
+                                                    <Clock size={14} />
+                                                    <span className="text-sm font-black text-slate-700">{fu.timing}</span>
+                                                </div>
+                                                <div className="pt-2">
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColor(fu.status)}`}>
+                                                        {fu.status}
+                                                    </span>
+                                                    {isPast && (
+                                                        <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                                                            <AlertCircle size={10} /> Overdue
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* CENTER: Details & Talking Points */}
+                                            <div className="flex-1 space-y-4">
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                                            Month {index + 1}: {fu.category}
+                                                        </h3>
+                                                        <p className="text-xs text-slate-500 font-medium">Coach: {fu.dieticianId?.name || 'Assigned Coach'}</p>
+                                                    </div>
+
+                                                    {fu.meetLink && fu.status !== 'Completed' && (
+                                                        <a href={fu.meetLink} target="_blank" rel="noopener noreferrer"
+                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition-all shadow-md group">
+                                                            <Video size={16} />
+                                                            Join Call
+                                                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                        </a>
+                                                    )}
+                                                </div>
+
+                                                {fu.notes && (
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-xs text-slate-600 italic">"{fu.notes}"</p>
+                                                    </div>
+                                                )}
+
+                                                {/* SMART TALKING POINTS */}
+                                                {fu.summary && fu.summary.logCount > 0 && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                                                        {/* Weight Diff */}
+                                                        {fu.summary.weightDiff !== null && (
+                                                            <div className={`p-3 rounded-xl border ${Number(fu.summary.weightDiff) <= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    {Number(fu.summary.weightDiff) <= 0 ? <TrendingDown size={14} className="text-emerald-500" /> : <TrendingUp size={14} className="text-rose-500" />}
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Weight Change</span>
+                                                                </div>
+                                                                <span className={`text-sm font-black ${Number(fu.summary.weightDiff) <= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                                                    {Number(fu.summary.weightDiff) > 0 ? '+' : ''}{fu.summary.weightDiff}kg
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Water consistency */}
+                                                        {fu.summary.waterConsistency !== null && (
+                                                            <div className={`p-3 rounded-xl border ${fu.summary.waterConsistency >= 80 ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'}`}>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <Droplets size={14} className="text-blue-500" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Hydration</span>
+                                                                </div>
+                                                                <span className="text-sm font-black text-slate-700">{fu.summary.waterConsistency}% consistency</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Avg Energy */}
+                                                        {fu.summary.avgEnergy !== null && (
+                                                            <div className={`p-3 rounded-xl border ${Number(fu.summary.avgEnergy) >= 3 ? 'bg-brand-sage/10 border-brand-sage/20' : 'bg-rose-50 border-rose-100'}`}>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <Zap size={14} className="text-brand-sage" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Energy Level</span>
+                                                                </div>
+                                                                <span className="text-sm font-black text-slate-700">{fu.summary.avgEnergy}/5 avg</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-600">
-                                            {fu.dieticianId?.name || 'Assigned Coach'}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            {fu.meetLink ? (
-                                                <a href={fu.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
-                                                    <Video size={16} />
-                                                </a>
-                                            ) : (
-                                                <span className="text-slate-300">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(fu.status)}`}>
-                                                {fu.status}
-                                            </span>
-                                        </td>
-                                        <td className={`px-6 py-4 text-center relative ${activeActionId === String(fu._id) ? 'z-50' : 'z-0'}`}>
-                                            <button
-                                                onClick={(e) => toggleActions(e, fu._id)}
-                                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                                            >
-                                                <MoreHorizontal size={18} />
-                                            </button>
 
-                                            {activeActionId === String(fu._id) && (
-                                                <div className="absolute right-4 top-10 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-[60] overflow-hidden text-left animate-in fade-in zoom-in-95 duration-200">
-                                                    <button
-                                                        onClick={() => setNotesModal({ isOpen: true, fuId: fu._id, notes: fu.notes || '' })}
-                                                        className="w-full px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-50 transition-colors"
-                                                    >
-                                                        <StickyNote size={14} className="text-orange-500" />
-                                                        Add Notes
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setRescheduleModal({ isOpen: true, fuId: fu._id, date: fu.date })}
-                                                        className="w-full px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-50 transition-colors"
-                                                    >
-                                                        <CalendarClock size={14} className="text-blue-500" />
-                                                        Reschedule
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleMarkComplete(fu._id)}
-                                                        className="w-full px-4 py-2.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 flex items-center gap-2 transition-colors"
-                                                    >
-                                                        <CheckCircle2 size={14} />
-                                                        Mark as complete
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination (Mock) */}
-                <div className="px-6 py-4 bg-slate-50/30 border-t border-slate-100 flex items-center justify-end gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <div className="flex items-center gap-2">
-                        Items per page:
-                        <span className="flex items-center gap-1 border-b border-slate-300 pb-0.5 cursor-pointer text-slate-700">
-                            10 <Clock size={10} className="rotate-180" />
-                        </span>
-                    </div>
-                    <div className="text-slate-500">
-                        {followUps.length > 0 ? `1 - ${followUps.length} of ${followUps.length}` : '0 of 0'}
-                    </div>
-                    <div className="flex items-center gap-4 text-slate-300">
-                        <span className="cursor-not-allowed">{'|<'}</span>
-                        <span className="cursor-not-allowed">{'<'}</span>
-                        <span className="cursor-not-allowed">{'>'}</span>
-                        <span className="cursor-not-allowed">{'>|'}</span>
-                    </div>
+                                            {/* RIGHT: Actions */}
+                                            <div className="flex lg:flex-col gap-2 justify-end">
+                                                {fu.status !== 'Completed' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleMarkComplete(fu._id)}
+                                                            className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors flex items-center justify-center"
+                                                            title="Mark Complete"
+                                                        >
+                                                            <CheckCircle2 size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handlePostpone(fu._id, fu.date)}
+                                                            className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors flex items-center justify-center"
+                                                            title="Postpone to Tomorrow"
+                                                        >
+                                                            <Clock size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setRescheduleModal({ isOpen: true, fuId: fu._id, date: fu.date })}
+                                                            className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center"
+                                                            title="Reschedule"
+                                                        >
+                                                            <CalendarClock size={18} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                <button
+                                                    onClick={() => setNotesModal({ isOpen: true, fuId: fu._id, notes: fu.notes || '' })}
+                                                    className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center"
+                                                    title="Add Notes"
+                                                >
+                                                    <StickyNote size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 

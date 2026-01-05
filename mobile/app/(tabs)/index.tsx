@@ -6,8 +6,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Activity, Bell, User as UserIcon, LogOut } from 'lucide-react-native';
+import { Activity, Bell, User as UserIcon, LogOut, Loader2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { calculateCycleStatus } from '@/lib/cycle-utils';
 
 import WeightTracker from '@/components/dashboard/WeightTracker';
 import WaterTracker from '@/components/dashboard/WaterTracker';
@@ -16,6 +17,10 @@ import LogWeightModal from '@/components/dashboard/LogWeightModal';
 import MeasurementTracker from '@/components/dashboard/MeasurementTracker';
 import LogMeasurementModal from '@/components/dashboard/LogMeasurementModal';
 import LogMealModal from '@/components/dashboard/LogMealModal';
+import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
+import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
+import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
+import { getLocalDateString } from '@/lib/date-utils';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -32,6 +37,10 @@ export default function DashboardScreen() {
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSavingSymptoms, setIsSavingSymptoms] = useState(false);
+  const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+  const [cycleStatus, setCycleStatus] = useState<any>(null);
+  const [lastPeriodLog, setLastPeriodLog] = useState<any>(null);
 
   const colorScheme = useColorScheme();
   const theme = (Colors as any)[colorScheme ?? 'light'];
@@ -39,12 +48,15 @@ export default function DashboardScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const data = await api.get<any>('/api/clients/me/dashboard');
+      const today = getLocalDateString();
+      const data = await api.get<any>(`/api/clients/me/dashboard?date=${today}`);
       setProfile(data.profile);
       setWeightLogs(data.weightLogs || []);
       setWaterData(data.waterData);
       setMealLogs(data.mealLogs || []);
       setMeasurementLogs(data.measurementLogs || []);
+      setCycleStatus(data.cycleStatus);
+      setLastPeriodLog(data.lastPeriodLog);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -59,6 +71,40 @@ export default function DashboardScreen() {
     }
   }, [user, fetchData]);
 
+  const handleSaveSymptoms = async (symptoms: string[], energyLevel: number) => {
+    setIsSavingSymptoms(true);
+    try {
+      const today = getLocalDateString();
+      await api.post('/api/clients/me/symptom-logs', {
+        symptoms,
+        energyLevel,
+        date: today
+      });
+    } catch (error) {
+      console.error('Failed to save symptom log:', error);
+    } finally {
+      setIsSavingSymptoms(false);
+    }
+  };
+
+  const handleSavePeriod = async (startDate: Date, endDate?: Date, intensity?: string) => {
+    // OPTIMISTIC UPDATE
+    const optimisticLog = { startDate, endDate, flowIntensity: intensity };
+    const optimisticStatus = calculateCycleStatus(startDate, profile?.cycleLength || 28);
+
+    setLastPeriodLog(optimisticLog);
+    setCycleStatus(optimisticStatus);
+    setIsPeriodModalOpen(false);
+
+    try {
+      await api.post('/api/clients/me/period-logs', optimisticLog);
+      // Optional: Refresh from server to ensure sync, but the local update makes it feel instant
+    } catch (error) {
+      console.error('Failed to save period log:', error);
+      // In a real app, you'd show a "Sync Failed" toast and revert
+    }
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
@@ -70,11 +116,24 @@ export default function DashboardScreen() {
   const idealWeight = profile?.idealWeight || (profile?.weight || 0);
 
   const handleAddWater = async () => {
+    // OPTIMISTIC UPDATE
+    if (waterData) {
+      setWaterData({
+        ...waterData,
+        currentGlasses: waterData.currentGlasses + 1
+      });
+    }
+
     try {
-      await api.post('/api/clients/me/water-intake', { increment: 1 });
-      fetchData();
+      const today = getLocalDateString();
+      await api.post('/api/clients/me/water-intake', {
+        increment: 1,
+        date: today
+      });
     } catch (error) {
       console.error('Failed to add water:', error);
+      // Revert if failed
+      setWaterData((prev: any) => ({ ...prev, currentGlasses: prev.currentGlasses - 1 }));
     }
   };
 
@@ -110,9 +169,19 @@ export default function DashboardScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <Activity size={40} color={theme.brandSage} />
-        <Text style={[styles.loadingText, { color: theme.brandForest }]}>Loading your wellness data...</Text>
+      <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
+        <View style={[styles.scrollContent, { paddingTop: insets.top + 24 }]}>
+          <View style={styles.header}>
+            <View style={[styles.skeleton, { width: 150, height: 40, borderRadius: 12 }]} />
+            <View style={[styles.skeleton, { width: 44, height: 44, borderRadius: 22 }]} />
+          </View>
+          <View style={styles.content}>
+            <View style={[styles.skeleton, { width: '100%', height: 160, borderRadius: 24 }]} />
+            <View style={[styles.skeleton, { width: '100%', height: 120, borderRadius: 24 }]} />
+            <View style={[styles.skeleton, { width: '100%', height: 140, borderRadius: 24 }]} />
+            <View style={[styles.skeleton, { width: '100%', height: 160, borderRadius: 24 }]} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -179,7 +248,6 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.content}>
-
           <View style={styles.row}>
             <View style={styles.col}>
               <WeightTracker
@@ -190,6 +258,26 @@ export default function DashboardScreen() {
               />
             </View>
           </View>
+
+          <View style={styles.row}>
+            <View style={styles.col}>
+              <SymptomCheckIn
+                onSave={handleSaveSymptoms}
+                isSaving={isSavingSymptoms}
+              />
+            </View>
+          </View>
+
+          {profile?.gender === 'female' && (
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CycleTrackerCard
+                  status={cycleStatus}
+                  onLogPress={() => setIsPeriodModalOpen(true)}
+                />
+              </View>
+            </View>
+          )}
 
           <View style={styles.row}>
             <View style={styles.col}>
@@ -208,12 +296,10 @@ export default function DashboardScreen() {
             onUpdateClick={() => setIsMeasurementModalOpen(true)}
           />
 
-
           <MealLogCard
             logs={mealLogs}
             onAdd={() => setIsMealModalOpen(true)}
           />
-
         </View>
       </ScrollView>
 
@@ -235,6 +321,12 @@ export default function DashboardScreen() {
           hips: measurementLogs[0].hips,
           thigh: measurementLogs[0].thigh,
         } : undefined}
+      />
+
+      <LogPeriodModal
+        isOpen={isPeriodModalOpen}
+        onClose={() => setIsPeriodModalOpen(false)}
+        onSave={handleSavePeriod}
       />
 
       <LogMealModal
@@ -421,5 +513,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  skeleton: {
+    backgroundColor: '#f1f5f9',
   }
 });

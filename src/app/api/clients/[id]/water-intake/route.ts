@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
         // For water, we usually want the latest data or a range. 
         // Let's return the last 7 days or current day by default.
-        const logs = await WaterIntake.find({ clientId: id }).sort({ date: -1 }).limit(10);
+        const logs = await WaterIntake.find({ clientId: id }).sort({ date: -1 }).limit(10).lean();
         return NextResponse.json(logs);
     } catch (error) {
         console.error('Failed to fetch water intake for dietician:', error);

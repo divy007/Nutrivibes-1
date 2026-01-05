@@ -52,6 +52,8 @@ export interface ClientInfo {
     createdAt?: string;
     updatedAt?: string;
     dietStartDate?: string;
+    cycleLength?: number;
+    averagePeriodDuration?: number;
     preferences: string;
     mealTimings?: MealTiming[];
     status?: string;

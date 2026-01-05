@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight } from 'lucide-react';
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
+import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
 
 export default function ClientSummaryPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
@@ -17,6 +18,25 @@ export default function ClientSummaryPage() {
     const [resetLoading, setResetLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Symptom state
+    const [symptomLogs, setSymptomLogs] = useState<any[]>([]);
+    const [symptomsLoading, setSymptomsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSymptoms = async () => {
+            if (!client?._id) return;
+            try {
+                const data = await api.get<any[]>(`/api/clients/${client._id}/symptom-logs`);
+                setSymptomLogs(data);
+            } catch (err) {
+                console.error('Failed to fetch symptoms:', err);
+            } finally {
+                setSymptomsLoading(false);
+            }
+        };
+        fetchSymptoms();
+    }, [client?._id]);
 
     const handlePasswordReset = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -162,6 +182,9 @@ export default function ClientSummaryPage() {
                         </div>
                     </div>
 
+                    {/* Symptom History Section */}
+                    <SymptomHistory logs={symptomLogs} />
+
                     {/* Goals Section */}
                     <div className="bg-white rounded-lg border border-slate-200 p-6">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Goals</h3>
@@ -262,11 +285,3 @@ export default function ClientSummaryPage() {
         </div>
     );
 }
-
-// Re-using some icons for consistent look
-const Activity = ({ size }: { size: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-);
-const Utensils = ({ size }: { size: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg>
-);

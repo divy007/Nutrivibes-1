@@ -127,7 +127,20 @@ export default function ClientsPage() {
             );
         }
 
+        if (statusFilter === 'NEEDS_DIET') {
+            return client.dietStatus === 'black';
+        }
+
         return client.status === statusFilter;
+    }).sort((a, b) => {
+        const priority = { black: 0, red: 1, yellow: 2, green: 3 };
+        const aStatus = (a.dietStatus as keyof typeof priority) || 'green';
+        const bStatus = (b.dietStatus as keyof typeof priority) || 'green';
+
+        if (priority[aStatus] !== priority[bStatus]) {
+            return priority[aStatus] - priority[bStatus];
+        }
+        return a.name.localeCompare(b.name);
     });
 
     const getDietStatusColor = (status: string) => {
@@ -230,8 +243,8 @@ export default function ClientsPage() {
 
                 {/* Filters Section */}
                 <div className="p-6 border-b border-slate-100 flex flex-col gap-6">
-                    {/* Search Bar */}
-                    <div className="flex items-center gap-4">
+                    {/* Search Bar & Legend */}
+                    <div className="flex items-center justify-between gap-6">
                         <div className="relative flex-1 max-w-xl">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
@@ -245,10 +258,26 @@ export default function ClientsPage() {
                                 <Filter size={16} />
                             </button>
                         </div>
-                        <div className="ml-auto text-slate-500 text-sm">
-                            <span className="border border-slate-200 px-4 py-2 rounded bg-white flex items-center gap-2">
-                                {new Date().toLocaleDateString('en-GB')} <Calendar size={14} />
-                            </span>
+                        <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Diet Legend:</span>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-slate-900"></div>
+                                    <span className="text-[10px] font-bold text-slate-500">Urgent</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                                    <span className="text-[10px] font-bold text-slate-500">Tomorrow</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                                    <span className="text-[10px] font-bold text-slate-500">48h</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <span className="text-[10px] font-bold text-slate-500">72h+</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -257,7 +286,7 @@ export default function ClientsPage() {
                         <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Status: {statusFilter}</span>
                         <div className="flex items-center gap-2">
                             {/* Filter Chips - Could expand this later */}
-                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW'] as const).map(status => (
+                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW', 'NEEDS_DIET'] as const).map(status => (
                                 <button
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
@@ -266,7 +295,9 @@ export default function ClientsPage() {
                                         : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:border-slate-200'
                                         }`}
                                 >
-                                    {status === 'NEW' ? 'New (7 Days)' : status.charAt(0) + status.slice(1).toLowerCase()}
+                                    {status === 'NEW' ? 'New (7 Days)' :
+                                        status === 'NEEDS_DIET' ? 'Needs Diet Today' :
+                                            status.charAt(0) + status.slice(1).toLowerCase()}
                                 </button>
                             ))}
 
@@ -335,7 +366,7 @@ export default function ClientsPage() {
                                         </td>
                                         {/* Removed Plan Column */}
                                         <td className="px-6 py-4 text-center">
-                                            <div className={`w-3 h-3 rounded-full mx-auto ${client.dietStartDate ? 'bg-emerald-500' : getDietStatusColor(client.dietStatus || '')}`}></div>
+                                            <div className={`w-3 h-3 rounded-full mx-auto ${getDietStatusColor(client.dietStatus || '')}`}></div>
                                         </td>
                                         <td className={`px-6 py-4 text-center relative ${activeActionId === client._id ? 'z-50' : 'z-0'}`}>
                                             <button

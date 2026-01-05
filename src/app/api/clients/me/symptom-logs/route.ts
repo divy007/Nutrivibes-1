@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
-import WeightLog from '@/models/WeightLog';
+import SymptomLog from '@/models/SymptomLog';
 import { getAuthUser } from '@/lib/auth';
 import { normalizeDateUTC } from '@/lib/date-utils';
 
@@ -18,11 +18,11 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const logs = await WeightLog.find({ clientId: client._id }).sort({ date: -1 });
+        const logs = await SymptomLog.find({ clientId: client._id }).sort({ date: -1 }).limit(30);
         return NextResponse.json(logs);
     } catch (error) {
-        console.error('Failed to fetch weight logs:', error);
-        return NextResponse.json({ error: 'Failed to fetch weight logs' }, { status: 500 });
+        console.error('Failed to fetch symptom logs:', error);
+        return NextResponse.json({ error: 'Failed to fetch symptom logs' }, { status: 500 });
     }
 }
 
@@ -39,25 +39,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const { weight, unit, date } = await req.json();
+        const { symptoms, energyLevel, notes, date } = await req.json();
 
-        if (!weight) {
-            return NextResponse.json({ error: 'Weight is required' }, { status: 400 });
-        }
+        const today = normalizeDateUTC(date || undefined);
 
-        const newLog = await WeightLog.create({
-            clientId: client._id,
-            weight,
-            unit: unit || 'kg',
-            date: normalizeDateUTC(date || undefined),
-        });
+        // Update or create log for today
+        const updatedLog = await SymptomLog.findOneAndUpdate(
+            { clientId: client._id, date: today },
+            {
+                $set: {
+                    symptoms,
+                    energyLevel,
+                    notes
+                }
+            },
+            { upsert: true, new: true }
+        );
 
-        // Also update the current weight in the client profile
-        await Client.findByIdAndUpdate(client._id, { $set: { weight } });
-
-        return NextResponse.json(newLog, { status: 201 });
+        return NextResponse.json(updatedLog, { status: 201 });
     } catch (error) {
-        console.error('Failed to save weight log:', error);
-        return NextResponse.json({ error: 'Failed to save weight log' }, { status: 500 });
+        console.error('Failed to save symptom log:', error);
+        return NextResponse.json({ error: 'Failed to save symptom log' }, { status: 500 });
     }
 }

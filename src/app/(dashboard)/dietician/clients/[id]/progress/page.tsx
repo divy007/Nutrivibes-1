@@ -6,7 +6,7 @@ import { api } from '@/lib/api-client';
 import { useClientData } from '@/context/ClientDataContext';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    AreaChart, Area, PieChart, Pie, Cell
+    AreaChart, Area, PieChart, Pie, Cell, ReferenceArea
 } from 'recharts';
 import {
     Activity, TrendingUp, TrendingDown, Scale,
@@ -15,6 +15,8 @@ import {
 import { MeasurementTrackerCard } from '@/components/client/dashboard/MeasurementTrackerCard';
 import { LogMeasurementModal } from '@/components/client/dashboard/LogMeasurementModal';
 import { format, subMonths, isAfter } from 'date-fns';
+import { calculateCycleStatus } from '@/lib/cycle-utils';
+import { getLocalDateString } from '@/lib/date-utils';
 
 interface WeightLog {
     _id: string;
@@ -48,20 +50,23 @@ export default function ProgressPage() {
     const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
     const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
     const [measurementLogs, setMeasurementLogs] = useState<MeasurementLog[]>([]);
+    const [periodLogs, setPeriodLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('3m');
     const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
 
     const fetchData = async () => {
         try {
-            const [wLogs, hLogs, mLogs] = await Promise.all([
+            const [wLogs, hLogs, mLogs, pLogs] = await Promise.all([
                 api.get<WeightLog[]>(`/api/clients/${clientId}/weight-logs`),
                 api.get<WaterLog[]>(`/api/clients/${clientId}/water-intake`),
-                api.get<MeasurementLog[]>(`/api/clients/${clientId}/measurement-logs`)
+                api.get<MeasurementLog[]>(`/api/clients/${clientId}/measurement-logs`),
+                api.get<any[]>(`/api/clients/${clientId}/period-logs`)
             ]);
             setWeightLogs(wLogs);
             setWaterLogs(hLogs);
             setMeasurementLogs(mLogs);
+            setPeriodLogs(pLogs);
         } catch (err) {
             console.error('Failed to fetch logs:', err);
         } finally {
@@ -92,15 +97,30 @@ export default function ProgressPage() {
         if (timeRange === '1m') startDate = subMonths(now, 1);
         if (timeRange === '6m') startDate = subMonths(now, 6);
 
-        return weightLogs
+        return [...weightLogs]
             .filter(log => isAfter(new Date(log.date), startDate))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(log => ({
-                date: format(new Date(log.date), 'd MMM'),
-                weight: log.weight,
-                bmi: clientInfo?.height ? parseFloat((log.weight / Math.pow(clientInfo.height / 100, 2)).toFixed(2)) : 0
-            }));
-    }, [weightLogs, timeRange, clientInfo]);
+            .map(log => {
+                const logDate = new Date(log.date);
+                let phase = null;
+                if (clientInfo?.gender === 'female' && periodLogs.length > 0) {
+                    const status = calculateCycleStatus(
+                        new Date(periodLogs[0].startDate),
+                        clientInfo.cycleLength || 28,
+                        logDate
+                    );
+                    phase = status.phase;
+                }
+
+                return {
+                    date: new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(logDate),
+                    weight: log.weight,
+                    bmi: clientInfo?.height ? parseFloat((log.weight / Math.pow(clientInfo.height / 100, 2)).toFixed(2)) : 0,
+                    phase,
+                    originalDate: logDate // Keep for ReferenceArea calculation
+                };
+            });
+    }, [weightLogs, timeRange, clientInfo, periodLogs]);
 
     const stats = useMemo(() => {
         if (weightLogs.length === 0) return null;
@@ -128,7 +148,9 @@ export default function ProgressPage() {
         if (waterLogs.length === 0) return { current: 0, target: 8 };
         // Assuming logs are sorted by date desc, latest is first
         const latest = waterLogs[0];
-        const isToday = format(new Date(latest.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+        const latestDateStr = new Date(latest.date).toISOString().split('T')[0];
+        const todayStr = getLocalDateString();
+        const isToday = latestDateStr === todayStr;
         return isToday ? { current: latest.currentGlasses, target: latest.targetGlasses } : { current: 0, target: 8 };
     }, [waterLogs]);
 
@@ -288,7 +310,20 @@ export default function ProgressPage() {
                     <div className="flex justify-between items-center">
                         <div className="space-y-1">
                             <h4 className="text-lg font-black text-slate-800">Weight Progress</h4>
-                            <p className="text-xs font-medium text-slate-400 tracking-wide">Historical trend of client weight</p>
+                            <div className="flex gap-3 items-center">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#f43f5e]" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Period</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">PMS</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9]" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Energy</span>
+                                </div>
+                            </div>
                         </div>
                         <button className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600">
                             View More
@@ -321,6 +356,24 @@ export default function ProgressPage() {
                                     <Tooltip
                                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
+
+                                    {/* Period Shading */}
+                                    {filteredWeightData.map((d, i) => {
+                                        if (d.phase === 'PERIOD') {
+                                            const next = filteredWeightData[i + 1];
+                                            return (
+                                                <ReferenceArea
+                                                    key={`period-${i}`}
+                                                    x1={d.date}
+                                                    x2={next ? next.date : d.date}
+                                                    fill="#f43f5e"
+                                                    fillOpacity={0.05}
+                                                    stroke="none"
+                                                />
+                                            );
+                                        }
+                                        return null;
+                                    })}
                                     <Area
                                         type="monotone"
                                         dataKey="weight"
@@ -328,8 +381,26 @@ export default function ProgressPage() {
                                         strokeWidth={3}
                                         fillOpacity={1}
                                         fill="url(#colorWeight)"
-                                        dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
-                                        activeDot={{ r: 6, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
+                                        dot={(props: any) => {
+                                            const { cx, cy, payload } = props;
+                                            if (!payload.phase) return <circle cx={cx} cy={cy} r={4} fill="#f97316" stroke="#fff" strokeWidth={2} />;
+
+                                            const colors: Record<string, string> = {
+                                                PERIOD: '#f43f5e',
+                                                FOLLICULAR: '#0ea5e9',
+                                                OVULATION: '#8b5cf6',
+                                                LUTEAL: '#f59e0b',
+                                            };
+
+                                            return (
+                                                <circle
+                                                    cx={cx} cy={cy} r={6}
+                                                    fill={colors[payload.phase]}
+                                                    stroke="#fff" strokeWidth={2}
+                                                />
+                                            );
+                                        }}
+                                        activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>

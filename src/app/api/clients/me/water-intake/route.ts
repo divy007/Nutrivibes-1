@@ -4,6 +4,7 @@ import Client from '@/models/Client';
 import WaterIntake from '@/models/WaterIntake';
 import { getAuthUser } from '@/lib/auth';
 import { startOfDay } from 'date-fns';
+import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
     await connectDB();
@@ -18,7 +19,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const today = startOfDay(new Date());
+        const { searchParams } = new URL(req.url);
+        const clientDate = searchParams.get('date');
+        const today = normalizeDateUTC(clientDate || undefined);
 
         let intake = await WaterIntake.findOne({
             clientId: client._id,
@@ -55,8 +58,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const { increment } = await req.json();
-        const today = startOfDay(new Date());
+        const { increment, date } = await req.json();
+        const today = normalizeDateUTC(date || undefined);
 
         const intake = await WaterIntake.findOneAndUpdate(
             { clientId: client._id, date: today },

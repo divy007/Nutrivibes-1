@@ -23,7 +23,8 @@ import {
     ArrowDownToLine,
     X,
     ClipboardPaste,
-    Eye
+    Eye,
+    AlertTriangle
 } from 'lucide-react';
 
 import { MealCard } from '@/components/dietician/plan/MealCard';
@@ -45,6 +46,77 @@ const DEFAULT_MEAL_TIMINGS: MealTiming[] = [
     { mealNumber: 6, time: '20:00' },
     { mealNumber: 7, time: '22:00' },
 ];
+
+const ClinicalAlertBanner = ({ clientInfo }: { clientInfo: ClientInfo | null }) => {
+    if (!clientInfo?.counsellingProfile) return null;
+
+    const { medicalConditions, otherMedicalCondition, allergies, deficiencies, otherDeficiency, stapleFood } = clientInfo.counsellingProfile;
+
+    const conditions = [...(medicalConditions || [])];
+    if (otherMedicalCondition) conditions.push(otherMedicalCondition);
+
+    const dfcs = [...(deficiencies || [])];
+    if (otherDeficiency) dfcs.push(otherDeficiency);
+
+    const hasData = conditions.length > 0 || allergies || dfcs.length > 0 || stapleFood;
+
+    if (!hasData) {
+        return (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <AlertTriangle size={20} />
+                </div>
+                <div>
+                    <h4 className="text-sm font-bold text-slate-600">No Clinical Alerts</h4>
+                    <p className="text-xs text-slate-500 font-medium">No critical medical conditions or allergies recorded for this patient.</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-4 mb-6 shadow-sm sticky top-[72px] z-30">
+            <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 shadow-inner">
+                    <AlertTriangle size={24} />
+                </div>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-rose-800 font-black uppercase tracking-wider text-xs">Clinical Alert: Medical Background</h3>
+                        <span className="bg-rose-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold animate-pulse">CRITICAL INFO</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {conditions.length > 0 && (
+                            <div>
+                                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter block mb-0.5">Conditions</span>
+                                <p className="text-xs font-bold text-rose-900 leading-tight">{conditions.join(', ')}</p>
+                            </div>
+                        )}
+                        {allergies && (
+                            <div>
+                                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter block mb-0.5">Allergies</span>
+                                <p className="text-xs font-bold text-rose-900 leading-tight">{allergies}</p>
+                            </div>
+                        )}
+                        {dfcs.length > 0 && (
+                            <div>
+                                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter block mb-0.5">Deficiencies</span>
+                                <p className="text-xs font-bold text-rose-900 leading-tight">{dfcs.join(', ')}</p>
+                            </div>
+                        )}
+                        {stapleFood && (
+                            <div>
+                                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter block mb-0.5">Key Restrictions / Staple</span>
+                                <p className="text-xs font-bold text-rose-900 leading-tight">{stapleFood}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function SuggestDietPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -827,6 +899,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
                 </div>
+
+                <ClinicalAlertBanner clientInfo={clientInfo} />
 
                 {/* Follow Up Notes Section */}
                 <AnimatePresence>

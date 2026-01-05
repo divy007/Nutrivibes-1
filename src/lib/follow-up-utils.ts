@@ -1,5 +1,5 @@
 import FollowUp from '@/models/FollowUp';
-import { addDays } from 'date-fns';
+import { addMonths } from 'date-fns';
 
 export async function generateFollowUps(clientId: string, dieticianId: string, startDate: Date) {
     // Delete existing PENDING follow-ups to avoid duplicates if start date is changed
@@ -9,15 +9,15 @@ export async function generateFollowUps(clientId: string, dieticianId: string, s
     });
 
     const followUps = [];
-    // Generate follow-ups for the next 12 weeks (7 days interval)
-    for (let i = 1; i <= 12; i++) {
-        const followUpDate = addDays(new Date(startDate), i * 7);
+    // Generate follow-ups for the next 6 months
+    for (let i = 1; i <= 6; i++) {
+        const followUpDate = addMonths(new Date(startDate), i);
         followUps.push({
             clientId,
             dieticianId,
             date: followUpDate,
             timing: '11:00 am', // Default timing
-            category: 'Diet',
+            category: 'Consultation', // More appropriate for monthly
             status: 'Pending'
         });
     }

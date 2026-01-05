@@ -11,6 +11,7 @@ import { LogMealModal } from '@/components/client/dashboard/LogMealModal';
 import { MeasurementTrackerCard } from '@/components/client/dashboard/MeasurementTrackerCard';
 import { LogMeasurementModal } from '@/components/client/dashboard/LogMeasurementModal';
 import { Loader2, Activity, ChevronRight } from 'lucide-react';
+import { getLocalDateString } from '@/lib/date-utils';
 
 interface ClientProfile {
     _id: string;
@@ -68,10 +69,11 @@ export default function ClientDashboard() {
 
     const fetchData = async () => {
         try {
+            const today = getLocalDateString();
             const [profileData, logsData, waterIntakeData, mealLogsData, measurementLogsData, assessmentData] = await Promise.all([
                 api.get<ClientProfile>('/api/clients/me'),
                 api.get<WeightLog[]>('/api/clients/me/weight-logs'),
-                api.get<WaterData>('/api/clients/me/water-intake'),
+                api.get<WaterData>(`/api/clients/me/water-intake?date=${today}`),
                 api.get<MealLog[]>('/api/clients/me/meal-logs'),
                 api.get<MeasurementLog[]>('/api/clients/me/measurement-logs'),
                 api.get<any>('/api/clients/me/health-assessment')
@@ -96,21 +98,45 @@ export default function ClientDashboard() {
     }, [user]);
 
     const handleSaveWeight = async (weight: number, unit: 'kg' | 'lb', date: Date) => {
+        // OPTIMISTIC UPDATE
+        const newLog: WeightLog = {
+            _id: 'temp-' + Date.now(),
+            weight,
+            unit,
+            date: date.toISOString()
+        };
+        setWeightLogs(prev => [newLog, ...prev]);
+
         try {
             await api.post('/api/clients/me/weight-logs', { weight, unit, date });
-            await fetchData(); // Refresh data
+            await fetchData(); // Final sync
         } catch (error) {
             console.error('Failed to save weight log:', error);
+            // Revert
+            setWeightLogs(prev => prev.filter(l => l._id !== newLog._id));
             alert('Failed to save weight log');
         }
     };
 
     const handleAddGlass = async () => {
+        // OPTIMISTIC UPDATE
+        if (waterData) {
+            setWaterData({
+                ...waterData,
+                currentGlasses: waterData.currentGlasses + 1
+            });
+        }
         try {
-            await api.post('/api/clients/me/water-intake', { increment: 1 });
-            await fetchData(); // Refresh data
+            const today = getLocalDateString();
+            await api.post('/api/clients/me/water-intake', {
+                increment: 1,
+                date: today
+            });
+            // Data is already updated locally, no need to fetchData() unless you want to sync
         } catch (error) {
             console.error('Failed to update water intake:', error);
+            // Revert on failure
+            setWaterData(prev => prev ? { ...prev, currentGlasses: prev.currentGlasses - 1 } : null);
         }
     };
 
