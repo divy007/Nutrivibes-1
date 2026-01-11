@@ -36,18 +36,39 @@ export async function GET(req: Request) {
             }).lean();
 
             const isPublished = (dateStr: string) => {
-                return plans.some((plan: any) =>
+                const result = plans.some((plan: any) =>
                     plan.days.some((day: any) => {
                         // Format the plan date and compare with the target date string
                         const planDateStr = formatDate(normalizeDateUTC(day.date));
-                        return planDateStr === dateStr && day.status === 'PUBLISHED';
+                        const isMatch = planDateStr === dateStr && day.status === 'PUBLISHED';
+
+                        // Debug logging for client "divy"
+                        if (client.name?.toLowerCase().includes('divy')) {
+                            console.log('🔍 Diet Status Debug for', client.name);
+                            console.log('  Target date:', dateStr);
+                            console.log('  Plan date (raw):', day.date);
+                            console.log('  Plan date (normalized & formatted):', planDateStr);
+                            console.log('  Day status:', day.status);
+                            console.log('  Match?', isMatch);
+                        }
+
+                        return isMatch;
                     })
                 );
+                return result;
             };
 
             const publishedToday = isPublished(targetDates[0]);
             const publishedTomorrow = isPublished(targetDates[1]);
             const publishedLater = isPublished(targetDates[2]);
+
+            // Debug logging for client "divy"
+            if (client.name?.toLowerCase().includes('divy')) {
+                console.log('📊 Final Status for', client.name);
+                console.log('  Today:', targetDates[0], '- Published?', publishedToday);
+                console.log('  Tomorrow:', targetDates[1], '- Published?', publishedTomorrow);
+                console.log('  Day After:', targetDates[2], '- Published?', publishedLater);
+            }
 
             let dietStatus = 'black';
             if (!publishedToday) {
