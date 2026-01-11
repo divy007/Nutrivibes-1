@@ -6,6 +6,7 @@ import WaterIntake from '@/models/WaterIntake';
 import SymptomLog from '@/models/SymptomLog';
 import { getAuthUser } from '@/lib/auth';
 import { subDays } from 'date-fns';
+import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
@@ -78,6 +79,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const body = await req.json();
         const followUp = await FollowUp.create({
             ...body,
+            date: normalizeDateUTC(body.date),
             clientId,
             dieticianId: user._id,
         });

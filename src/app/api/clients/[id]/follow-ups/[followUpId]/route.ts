@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB as dbConnect } from '@/lib/mongodb';
 import FollowUp from '@/models/FollowUp';
 import { getAuthUser } from '@/lib/auth';
+import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string, followUpId: string }> }) {
     await dbConnect();
@@ -14,6 +15,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         const body = await req.json();
+
+        if (body.date) {
+            body.date = normalizeDateUTC(body.date);
+        }
+
         const updatedFollowUp = await FollowUp.findOneAndUpdate(
             { _id: followUpId, clientId, dieticianId: user._id },
             body,
