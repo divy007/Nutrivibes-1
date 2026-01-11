@@ -42,7 +42,14 @@ export async function GET(req: Request) {
                     plan.days.some((day: any) => {
                         // Format the plan date and compare with the target date string
                         const planDateStr = formatDate(normalizeDateUTC(day.date));
-                        return planDateStr === dateStr && day.status === 'PUBLISHED';
+                        const isMatch = planDateStr === dateStr && day.status === 'PUBLISHED';
+
+                        // Temporary debug for divy
+                        if (client.name?.toLowerCase().includes('divy') && isMatch) {
+                            console.log('✅ MATCH FOUND for', client.name, '- Date:', dateStr, 'Status:', day.status);
+                        }
+
+                        return isMatch;
                     })
                 );
             };
@@ -50,6 +57,17 @@ export async function GET(req: Request) {
             const publishedToday = isPublished(targetDates[0]);
             const publishedTomorrow = isPublished(targetDates[1]);
             const publishedLater = isPublished(targetDates[2]);
+
+            // Debug final status for divy
+            if (client.name?.toLowerCase().includes('divy')) {
+                console.log('🎯 Divy Status:', {
+                    today: targetDates[0],
+                    publishedToday,
+                    publishedTomorrow,
+                    publishedLater,
+                    finalStatus: !publishedToday ? 'black' : publishedToday && publishedTomorrow && publishedLater ? 'green' : publishedToday && publishedTomorrow ? 'yellow' : 'red'
+                });
+            }
 
 
 
