@@ -28,12 +28,21 @@ export default function NewClientPage() {
         setLoading(true);
         setError(null);
 
-        // Strict Email Validation
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(formData.email)) {
-            setError('Invalid email format. Please enter a valid email address.');
+        // Validation: Require either Email or Phone
+        if (!formData.email && !formData.phone) {
+            setError('Please provide either an Email or a Phone Number.');
             setLoading(false);
             return;
+        }
+
+        // Strict Email Validation (if email is provided)
+        if (formData.email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(formData.email)) {
+                setError('Invalid email format. Please enter a valid email address.');
+                setLoading(false);
+                return;
+            }
         }
 
         try {
@@ -82,43 +91,54 @@ export default function NewClientPage() {
                                 placeholder="Jane Doe"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
-                                placeholder="jane@example.com"
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address <span className="text-gray-400 font-normal text-xs">(Optional)</span></label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
+                                    placeholder="jane@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number <span className="text-gray-400 font-normal text-xs">(Required if no Email)</span></label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
+                                    placeholder="+91 98765 43210"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                minLength={6}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
-                                placeholder="••••••••"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters. Client will use this to login.</p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile ID</label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
-                                placeholder="+1 234 567 8900"
-                            />
-                        </div>
+
+                        {formData.email && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required={!!formData.email}
+                                    minLength={6}
+                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
+                                    placeholder="••••••••"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Required for email login. Must be at least 6 characters.</p>
+                            </div>
+                        )}
+                        {!formData.email && (
+                            <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg border border-blue-100 flex gap-2">
+                                <span className="shrink-0">ℹ️</span>
+                                <p>Without an email/password, the client will login using <strong>Phone Number & OTP</strong>.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

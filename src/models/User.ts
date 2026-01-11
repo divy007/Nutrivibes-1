@@ -2,10 +2,13 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
-    email: string;
-    password: string;
+    email?: string;
+    phone?: string;
+    password?: string;
     role: 'DIETICIAN' | 'CLIENT';
     name: string;
+    loginMethod: 'EMAIL_PASSWORD' | 'PHONE_OTP';
+    firebaseUid?: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -13,13 +16,20 @@ const UserSchema: Schema<IUser> = new Schema(
     {
         email: {
             type: String,
-            required: true,
+            required: false, // Email is now optional
             unique: true,
             lowercase: true,
+            sparse: true, // Allows multiple null values
+        },
+        phone: {
+            type: String,
+            required: false,
+            unique: true,
+            sparse: true, // Allows multiple null values
         },
         password: {
             type: String,
-            required: true,
+            required: false, // Password optional for OTP users
             minlength: 6,
         },
         role: {
@@ -30,6 +40,16 @@ const UserSchema: Schema<IUser> = new Schema(
         name: {
             type: String,
             required: true,
+        },
+        loginMethod: {
+            type: String,
+            enum: ['EMAIL_PASSWORD', 'PHONE_OTP'],
+            default: 'EMAIL_PASSWORD',
+        },
+        firebaseUid: {
+            type: String,
+            unique: true,
+            sparse: true,
         },
     },
     {
@@ -47,7 +67,7 @@ const UserSchema: Schema<IUser> = new Schema(
 );
 
 UserSchema.pre('save', async function () {
-    if (!this.isModified('password')) {
+    if (!this.isModified('password') || !this.password) {
         return;
     }
     const salt = await bcrypt.genSalt(10);
@@ -57,6 +77,7 @@ UserSchema.pre('save', async function () {
 UserSchema.methods.comparePassword = async function (
     candidatePassword: string
 ): Promise<boolean> {
+    if (!this.password) return false;
     return await bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -7,9 +7,12 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 // ============================================
 // Change this URL based on your needs:
 // - Production: https://nutrivibesbymansi.vercel.app
-// - Local Dev: http://192.168.29.232:3000 (use your Mac's IP)
+// - Local Dev: http://192.168.1.17:3000 (Your Mac's IP)
 // ============================================
-const BASE_URL = 'https://nutrivibesbymansi.vercel.app';
+// For local development, use your machine's IP address
+// For production, change this to your Vercel URL
+const BASE_URL = 'http://192.168.1.17:3000';
+// const BASE_URL = 'https://nutrivibes-official.vercel.app'; // Example production URL
 
 console.log('🌐 API URL:', BASE_URL);
 

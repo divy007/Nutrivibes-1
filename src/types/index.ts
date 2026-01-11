@@ -58,6 +58,8 @@ export interface ClientInfo {
     preferences: string;
     mealTimings?: MealTiming[];
     status?: string;
+    registrationSource?: 'DIETICIAN' | 'MOBILE_APP';
+    isProfileComplete?: boolean;
     hasFollowUpToday?: boolean;
     counsellingProfile?: any;
     followUpHistory?: {

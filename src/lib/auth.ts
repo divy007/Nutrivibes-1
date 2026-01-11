@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
 
 interface TokenPayload extends JwtPayload {
     userId: string;
-    email: string;
+    email?: string;
     role: string;
     isProfileComplete?: boolean;
 }
@@ -19,7 +19,7 @@ export const generateToken = (user: IUser, isProfileComplete?: boolean): string 
     return jwt.sign(
         {
             userId: user._id,
-            email: user.email,
+            email: user.email || '', // Fallback or handle as optional
             role: user.role,
             isProfileComplete,
         },

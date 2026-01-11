@@ -29,6 +29,7 @@ export interface IClient extends Document {
     }[];
     mealTimings?: { mealNumber: number; time: string }[];
     status: 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
+    registrationSource: 'DIETICIAN' | 'MOBILE_APP';
     pausedUntil?: Date;
     isProfileComplete: boolean;
     counsellingProfile?: {
@@ -56,7 +57,7 @@ export interface IClient extends Document {
 const ClientSchema = new Schema(
     {
         name: { type: String, required: true },
-        email: { type: String, required: true, unique: true },
+        email: { type: String, required: false, unique: true, sparse: true }, // Email is now optional
         phone: { type: String, unique: true, sparse: true },
         dob: { type: Date },
         gender: { type: String, enum: ['male', 'female', 'other'] },
@@ -88,6 +89,7 @@ const ClientSchema = new Schema(
             time: String
         }],
         status: { type: String, enum: ['NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
+        registrationSource: { type: String, enum: ['DIETICIAN', 'MOBILE_APP'], default: 'DIETICIAN' },
         pausedUntil: { type: Date },
         isProfileComplete: { type: Boolean, default: false },
         counsellingProfile: {

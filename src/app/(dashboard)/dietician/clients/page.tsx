@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle } from 'lucide-react';
+import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle, Phone } from 'lucide-react';
 import { ClientInfo } from '@/types';
 
 const PauseModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: () => void, onConfirm: (date: string) => void }) => {
@@ -125,6 +125,10 @@ export default function ClientsPage() {
             return client.dietStatus === 'black';
         }
 
+        if (statusFilter === 'LEADS') {
+            return client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete;
+        }
+
         return client.status === statusFilter;
     }).sort((a, b) => {
         const priority = { black: 0, red: 1, yellow: 2, green: 3 };
@@ -159,9 +163,18 @@ export default function ClientsPage() {
                 return { label: 'Paused', color: 'text-amber-600', dot: 'bg-amber-500' };
             case 'DELETED':
                 return { label: 'Deleted', color: 'text-rose-900', dot: 'bg-rose-800' };
+            case 'LEAD':
+                return { label: 'Lead', color: 'text-orange-600', dot: 'bg-orange-500' };
             default:
+                if (!status && initialStatus === 'LEADS') return { label: 'Lead', color: 'text-orange-600', dot: 'bg-orange-500' };
                 return { label: status || 'Unknown', color: 'text-slate-400', dot: 'bg-slate-300' };
         }
+    };
+
+    // Helper to get status for the tag specifically
+    const getClientDisplayStatus = (client: ClientInfo) => {
+        if (client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete) return 'LEAD';
+        return client.status;
     };
 
     const handleRowClick = (clientId: string) => {
@@ -280,7 +293,7 @@ export default function ClientsPage() {
                         <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Status: {statusFilter}</span>
                         <div className="flex items-center gap-2">
                             {/* Filter Chips - Could expand this later */}
-                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW', 'NEEDS_DIET', 'FOLLOW_UPS'] as const).map(status => (
+                            {(['ACTIVE', 'PAUSED', 'DELETED', 'NEW', 'LEADS', 'NEEDS_DIET', 'FOLLOW_UPS'] as const).map(status => (
                                 <button
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
@@ -290,9 +303,10 @@ export default function ClientsPage() {
                                         }`}
                                 >
                                     {status === 'NEW' ? 'New (7 Days)' :
-                                        status === 'NEEDS_DIET' ? 'Needs Diet Today' :
-                                            status === 'FOLLOW_UPS' ? 'Follow-ups Today' :
-                                                status.charAt(0) + status.slice(1).toLowerCase()}
+                                        status === 'LEADS' ? 'Leads (Incomplete)' :
+                                            status === 'NEEDS_DIET' ? 'Needs Diet Today' :
+                                                status === 'FOLLOW_UPS' ? 'Follow-ups Today' :
+                                                    status.charAt(0) + status.slice(1).toLowerCase()}
                                 </button>
                             ))}
 
@@ -339,10 +353,20 @@ export default function ClientsPage() {
                                             {client.clientId}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <span className="font-bold text-slate-700 text-sm group-hover:text-orange-600 transition-colors">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <span className="font-bold text-slate-700 text-sm group-hover:text-brand-forest transition-colors">
                                                     {client.name}
                                                 </span>
+                                                {client.phone && (
+                                                    <a
+                                                        href={`tel:${client.phone}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="p-1.5 bg-brand-sage/10 text-brand-sage rounded-full hover:bg-brand-sage hover:text-white transition-all shadow-sm"
+                                                        title="Call Client"
+                                                    >
+                                                        <Phone size={14} />
+                                                    </a>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-xs text-slate-600 font-medium">
@@ -350,12 +374,18 @@ export default function ClientsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {(() => {
-                                                const styles = getStatusStyles(client.status || 'ACTIVE');
+                                                const styles = getStatusStyles(getClientDisplayStatus(client) || 'ACTIVE');
+                                                const isMobile = client.registrationSource === 'MOBILE_APP';
                                                 return (
-                                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold ${styles.color} rounded`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`}></span>
-                                                        {styles.label}
-                                                    </span>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold ${styles.color} rounded`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`}></span>
+                                                            {styles.label}
+                                                        </span>
+                                                        <span className="text-[8px] font-black text-slate-400 tracking-tighter uppercase">
+                                                            via {isMobile ? 'Mobile' : 'Dietician'}
+                                                        </span>
+                                                    </div>
                                                 );
                                             })()}
                                         </td>

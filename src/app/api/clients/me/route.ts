@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
+import User from '@/models/User';
 import WeightLog from '@/models/WeightLog';
 import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
@@ -16,7 +17,15 @@ export async function GET(req: Request) {
 
         const client = await Client.findOne({ userId: user._id });
         if (!client) {
-            return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
+            // Return skeleton profile for new phone-auth users
+            return NextResponse.json({
+                userId: user._id,
+                name: user.name || 'App User',
+                phone: user.phone,
+                email: user.email,
+                isProfileComplete: false,
+                isNewUser: true
+            });
         }
 
         return NextResponse.json(client);
@@ -36,6 +45,28 @@ export async function PATCH(req: Request) {
 
         const body = await req.json();
         console.log('Update request body:', body);
+
+        let client = await Client.findOne({ userId: user._id });
+
+        if (!client) {
+            // New user scenario: Create the Client record
+            const defaultDietician = await User.findOne({ role: 'DIETICIAN' });
+            if (!defaultDietician) {
+                return NextResponse.json({ error: 'No dietician available for assignment' }, { status: 500 });
+            }
+
+            client = new Client({
+                userId: user._id,
+                dieticianId: defaultDietician._id,
+                name: body.name || user.name || 'App User',
+                email: body.email || user.email,
+                phone: user.phone,
+                status: 'NEW',
+                registrationSource: 'MOBILE_APP',
+                isProfileComplete: false
+            });
+            await client.save();
+        }
 
         // Extract only the fields that should be updated (exclude read-only fields)
         const { name, email, phone, userId, dieticianId, _id, ...updateFields } = body;
@@ -62,11 +93,12 @@ export async function PATCH(req: Request) {
             ...updateFields,
             isProfileComplete,
             idealWeight,
+            name: body.name || client.name, // Allow updating name
         };
 
         console.log('Updating client with data:', updateData);
 
-        const client = await Client.findOneAndUpdate(
+        const updatedClient = await Client.findOneAndUpdate(
             { userId: user._id },
             { $set: updateData },
             {
@@ -75,10 +107,12 @@ export async function PATCH(req: Request) {
             }
         );
 
-        if (!client) {
+        if (!updatedClient) {
             console.error('Client profile not found for userId:', user._id);
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
+
+        client = updatedClient;
 
         // AUTO-LOG WEIGHT: If weight was updated in the profile, create a history log
         if (updateFields.weight) {

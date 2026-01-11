@@ -109,38 +109,75 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, email, password, ...clientData } = body;
+        const { name, email, password, phone, ...clientData } = body;
 
-        // 1. Check if User/Email exists
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-        if (existingUser) {
-            return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+        // Validation: Require either Email or Phone
+        if (!email && !phone) {
+            return NextResponse.json({ error: 'Either Email or Phone number is required' }, { status: 400 });
+        }
+
+        // 1. Check if User/Email exists (if email provided)
+        if (email) {
+            const existingUser = await User.findOne({ email: email.toLowerCase() });
+            if (existingUser) {
+                return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+            }
         }
 
         // 2. Check if Phone exists (if provided)
-        if (clientData.phone) {
-            const existingClient = await Client.findOne({ phone: clientData.phone });
+        if (phone) {
+            // Check in User model
+            const existingUserPhone = await User.findOne({ phone });
+            if (existingUserPhone) {
+                return NextResponse.json({ error: 'Phone number already registered to a User' }, { status: 400 });
+            }
+            // Check in Client model (redundant but safe)
+            const existingClient = await Client.findOne({ phone });
             if (existingClient) {
-                return NextResponse.json({ error: 'Phone number already registered' }, { status: 400 });
+                return NextResponse.json({ error: 'Phone number already registered to a Client' }, { status: 400 });
             }
         }
 
         // 3. Create User for Login
-        const newUser = await User.create({
+        const userData: any = {
             name,
-            email,
-            password, // User model handles hashing
             role: 'CLIENT',
-        });
+        };
 
-        // 3. Create Client Profile
-        const client = await Client.create({
+        if (email) {
+            userData.email = email;
+            userData.loginMethod = 'EMAIL_PASSWORD';
+            if (password) {
+                userData.password = password;
+            } else {
+                return NextResponse.json({ error: 'Password is required with Email' }, { status: 400 });
+            }
+        }
+
+        if (phone) {
+            userData.phone = phone;
+            if (!email) {
+                userData.loginMethod = 'PHONE_OTP';
+            }
+        }
+
+        const newUser = await User.create(userData);
+        // Cast to any to handle potential Mongoose array return types
+        const newUserId = (newUser as any)._id || (newUser as any)[0]?._id;
+
+        // 4. Create Client Profile
+        const clientDataCreate: any = {
             ...clientData,
             name,
-            email,
-            userId: newUser._id,
+            userId: newUserId,
             dieticianId: user._id,
-        });
+            registrationSource: 'DIETICIAN',
+        };
+
+        if (email) clientDataCreate.email = email;
+        if (phone) clientDataCreate.phone = phone;
+
+        const client = await Client.create(clientDataCreate);
 
         // Trigger automatic follow-up generation if dietStartDate was provided
         if (clientData.dietStartDate) {
