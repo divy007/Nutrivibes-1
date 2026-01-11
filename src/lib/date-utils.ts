@@ -1,41 +1,48 @@
 import { startOfDay } from 'date-fns';
 
+// Constants
+const APP_TIMEZONE = 'Asia/Kolkata';
+
 /**
- * Normalizes a date or date string to a UTC Date object at 00:00:0.000Z.
- * This ensures that a "day" is consistent across client and server timezones.
+ * Normalizes a date or date string to a UTC Date object at 00:00:0.000Z
+ * corresponding to the start of the day in the application's timezone (IST).
+ * 
+ * Example: '2026-01-04T18:30:00Z' (Jan 5 IST) -> '2026-01-05T00:00:00Z'
  */
 export function normalizeDateUTC(dateInput?: string | Date): Date {
     if (!dateInput) return normalizeDateUTC(new Date());
 
     const date = new Date(dateInput);
 
-    // Shift by +5.5 hours to align with IST (Indian Standard Time)
-    // 5.5 hours = 5.5 * 60 * 60 * 1000 = 19800000 ms
-    // This allows identifying the "IST Day" even when server is in UTC
-    const shiftedDate = new Date(date.getTime() + 19800000);
+    // Get the YYYY-MM-DD string in the application's timezone
+    // 'en-CA' gives YYYY-MM-DD format
+    const dateString = date.toLocaleDateString('en-CA', {
+        timeZone: APP_TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 
-    // Create a date in UTC at 00:00 of the shifted date
-    const normalized = new Date(Date.UTC(
-        shiftedDate.getUTCFullYear(),
-        shiftedDate.getUTCMonth(),
-        shiftedDate.getUTCDate(),
-        0, 0, 0, 0
-    ));
+    // Create a new UTC date from this string, effectively "flooring" to the day boundary
+    const normalized = new Date(dateString + 'T00:00:00.000Z');
+
+    // Safety check - should not happen with valid inputs
+    if (isNaN(normalized.getTime())) {
+        // Fallback just in case, though highly unlikely with en-CA + known timezone
+        return new Date(dateString);
+    }
 
     return normalized;
 }
 
 /**
- * Returns the current date as a YYYY-MM-DD string in the environmental timezone.
+ * Returns the current date as a YYYY-MM-DD string in the application's timezone.
  */
 export function getLocalDateString(date: Date = new Date()): string {
-    // Shift by +5.5 hours for IST
-    const shiftedDate = new Date(date.getTime() + 19800000);
-
-    // Use UTC methods on the shifted date to get IST day components
-    const year = shiftedDate.getUTCFullYear();
-    const month = String(shiftedDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(shiftedDate.getUTCDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+    return date.toLocaleDateString('en-CA', {
+        timeZone: APP_TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 }
