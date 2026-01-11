@@ -4,6 +4,7 @@ import DietPlan from '@/models/DietPlan';
 import Client from '@/models/Client';
 import { format } from 'date-fns';
 import { verifyToken } from '@/lib/auth';
+import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
     console.log('GET /api/client/diet-plan hit');
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
         // Fetch diet plan using the actual Client ID
         const dietPlan = await DietPlan.findOne({
             clientId: client._id,
-            weekStartDate: new Date(startDate)
+            weekStartDate: normalizeDateUTC(startDate)
         });
 
         if (!dietPlan) {

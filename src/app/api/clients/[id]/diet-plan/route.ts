@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB as dbConnect } from '@/lib/mongodb';
 import DietPlan from '@/models/DietPlan';
 import { startOfWeek, format } from 'date-fns';
+import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
@@ -12,10 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     try {
         const dietPlan = await DietPlan.findOne({
             clientId: id,
-            weekStartDate: {
-                $gte: new Date(startDate),
-                $lt: new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000) // Within the same day
-            }
+            weekStartDate: normalizeDateUTC(startDate)
         });
 
         return NextResponse.json(dietPlan || { success: true, message: 'No plan found' });
@@ -32,9 +30,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     try {
         const { weekStartDate, days } = body;
 
+        // Normalize all dates in the days array to UTC to prevent timezone issues
+        const normalizedDays = days.map((day: any) => ({
+            ...day,
+            date: normalizeDateUTC(day.date)
+        }));
+
         const dietPlan = await DietPlan.findOneAndUpdate(
-            { clientId: id, weekStartDate: new Date(weekStartDate) },
-            { clientId: id, weekStartDate: new Date(weekStartDate), days },
+            { clientId: id, weekStartDate: normalizeDateUTC(weekStartDate) },
+            {
+                clientId: id,
+                weekStartDate: normalizeDateUTC(weekStartDate),
+                days: normalizedDays
+            },
             { upsert: true, new: true }
         );
 

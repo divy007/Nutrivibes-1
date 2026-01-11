@@ -35,20 +35,7 @@ export async function GET(req: Request) {
                 }
             }).lean();
 
-            // Debug: Show all dates for Divy
-            if (client.name?.toLowerCase().includes('divy')) {
-                console.log('📅 All dates in Divy\'s plans:');
-                plans.forEach((plan: any, planIdx: number) => {
-                    console.log(`  Plan ${planIdx + 1}:`);
-                    plan.days?.forEach((day: any) => {
-                        const rawDate = day.date;
-                        const normalized = normalizeDateUTC(rawDate);
-                        const formatted = formatDate(normalized);
-                        console.log(`    - Raw: ${rawDate} → Normalized: ${normalized.toISOString()} → Formatted: ${formatted} (Status: ${day.status})`);
-                    });
-                });
-                console.log('  Looking for:', targetDates[0], targetDates[1], targetDates[2]);
-            }
+
 
 
 
@@ -57,14 +44,7 @@ export async function GET(req: Request) {
                     plan.days.some((day: any) => {
                         // Format the plan date and compare with the target date string
                         const planDateStr = formatDate(normalizeDateUTC(day.date));
-                        const isMatch = planDateStr === dateStr && day.status === 'PUBLISHED';
-
-                        // Temporary debug for divy
-                        if (client.name?.toLowerCase().includes('divy') && isMatch) {
-                            console.log('✅ MATCH FOUND for', client.name, '- Date:', dateStr, 'Status:', day.status);
-                        }
-
-                        return isMatch;
+                        return planDateStr === dateStr && day.status === 'PUBLISHED';
                     })
                 );
             };
@@ -73,16 +53,7 @@ export async function GET(req: Request) {
             const publishedTomorrow = isPublished(targetDates[1]);
             const publishedLater = isPublished(targetDates[2]);
 
-            // Debug final status for divy
-            if (client.name?.toLowerCase().includes('divy')) {
-                console.log('🎯 Divy Status:', {
-                    today: targetDates[0],
-                    publishedToday,
-                    publishedTomorrow,
-                    publishedLater,
-                    finalStatus: !publishedToday ? 'black' : publishedToday && publishedTomorrow && publishedLater ? 'green' : publishedToday && publishedTomorrow ? 'yellow' : 'red'
-                });
-            }
+
 
 
 
