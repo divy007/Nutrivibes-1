@@ -7,7 +7,6 @@ import { verifyToken } from '@/lib/auth';
 import { normalizeDateUTC } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
-    console.log('GET /api/client/diet-plan hit');
     await dbConnect();
 
     try {
