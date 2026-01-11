@@ -37,10 +37,12 @@ export async function GET(req: Request) {
 
             const isPublished = (dateStr: string) => {
                 return plans.some((plan: any) =>
-                    plan.days.some((day: any) =>
-                        formatDate(new Date(day.date)) === dateStr &&
-                        day.status === 'PUBLISHED'
-                    )
+                    plan.days.some((day: any) => {
+                        // Normalize both dates to UTC for consistent comparison
+                        const planDate = normalizeDateUTC(day.date);
+                        const targetDate = normalizeDateUTC(dateStr);
+                        return formatDate(planDate) === formatDate(targetDate) && day.status === 'PUBLISHED';
+                    })
                 );
             };
 
