@@ -9,11 +9,12 @@ export function normalizeDateUTC(dateInput?: string | Date): Date {
 
     const date = new Date(dateInput);
 
-    // Create a date in UTC at 00:00 of the given date's calendar day
+    // Create a date in UTC at 00:00 of the given date's calendar day IN UTC
+    // Use UTC methods to avoid timezone shifts
     const normalized = new Date(Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
         0, 0, 0, 0
     ));
 
