@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Activity, Bell, User as UserIcon, LogOut, Loader2 } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 
@@ -32,6 +33,7 @@ export default function DashboardScreen() {
   const [measurementLogs, setMeasurementLogs] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
@@ -57,8 +59,18 @@ export default function DashboardScreen() {
       setMeasurementLogs(data.measurementLogs || []);
       setCycleStatus(data.cycleStatus);
       setLastPeriodLog(data.lastPeriodLog);
-    } catch (error) {
+
+      // Check if welcome banner should be shown
+      if (data.profile && data.profile.status === 'LEAD' && data.profile.registrationSource === 'MOBILE_APP') {
+        const dismissed = await AsyncStorage.getItem('welcome_banner_dismissed');
+        if (!dismissed) {
+          setShowWelcome(true);
+        }
+      }
+    } catch (error: any) {
       console.error('Failed to fetch dashboard data:', error);
+      const errorMessage = error.message || 'Failed to fetch dashboard data';
+      Alert.alert('Dashboard Error', errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -108,6 +120,15 @@ export default function DashboardScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
+  };
+
+  const dismissWelcome = async () => {
+    setShowWelcome(false);
+    try {
+      await AsyncStorage.setItem('welcome_banner_dismissed', 'true');
+    } catch (e) {
+      console.error('Failed to save welcome dismissal:', e);
+    }
   };
 
   // Logic to determine weight values
@@ -248,6 +269,39 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.content}>
+          {profile?.primaryGoal && (
+            <View style={[styles.goalBanner, { backgroundColor: theme.brandSage + '15', borderColor: theme.brandSage + '30' }]}>
+              <View style={styles.goalIconContainer}>
+                <Target size={18} color={theme.brandForest} />
+              </View>
+              <View style={styles.goalTextContainer}>
+                <Text style={styles.goalLabel}>Focusing on</Text>
+                <Text style={[styles.goalValue, { color: theme.brandForest }]}>{profile.primaryGoal}</Text>
+              </View>
+            </View>
+          )}
+
+          {showWelcome && (
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <View style={[styles.leadCard, { backgroundColor: theme.brandForest }]}>
+                  <View style={[styles.leadIconContainer, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                    <Sparkles size={24} color="#fff" />
+                  </View>
+                  <View style={[styles.leadTextContainer, { backgroundColor: 'transparent' }]}>
+                    <Text style={styles.leadTitle}>Welcome to NutriVibes!</Text>
+                    <Text style={styles.leadSubtitle}>
+                      Your dietician will review your profile and reach out soon. Start logging your water and weight to kickstart your journey!
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={dismissWelcome} style={styles.dismissButton}>
+                    <X size={20} color="rgba(255,255,255,0.6)" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+
           <View style={styles.row}>
             <View style={styles.col}>
               <WeightTracker
@@ -342,20 +396,87 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
+  goalBanner: {
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 8,
+  },
+  goalIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  goalTextContainer: {
+    flex: 1,
+  },
+  goalLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  goalValue: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  leadCard: {
+    padding: 24,
+    borderRadius: 24,
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    position: 'relative',
+  },
+  dismissButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  leadIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leadTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  leadTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  leadSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
   scrollContent: {
     padding: 24,
     paddingTop: 24, // Padding handled by contentContainer style dynamically
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    opacity: 0.7,
   },
   header: {
     flexDirection: 'row',

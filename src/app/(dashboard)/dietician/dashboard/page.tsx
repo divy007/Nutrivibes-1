@@ -21,6 +21,7 @@ interface Stats {
   newClients: number;
   pausedClients: number;
   expiredClients: number;
+  leadsCount: number;
   todayFollowUps: { name: string; color: string }[];
 }
 
@@ -59,7 +60,7 @@ export default function DieticianDashboard() {
           <h1 className="text-xl font-bold text-slate-800">Homepage</h1>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <Link href="/dietician/clients?status=ACTIVE">
               <SummaryCard title="Active Clients" count={stats?.activeClients ?? 0} icon={<Users className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
             </Link>
@@ -71,6 +72,9 @@ export default function DieticianDashboard() {
             </Link>
             <Link href="/dietician/clients?status=DELETED">
               <SummaryCard title="Expired Clients (Deleted)" count={stats?.expiredClients ?? 0} icon={<Clock className="text-brand-earth" />} color="border-brand-earth" loading={loading} />
+            </Link>
+            <Link href="/dietician/clients?status=LEADS">
+              <SummaryCard title="Leads (Incomplete)" count={stats?.leadsCount ?? 0} icon={<Zap className="text-orange-500" />} color="border-orange-500" loading={loading} />
             </Link>
           </div>
 

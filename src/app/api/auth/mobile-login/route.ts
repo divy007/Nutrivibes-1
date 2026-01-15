@@ -26,6 +26,7 @@ export async function POST(req: Request) {
         }
 
         const { uid, phone_number } = decodedToken;
+        console.log('Decoded Token:', { uid, phone_number, allClaims: decodedToken });
 
         if (!phone_number) {
             return NextResponse.json({ error: 'Phone number not found in token' }, { status: 400 });
@@ -97,8 +98,11 @@ export async function POST(req: Request) {
             isProfileComplete
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Mobile login error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Internal server error',
+            message: error.message
+        }, { status: 500 });
     }
 }

@@ -7,7 +7,6 @@ import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
 
 export async function GET(req: Request) {
-    console.log('GET /api/clients/me hit');
     await connectDB();
     try {
         const user = await getAuthUser(req);
@@ -15,7 +14,22 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const client = await Client.findOne({ userId: user._id });
+        let client = await Client.findOne({ userId: user._id });
+
+        // SELF-HEALING: If no client by userId, try finding by phone (orphaned record)
+        if (!client && user.phone) {
+            client = await Client.findOne({ phone: user.phone });
+            if (client) {
+                console.log('Found orphaned client record by phone, claiming it for user:', user._id);
+                client.userId = user._id;
+                // If it was deleted, move it back to LEAD so it shows up in dashboard
+                if (client.status === 'DELETED') {
+                    client.status = 'LEAD';
+                }
+                await client.save();
+            }
+        }
+
         if (!client) {
             // Return skeleton profile for new phone-auth users
             return NextResponse.json({
@@ -48,6 +62,21 @@ export async function PATCH(req: Request) {
 
         let client = await Client.findOne({ userId: user._id });
 
+        // SELF-HEALING: If no client by userId, try finding by phone (orphaned record)
+        if (!client && user.phone) {
+            client = await Client.findOne({ phone: user.phone });
+            if (client) {
+                console.log('Found orphaned client record by phone during PATCH, claiming it:', user._id);
+                client.userId = user._id;
+                // Important: Don't change status to LEAD yet if it's already ACTIVE/NEW, 
+                // but if it was DELETED/LEAD, ensure it's LEAD for conversion.
+                if (['DELETED', 'LEAD'].includes(client.status)) {
+                    client.status = 'LEAD';
+                }
+                await client.save();
+            }
+        }
+
         if (!client) {
             // New user scenario: Create the Client record
             const defaultDietician = await User.findOne({ role: 'DIETICIAN' });
@@ -61,7 +90,7 @@ export async function PATCH(req: Request) {
                 name: body.name || user.name || 'App User',
                 email: body.email || user.email,
                 phone: user.phone,
-                status: 'NEW',
+                status: 'LEAD',
                 registrationSource: 'MOBILE_APP',
                 isProfileComplete: false
             });
@@ -74,11 +103,11 @@ export async function PATCH(req: Request) {
         // Check if all required fields are filled to mark profile as complete
         const isProfileComplete = !!(
             updateFields.city &&
-            updateFields.state &&
             updateFields.dob &&
             updateFields.gender &&
             updateFields.height &&
-            updateFields.weight
+            updateFields.weight &&
+            updateFields.primaryGoal
         );
 
         // Auto-calculate Ideal Weight (Target Weight) using BMI 22 if height is changed/present
@@ -96,10 +125,8 @@ export async function PATCH(req: Request) {
             name: body.name || client.name, // Allow updating name
         };
 
-        console.log('Updating client with data:', updateData);
-
         const updatedClient = await Client.findOneAndUpdate(
-            { userId: user._id },
+            { _id: client._id }, // Use actual ID since we just claimed/found it
             { $set: updateData },
             {
                 new: true,
@@ -108,7 +135,7 @@ export async function PATCH(req: Request) {
         );
 
         if (!updatedClient) {
-            console.error('Client profile not found for userId:', user._id);
+            console.error('Client profile not found during update:', client._id);
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
@@ -125,11 +152,8 @@ export async function PATCH(req: Request) {
                 });
             } catch (logError) {
                 console.error('Failed to auto-create weight log during profile update:', logError);
-                // Non-blocking error
             }
         }
-
-        console.log('Client updated successfully:', client._id);
 
         // Generate new token with updated isProfileComplete status
         const newToken = generateToken(user, isProfileComplete);
@@ -149,11 +173,11 @@ export async function PATCH(req: Request) {
         response.headers.set('X-New-Token', newToken);
 
         return response;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to update client profile - Full error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({
-            error: 'Failed to update profile',
+            error: `Update failed: ${errorMessage}`,
             details: errorMessage
         }, { status: 400 });
     }

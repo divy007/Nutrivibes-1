@@ -84,8 +84,12 @@ export async function GET(req: Request) {
             cycleStatus,
             lastPeriodLog
         });
-    } catch (error) {
-        console.error('Failed to fetch dashboard summary:', error);
-        return NextResponse.json({ error: 'Failed to fetch dashboard data' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Failed to fetch dashboard summary - Full error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({
+            error: `Dashboard failed: ${errorMessage}`,
+            details: errorMessage
+        }, { status: 500 });
     }
 }

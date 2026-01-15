@@ -49,6 +49,7 @@ export default function LoginScreen() {
         setError(null);
         try {
             const phoneProvider = new PhoneAuthProvider(auth);
+            console.log('Sending OTP to:', formattedPhone);
             const verificationId = await phoneProvider.verifyPhoneNumber(
                 formattedPhone,
                 recaptchaVerifier.current!
@@ -102,7 +103,6 @@ export default function LoginScreen() {
 
     // --- Email Auth Logic ---
     const handleEmailLogin = async () => {
-        // ... (Existing Email Logic)
         setLoading(true);
         try {
             const response = await api.post<any>('/api/auth/login', { email, password });
@@ -116,20 +116,31 @@ export default function LoginScreen() {
 
 
     const renderPhoneInput = () => (
-        <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.brandForest }]}>Phone Number</Text>
-            <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
-                <Smartphone size={20} color={theme.brandForest} />
-                <TextInput
-                    style={[styles.input, { color: theme.text }]}
-                    placeholder="+91 99999 99999"
-                    placeholderTextColor={theme.brandForest + '80'}
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                    keyboardType="phone-pad"
-                    autoFocus
-                />
+        <View style={styles.form}>
+            <View style={styles.inputGroup}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.label, { color: theme.brandForest }]}>Phone Number</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Phone Login', 'Enter your registered mobile number to receive a 6-digit OTP.')}>
+                        <HelpCircle size={16} color={theme.brandForest + '80'} />
+                    </TouchableOpacity>
+                </View>
+                <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                    <Smartphone size={20} color={theme.brandForest} />
+                    <TextInput
+                        style={[styles.input, { color: theme.text }]}
+                        placeholder="+91 99999 99999"
+                        placeholderTextColor={theme.brandForest + '80'}
+                        value={phoneNumber}
+                        onChangeText={setPhoneNumber}
+                        keyboardType="phone-pad"
+                        autoFocus
+                    />
+                </View>
+                <Text style={{ fontSize: 12, color: theme.brandForest + '90' }}>
+                    Include country code (e.g., +91 for India).
+                </Text>
             </View>
+
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.brandForest }]}
                 onPress={sendOTP}
@@ -137,6 +148,8 @@ export default function LoginScreen() {
             >
                 {loading ? <Loader2 color="#FFF" /> : <Text style={styles.buttonText}>Send OTP</Text>}
             </TouchableOpacity>
+
+            <FirebaseRecaptchaBanner style={{ marginTop: 12 }} />
         </View>
     );
 
@@ -173,21 +186,53 @@ export default function LoginScreen() {
     const renderEmailInput = () => (
         <View style={styles.form}>
             <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: theme.brandForest }]}>Email</Text>
-                <TextInput
-                    style={[styles.inputWrapper, { padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 12 }]}
-                    value={email} onChangeText={setEmail} autoCapitalize="none"
-                    placeholder="email@example.com"
-                />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.label, { color: theme.brandForest }]}>Email Address</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Email Login', 'Use your registered email and password to sign in.')}>
+                        <HelpCircle size={16} color={theme.brandForest + '80'} />
+                    </TouchableOpacity>
+                </View>
+                <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                    <Mail size={20} color={theme.brandForest} />
+                    <TextInput
+                        style={[styles.input, { color: theme.text }]}
+                        value={email}
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        placeholder="email@example.com"
+                        placeholderTextColor={theme.brandForest + '80'}
+                        keyboardType="email-address"
+                    />
+                </View>
             </View>
+
             <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
-                <TextInput
-                    style={[styles.inputWrapper, { padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 12 }]}
-                    value={password} onChangeText={setPassword} secureTextEntry
-                    placeholder="******"
-                />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Password Help', 'Passwords must be at least 6 characters long.')}>
+                        <HelpCircle size={16} color={theme.brandForest + '80'} />
+                    </TouchableOpacity>
+                </View>
+                <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                    <Lock size={20} color={theme.brandForest} />
+                    <TextInput
+                        style={[styles.input, { color: theme.text }]}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!showPassword}
+                        placeholder="******"
+                        placeholderTextColor={theme.brandForest + '80'}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        {showPassword ? (
+                            <EyeOff size={20} color={theme.brandForest} />
+                        ) : (
+                            <Eye size={20} color={theme.brandForest} />
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
+
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.brandForest }]}
                 onPress={handleEmailLogin}
@@ -204,7 +249,6 @@ export default function LoginScreen() {
             <FirebaseRecaptchaVerifierModal
                 ref={recaptchaVerifier}
                 firebaseConfig={firebaseConfig}
-            // attemptInvisibleVerification={true} // Optional
             />
 
             <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>

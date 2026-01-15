@@ -117,53 +117,69 @@ export async function POST(req: Request) {
         }
 
         // 1. Check if User/Email exists (if email provided)
+        let linkedUser = null;
         if (email) {
             const existingUser = await User.findOne({ email: email.toLowerCase() });
             if (existingUser) {
-                return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+                // Check if user already has a client profile
+                const existingClient = await Client.findOne({ userId: existingUser._id });
+                if (existingClient) {
+                    return NextResponse.json({ error: 'Email already registered with a client profile' }, { status: 400 });
+                }
+                linkedUser = existingUser;
             }
         }
 
         // 2. Check if Phone exists (if provided)
-        if (phone) {
-            // Check in User model
+        if (phone && !linkedUser) {
             const existingUserPhone = await User.findOne({ phone });
             if (existingUserPhone) {
-                return NextResponse.json({ error: 'Phone number already registered to a User' }, { status: 400 });
-            }
-            // Check in Client model (redundant but safe)
-            const existingClient = await Client.findOne({ phone });
-            if (existingClient) {
-                return NextResponse.json({ error: 'Phone number already registered to a Client' }, { status: 400 });
-            }
-        }
-
-        // 3. Create User for Login
-        const userData: any = {
-            name,
-            role: 'CLIENT',
-        };
-
-        if (email) {
-            userData.email = email;
-            userData.loginMethod = 'EMAIL_PASSWORD';
-            if (password) {
-                userData.password = password;
-            } else {
-                return NextResponse.json({ error: 'Password is required with Email' }, { status: 400 });
+                // Check if user already has a client profile
+                const existingClient = await Client.findOne({ userId: existingUserPhone._id });
+                if (existingClient) {
+                    return NextResponse.json({ error: 'Phone number already registered with a client profile' }, { status: 400 });
+                }
+                linkedUser = existingUserPhone;
             }
         }
 
-        if (phone) {
-            userData.phone = phone;
-            if (!email) {
-                userData.loginMethod = 'PHONE_OTP';
-            }
-        }
+        let newUserId;
+        if (linkedUser) {
+            console.log('Linking existing User to new Client profile:', linkedUser._id);
+            newUserId = linkedUser._id;
 
-        const newUser = await User.create(userData);
-        // Cast to any to handle potential Mongoose array return types
-        const newUserId = (newUser as any)._id || (newUser as any)[0]?._id;
+            // If user exists but was placeholder "App User" and we have a real name now, update it
+            if (linkedUser.name === 'App User' && name) {
+                linkedUser.name = name;
+                await linkedUser.save();
+            }
+        } else {
+            // 3. Create User for Login
+            const userData: any = {
+                name,
+                role: 'CLIENT',
+            };
+
+            if (email) {
+                userData.email = email;
+                userData.loginMethod = 'EMAIL_PASSWORD';
+                if (password) {
+                    userData.password = password;
+                } else {
+                    return NextResponse.json({ error: 'Password is required with Email' }, { status: 400 });
+                }
+            }
+
+            if (phone) {
+                userData.phone = phone;
+                if (!email) {
+                    userData.loginMethod = 'PHONE_OTP';
+                }
+            }
+
+            const newUser = await User.create(userData);
+            newUserId = (newUser as any)._id || (newUser as any)[0]?._id;
+        }
 
         // 4. Create Client Profile
         const clientDataCreate: any = {

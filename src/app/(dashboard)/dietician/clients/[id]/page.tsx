@@ -88,6 +88,9 @@ export default function ClientSummaryPage() {
                             <p className="text-sm text-slate-400 font-medium">{client.id}</p>
                             <div className="mt-4 flex flex-col gap-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{client.preferences || 'No Preferences Set'}</span>
+                                {client.primaryGoal && (
+                                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest leading-none mt-1">Goal: {client.primaryGoal}</span>
+                                )}
                                 <div className="mt-2">
                                     <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tighter">{client.status}</span>
                                 </div>

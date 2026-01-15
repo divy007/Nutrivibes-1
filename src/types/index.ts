@@ -58,6 +58,7 @@ export interface ClientInfo {
     preferences: string;
     mealTimings?: MealTiming[];
     status?: string;
+    primaryGoal?: string;
     registrationSource?: 'DIETICIAN' | 'MOBILE_APP';
     isProfileComplete?: boolean;
     hasFollowUpToday?: boolean;

@@ -1,5 +1,17 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export const PRIMARY_GOALS = [
+    'Weight Loss',
+    'Weight Gain',
+    'Muscle Building',
+    'PCOD/PCOS Management',
+    'Diabetes Management',
+    'General Wellness',
+    'Other'
+] as const;
+
+export type PrimaryGoal = typeof PRIMARY_GOALS[number];
+
 export interface IClient extends Document {
     name: string;
     email: string;
@@ -28,7 +40,7 @@ export interface IClient extends Document {
         updatedAt: Date;
     }[];
     mealTimings?: { mealNumber: number; time: string }[];
-    status: 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
+    status: 'LEAD' | 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
     registrationSource: 'DIETICIAN' | 'MOBILE_APP';
     pausedUntil?: Date;
     isProfileComplete: boolean;
@@ -50,6 +62,7 @@ export interface IClient extends Document {
         exerciseFrequency?: string;
         exerciseDuration?: string;
     };
+    primaryGoal?: PrimaryGoal;
     dieticianId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
 }
@@ -88,7 +101,7 @@ const ClientSchema = new Schema(
             mealNumber: Number,
             time: String
         }],
-        status: { type: String, enum: ['NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
+        status: { type: String, enum: ['LEAD', 'NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
         registrationSource: { type: String, enum: ['DIETICIAN', 'MOBILE_APP'], default: 'DIETICIAN' },
         pausedUntil: { type: Date },
         isProfileComplete: { type: Boolean, default: false },
@@ -144,6 +157,11 @@ const ClientSchema = new Schema(
             exerciseType: String,
             exerciseFrequency: String,
             exerciseDuration: String
+        },
+        primaryGoal: {
+            type: String,
+            enum: PRIMARY_GOALS,
+            required: false
         },
         dieticianId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

@@ -5,16 +5,16 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 // ============================================
 // API CONFIGURATION
 // ============================================
-// Change this URL based on your needs:
-// - Production: https://nutrivibesbymansi.vercel.app
-// - Local Dev: http://192.168.1.17:3000 (Your Mac's IP)
-// ============================================
-// For local development, use your machine's IP address
-// For production, change this to your Vercel URL
-const BASE_URL = 'http://192.168.1.17:3000';
-// const BASE_URL = 'https://nutrivibes-official.vercel.app'; // Example production URL
+const PROD_URL = 'https://nutrivibesbymansi.vercel.app';
+const LOCAL_URL = 'http://192.168.1.6:3000'; // Change to your Mac's IP for local dev
 
-console.log('🌐 API URL:', BASE_URL);
+// Set this to true for production, false for local development
+const IS_PROD = false;
+
+const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
+
+console.log(`🌐 API Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+console.log(`🔗 API URL: ${BASE_URL}`);
 
 export const setAuthToken = async (token: string): Promise<void> => {
     await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
@@ -48,7 +48,7 @@ export const apiRequest = async <T>(
 
     // Set a 10 second timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const config: RequestInit = {
         ...options,

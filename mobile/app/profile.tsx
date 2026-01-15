@@ -6,6 +6,9 @@ import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle } from 'lucide-react-
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { Target, Check } from 'lucide-react-native';
+import { SelectionOption } from '@/components/ProfileOptions';
+import { PRIMARY_GOALS, DIETARY_PREFERENCES, GENDER_OPTIONS } from '@/constants/Constants';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -24,7 +27,8 @@ export default function ProfileScreen() {
         city: '',
         state: '',
         gender: '' as 'male' | 'female' | 'other' | '',
-        preferences: '' // Single selection logic for UI
+        preferences: '', // Single selection logic for UI
+        primaryGoal: ''
     });
 
     useEffect(() => {
@@ -45,7 +49,8 @@ export default function ProfileScreen() {
                 state: data.state || '',
                 gender: data.gender || '',
                 // backend returns array, we take first item or join, but for Persona strict logic we take first
-                preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : ''
+                preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
+                primaryGoal: data.primaryGoal || ''
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -68,7 +73,8 @@ export default function ProfileScreen() {
                 gender: formData.gender,
                 // Calculate DOB from Age (approximate to Jan 1st of the birth year)
                 dob: formData.age ? new Date(new Date().getFullYear() - parseInt(formData.age), 0, 1) : undefined,
-                dietaryPreferences: formData.preferences ? [formData.preferences] : []
+                dietaryPreferences: formData.preferences ? [formData.preferences] : [],
+                primaryGoal: formData.primaryGoal
             });
             Alert.alert('Success', 'Profile updated successfully');
         } catch (error) {
@@ -87,23 +93,6 @@ export default function ProfileScreen() {
         );
     }
 
-    const DietOption = ({ value, label }: { value: string, label: string }) => (
-        <TouchableOpacity
-            style={[
-                styles.genderOption,
-                {
-                    backgroundColor: formData.preferences === value ? theme.brandSage : '#f8fafc',
-                    borderColor: formData.preferences === value ? theme.brandForest : '#f1f5f9'
-                }
-            ]}
-            onPress={() => setFormData({ ...formData, preferences: value })}
-        >
-            <Text style={[
-                styles.genderLabel,
-                { color: formData.preferences === value ? '#fff' : '#64748b', fontSize: 12 }
-            ]}>{label}</Text>
-        </TouchableOpacity>
-    );
 
     return (
         <KeyboardAvoidingView
@@ -145,33 +134,16 @@ export default function ProfileScreen() {
                             <Text style={styles.label}>Gender</Text>
                             <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                 <UserCircle size={20} color="#94a3b8" />
-                                <View style={{ flexDirection: 'row', gap: 16, flex: 1 }}>
-                                    {['male', 'female', 'other'].map((g) => (
-                                        <TouchableOpacity
-                                            key={g}
-                                            onPress={() => setFormData({ ...formData, gender: g as any })}
-                                            style={{
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                gap: 4,
-                                                opacity: formData.gender === g ? 1 : 0.5
-                                            }}
-                                        >
-                                            <View style={{
-                                                width: 16,
-                                                height: 16,
-                                                borderRadius: 8,
-                                                borderWidth: 2,
-                                                borderColor: theme.brandForest,
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                {formData.gender === g && (
-                                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.brandForest }} />
-                                                )}
-                                            </View>
-                                            <Text style={{ textTransform: 'capitalize', fontWeight: 'bold', color: theme.text }}>{g}</Text>
-                                        </TouchableOpacity>
+                                <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
+                                    {GENDER_OPTIONS.map((opt) => (
+                                        <SelectionOption
+                                            key={opt.value}
+                                            value={opt.value}
+                                            label={opt.label}
+                                            selected={formData.gender === opt.value}
+                                            onSelect={(val) => setFormData({ ...formData, gender: val })}
+                                            theme={theme}
+                                        />
                                     ))}
                                 </View>
                             </View>
@@ -181,13 +153,45 @@ export default function ProfileScreen() {
                             <Text style={styles.label}>Diet Preference</Text>
                             <View style={{ gap: 8 }}>
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    <DietOption value="Vegetarian" label="Vegetarian" />
-                                    <DietOption value="Eggetarian" label="Eggetarian" />
+                                    {DIETARY_PREFERENCES.slice(0, 2).map((opt) => (
+                                        <SelectionOption
+                                            key={opt.value}
+                                            value={opt.value}
+                                            label={opt.label}
+                                            selected={formData.preferences === opt.value}
+                                            onSelect={(val) => setFormData({ ...formData, preferences: val })}
+                                            theme={theme}
+                                        />
+                                    ))}
                                 </View>
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    <DietOption value="Vegan" label="Vegan" />
-                                    <DietOption value="Non-Vegetarian" label="Non-Veg" />
+                                    {DIETARY_PREFERENCES.slice(2).map((opt) => (
+                                        <SelectionOption
+                                            key={opt.value}
+                                            value={opt.value}
+                                            label={opt.label}
+                                            selected={formData.preferences === opt.value}
+                                            onSelect={(val) => setFormData({ ...formData, preferences: val })}
+                                            theme={theme}
+                                        />
+                                    ))}
                                 </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Primary Goal</Text>
+                            <View style={styles.goalGrid}>
+                                {PRIMARY_GOALS.map((goal) => (
+                                    <SelectionOption
+                                        key={goal}
+                                        value={goal}
+                                        selected={formData.primaryGoal === goal}
+                                        onSelect={(val) => setFormData({ ...formData, primaryGoal: val })}
+                                        theme={theme}
+                                        flex={false}
+                                    />
+                                ))}
                             </View>
                         </View>
 
@@ -385,6 +389,25 @@ const styles = StyleSheet.create({
     },
     genderLabel: {
         fontSize: 14,
+        fontWeight: '700',
+    },
+    goalGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+    },
+    goalOption: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    goalLabel: {
+        fontSize: 13,
         fontWeight: '700',
     },
 });

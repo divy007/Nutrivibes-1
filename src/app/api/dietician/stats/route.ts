@@ -30,6 +30,7 @@ export async function GET(req: Request) {
         const sevenDaysAgo = subDays(new Date(), 7);
         const newCount = await Client.countDocuments({
             dieticianId,
+            status: 'NEW',
             createdAt: { $gte: sevenDaysAgo }
         });
 
@@ -39,7 +40,13 @@ export async function GET(req: Request) {
             status: 'DELETED'
         });
 
-        // 5. Today's Follow Up (from FollowUp collection, Pending status)
+        // 5. Leads (Unconverted self-registered users)
+        const leadsCount = await Client.countDocuments({
+            dieticianId,
+            status: 'LEAD'
+        });
+
+        // 6. Today's Follow Up (from FollowUp collection, Pending status)
         const FollowUp = (await import('@/models/FollowUp')).default;
         const todayStart = startOfDay(new Date());
         const todayEnd = endOfDay(new Date());
@@ -51,14 +58,18 @@ export async function GET(req: Request) {
                 $gte: todayStart,
                 $lte: todayEnd
             }
-        }).populate('clientId', 'name dietStatus');
+        }).populate('clientId', 'name dietStatus status');
+
+        // Filter out follow-ups for DELETED clients
+        const activeFollowUps = followUps.filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
 
         return NextResponse.json({
             activeClients: activeCount,
             newClients: newCount,
             pausedClients: pausedCount,
             expiredClients: expiredCount,
-            todayFollowUps: followUps.map((fu: any) => ({
+            leadsCount: leadsCount,
+            todayFollowUps: activeFollowUps.map((fu: any) => ({
                 name: fu.clientId?.name || 'Unknown Client',
                 color: fu.clientId?.dietStatus ? (fu.clientId.dietStatus === 'green' ? 'bg-emerald-500' : fu.clientId.dietStatus === 'red' ? 'bg-rose-500' : 'bg-amber-500') : 'bg-slate-300'
             }))

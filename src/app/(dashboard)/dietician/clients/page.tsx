@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle, Phone } from 'lucide-react';
+import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle, Phone, UserPlus } from 'lucide-react';
 import { ClientInfo } from '@/types';
 
 const PauseModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: () => void, onConfirm: (date: string) => void }) => {
@@ -103,33 +103,36 @@ export default function ClientsPage() {
 
         if (!matchesSearch) return false;
 
-        // Status Filtering
         if (statusFilter === 'ALL') return true;
+
+        if (statusFilter === 'DELETED') {
+            return client.status === 'DELETED';
+        }
+
+        // For all other statuses, MUST NOT be DELETED
+        if (client.status === 'DELETED') return false;
+
+        if (statusFilter === 'ACTIVE') {
+            return client.status === 'ACTIVE';
+        }
         if (statusFilter === 'NEW') {
-            // New means created in last 7 days
-            if (!client.createdAt) return false;
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return new Date(client.createdAt) >= sevenDaysAgo;
+            return client.status === 'NEW';
         }
-
-        if (statusFilter === 'FOLLOWUP_TODAY') {
-            return !!client.hasFollowUpToday;
+        if (statusFilter === 'PAUSED') {
+            return client.status === 'PAUSED';
         }
-
+        if (statusFilter === 'LEADS') {
+            // Leads are either explicitly status 'LEAD' OR incomplete profiles from Mobile App
+            return client.status === 'LEAD' || (client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete);
+        }
         if (statusFilter === 'FOLLOW_UPS') {
             return !!client.hasFollowUpToday;
         }
-
         if (statusFilter === 'NEEDS_DIET') {
+            // 'black' color indicates no diet plan for today
             return client.dietStatus === 'black';
         }
-
-        if (statusFilter === 'LEADS') {
-            return client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete;
-        }
-
-        return client.status === statusFilter;
+        return true;
     }).sort((a, b) => {
         const priority = { black: 0, red: 1, yellow: 2, green: 3 };
         const aStatus = (a.dietStatus as keyof typeof priority) || 'green';
@@ -173,7 +176,6 @@ export default function ClientsPage() {
 
     // Helper to get status for the tag specifically
     const getClientDisplayStatus = (client: ClientInfo) => {
-        if (client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete) return 'LEAD';
         return client.status;
     };
 
@@ -223,6 +225,19 @@ export default function ClientsPage() {
         } catch (error) {
             console.error('Failed to pause client:', error);
             alert('Failed to pause client');
+        }
+    };
+
+    const handleConvertLead = async (e: React.MouseEvent, clientId: string) => {
+        e.stopPropagation();
+        if (!confirm('Add this lead to your client list?')) return;
+
+        try {
+            await api.patch(`/api/clients/${clientId}`, { status: 'NEW' });
+            setClients(prev => prev.map(c => c._id === clientId ? { ...c, status: 'NEW' } : c));
+        } catch (error: any) {
+            console.error('Failed to convert lead:', error);
+            alert(error.message || 'Failed to convert lead');
         }
     };
 
@@ -394,40 +409,52 @@ export default function ClientsPage() {
                                             <div className={`w-3 h-3 rounded-full mx-auto ${getDietStatusColor(client.dietStatus || '')}`}></div>
                                         </td>
                                         <td className={`px-6 py-4 text-center relative ${activeActionId === client._id ? 'z-50' : 'z-0'}`}>
-                                            <button
-                                                onClick={(e) => toggleActions(e, client._id)}
-                                                className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
-                                            >
-                                                <MoreHorizontal size={18} />
-                                            </button>
+                                            {client.status === 'LEAD' ? (
+                                                <button
+                                                    onClick={(e) => handleConvertLead(e, client._id)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-orange-600 transition-all shadow-sm hover:shadow-md"
+                                                >
+                                                    <UserPlus size={12} />
+                                                    Add Client
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => toggleActions(e, client._id)}
+                                                        className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                                                    >
+                                                        <MoreHorizontal size={18} />
+                                                    </button>
 
-                                            {/* Action Dropdown */}
-                                            {activeActionId === client._id && (
-                                                <div className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-xl border border-slate-100 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-100">
-                                                    <button
-                                                        onClick={(e) => handlePause(e, client._id, client.status || 'ACTIVE')}
-                                                        className="w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors border-b border-slate-50"
-                                                    >
-                                                        {client.status === 'PAUSED' ? (
-                                                            <>
-                                                                <PlayCircle size={14} className="text-emerald-500" />
-                                                                <span>Resume</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <PauseCircle size={14} className="text-amber-500" />
-                                                                <span>Pause</span>
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDelete(e, client._id)}
-                                                        className="w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                        <span>Delete</span>
-                                                    </button>
-                                                </div>
+                                                    {/* Action Dropdown */}
+                                                    {activeActionId === client._id && (
+                                                        <div className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-xl border border-slate-100 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-100">
+                                                            <button
+                                                                onClick={(e) => handlePause(e, client._id, client.status || 'ACTIVE')}
+                                                                className="w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors border-b border-slate-50"
+                                                            >
+                                                                {client.status === 'PAUSED' ? (
+                                                                    <>
+                                                                        <PlayCircle size={14} className="text-emerald-500" />
+                                                                        <span>Resume</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <PauseCircle size={14} className="text-amber-500" />
+                                                                        <span>Pause</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => handleDelete(e, client._id)}
+                                                                className="w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                                <span>Delete</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
