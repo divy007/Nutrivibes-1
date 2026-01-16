@@ -6,7 +6,7 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 // API CONFIGURATION
 // ============================================
 const PROD_URL = 'https://nutrivibesbymansi.vercel.app';
-const LOCAL_URL = 'http://192.168.1.6:3000'; // Change to your Mac's IP for local dev
+const LOCAL_URL = 'http://192.168.1.20:3000'; // Change to your Mac's IP for local dev
 
 // Set this to true for production, false for local development
 const IS_PROD = false;

@@ -172,9 +172,6 @@ export async function POST(req: Request) {
 
             if (phone) {
                 userData.phone = phone;
-                if (!email) {
-                    userData.loginMethod = 'PHONE_OTP';
-                }
             }
 
             const newUser = await User.create(userData);

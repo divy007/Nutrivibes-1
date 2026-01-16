@@ -5,10 +5,11 @@ import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Mail, Lock, Loader2, Eye, EyeOff, HelpCircle } from 'lucide-react-native';
-import { Link, useRouter } from 'expo-router';
+import { Mail, Lock, Loader2, Eye, EyeOff, User, ArrowLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
-export default function LoginScreen() {
+export default function SignupScreen() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,27 +21,34 @@ export default function LoginScreen() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            setError('Please enter both email and password');
+    const handleSignup = async () => {
+        if (!name || !email || !password) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
             return;
         }
 
         setLoading(true);
         setError(null);
         try {
-            const response = await api.post<any>('/api/auth/login', {
+            const response = await api.post<any>('/api/auth/register', {
+                name: name.trim(),
                 email: email.trim().toLowerCase(),
                 password
             });
 
             if (response.token) {
+                Alert.alert('Success', 'Account created successfully!');
                 await login(response.token);
             } else {
-                setError('Login failed. Please check your credentials.');
+                setError('Registration failed. Please try again.');
             }
         } catch (err: any) {
-            setError(err.message || 'Login failed. Please try again.');
+            setError(err.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -50,10 +58,14 @@ export default function LoginScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
             <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
                 <View style={[styles.container, { backgroundColor: theme.background }]}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                        <ArrowLeft size={24} color={theme.brandForest} />
+                    </TouchableOpacity>
+
                     <View style={styles.header}>
                         <Image source={require('@/assets/images/brand-logo.png')} style={styles.logo} resizeMode="contain" />
-                        <Text style={[styles.title, { color: theme.brandForest }]}>Welcome back!</Text>
-                        <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
+                        <Text style={[styles.title, { color: theme.brandForest }]}>Join NutriVibes</Text>
+                        <Text style={styles.subtitle}>Start your wellness journey today</Text>
                     </View>
 
                     {error && (
@@ -64,12 +76,21 @@ export default function LoginScreen() {
 
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text style={[styles.label, { color: theme.brandForest }]}>Email Address</Text>
-                                <TouchableOpacity onPress={() => Alert.alert('Email Login', 'Use your registered email and password to sign in.')}>
-                                    <HelpCircle size={16} color={theme.brandForest + '80'} />
-                                </TouchableOpacity>
+                            <Text style={[styles.label, { color: theme.brandForest }]}>Full Name</Text>
+                            <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                                <User size={20} color={theme.brandForest} />
+                                <TextInput
+                                    style={[styles.input, { color: theme.text }]}
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="Your Name"
+                                    placeholderTextColor={theme.brandForest + '80'}
+                                />
                             </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: theme.brandForest }]}>Email Address</Text>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Mail size={20} color={theme.brandForest} />
                                 <TextInput
@@ -85,9 +106,7 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
-                            </View>
+                            <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Lock size={20} color={theme.brandForest} />
                                 <TextInput
@@ -95,7 +114,7 @@ export default function LoginScreen() {
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
-                                    placeholder="******"
+                                    placeholder="Min 6 characters"
                                     placeholderTextColor={theme.brandForest + '80'}
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -110,17 +129,17 @@ export default function LoginScreen() {
 
                         <TouchableOpacity
                             style={[styles.button, { backgroundColor: theme.brandForest }]}
-                            onPress={handleLogin}
+                            onPress={handleSignup}
                             disabled={loading}
                         >
-                            {loading ? <Loader2 color="#FFF" /> : <Text style={styles.buttonText}>Sign In</Text>}
+                            {loading ? <Loader2 color="#FFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.footer}>
-                        <Text style={{ color: '#64748b' }}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push('/signup' as any)}>
-                            <Text style={{ color: theme.brandForest, fontWeight: 'bold' }}>Sign Up</Text>
+                        <Text style={{ color: '#64748b' }}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => router.push('/login' as any)}>
+                            <Text style={{ color: theme.brandForest, fontWeight: 'bold' }}>Sign In</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -133,6 +152,7 @@ const styles = StyleSheet.create({
     keyboardView: { flex: 1 },
     scrollContent: { flexGrow: 1 },
     container: { flex: 1, padding: 32, justifyContent: 'center' },
+    backButton: { position: 'absolute', top: 60, left: 32, zIndex: 10 },
     header: { alignItems: 'center', marginBottom: 40 },
     logo: { width: 100, height: 100, marginBottom: 16 },
     title: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },

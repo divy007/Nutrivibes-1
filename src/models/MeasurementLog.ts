@@ -25,7 +25,8 @@ const MeasurementLogSchema = new Schema(
     { timestamps: true }
 );
 
-// Index for faster queries
+// Index for faster queries and 6-month data retention
 MeasurementLogSchema.index({ clientId: 1, date: -1 });
+MeasurementLogSchema.index({ date: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.MeasurementLog || mongoose.model<IMeasurementLog>('MeasurementLog', MeasurementLogSchema);

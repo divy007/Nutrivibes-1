@@ -91,6 +91,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                 { name: 'Follow-ups', href: '/dietician/clients?status=FOLLOW_UPS' },
             ]
         },
+        { name: 'Subscription Plans', href: '/dietician/plans', icon: Settings },
     ];
 
     const clientNav: NavItem[] = [
@@ -110,7 +111,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
         <header className="bg-brand-forest text-white h-[60px] flex items-center px-6 sticky top-0 z-[100] shadow-premium">
             {/* Logo Section */}
             <div className="flex items-center gap-4 border-r border-slate-700/50 pr-6 mr-6">
-                <Link href="/" className="flex items-center gap-2 group">
+                <Link href={user?.role === 'DIETICIAN' ? '/dietician/dashboard' : user?.role === 'CLIENT' ? '/client/dashboard' : '/'} className="flex items-center gap-2 group">
                     <div className="h-10 w-auto flex items-center justify-center p-1 bg-white rounded-lg shadow-inner overflow-hidden">
                         <img
                             src="/brand-logo.png"

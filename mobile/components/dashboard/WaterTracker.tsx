@@ -18,15 +18,15 @@ export default function WaterTracker({ currentGlasses, targetGlasses, onAdd }: W
     return (
         <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
             <View style={styles.header}>
-                <View style={[styles.iconContainer, { backgroundColor: '#e0f2fe' }]}>
-                    <Droplet size={20} color="#0ea5e9" />
+                <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '15' }]}>
+                    <Droplet size={20} color={theme.brandSage} />
                 </View>
                 <View>
                     <Text style={[styles.label, { color: theme.brandForest }]}>Water Intake</Text>
                     <Text style={styles.subtitle}>{currentGlasses * 250}ml / {targetGlasses * 250}ml</Text>
                 </View>
                 <TouchableOpacity
-                    style={[styles.addButton, { backgroundColor: '#0ea5e9' }]}
+                    style={[styles.addButton, { backgroundColor: theme.brandSage, shadowColor: theme.brandSage }]}
                     onPress={onAdd}
                     activeOpacity={0.7}
                 >
@@ -41,15 +41,15 @@ export default function WaterTracker({ currentGlasses, targetGlasses, onAdd }: W
                         style={[
                             styles.glass,
                             {
-                                borderColor: i < currentGlasses ? '#0ea5e9' : '#e2e8f0',
-                                backgroundColor: i < currentGlasses ? '#e0f2fe' : 'transparent'
+                                borderColor: i < currentGlasses ? theme.brandSage : '#e2e8f0',
+                                backgroundColor: i < currentGlasses ? theme.brandSage + '15' : 'transparent'
                             }
                         ]}
                     >
                         <Droplet
                             size={12}
-                            color={i < currentGlasses ? '#0ea5e9' : '#cbd5e1'}
-                            fill={i < currentGlasses ? '#0ea5e9' : 'transparent'}
+                            color={i < currentGlasses ? theme.brandSage : '#cbd5e1'}
+                            fill={i < currentGlasses ? theme.brandSage : 'transparent'}
                         />
                     </View>
                 ))}
@@ -103,9 +103,8 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#0ea5e9',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 4,
     },

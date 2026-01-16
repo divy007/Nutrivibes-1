@@ -131,5 +131,7 @@ export const api = {
         apiRequest<T>(endpoint, { method: 'POST', body }),
     patch: <T>(endpoint: string, body: unknown) =>
         apiRequest<T>(endpoint, { method: 'PATCH', body }),
+    put: <T>(endpoint: string, body: unknown) =>
+        apiRequest<T>(endpoint, { method: 'PUT', body }),
     del: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'DELETE' }),
 };

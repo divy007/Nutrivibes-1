@@ -230,6 +230,7 @@ export default function DashboardScreen() {
             <TouchableOpacity
               style={[styles.avatarButton, { backgroundColor: theme.brandSage }]}
               onPress={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              activeOpacity={0.7}
             >
               <Text style={styles.avatarText}>{profile?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}</Text>
             </TouchableOpacity>
@@ -398,12 +399,17 @@ const styles = StyleSheet.create({
   },
   goalBanner: {
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   goalIconContainer: {
     width: 40,
@@ -483,6 +489,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 32,
+    zIndex: 1000, // Ensure header actions stay on top
+    elevation: 1000,
   },
   greeting: {
     fontSize: 16,
@@ -526,17 +534,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     right: 0,
-    width: 200,
+    width: 220, // Slightly wider for better text handling
     borderRadius: 20,
     padding: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15, // More pronounced shadow
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 1001, // Higher than components below
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    zIndex: 1000,
+    zIndex: 2000, // Very high to overlay everything
   },
   menuHeader: {
     padding: 12,

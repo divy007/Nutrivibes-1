@@ -115,6 +115,11 @@ export const SymptomCheckIn = ({ onSave, isSaving }: Props) => {
 const styles = StyleSheet.create({
     card: {
         padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
         shadowRadius: 12,
         elevation: 2,
     },

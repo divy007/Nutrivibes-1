@@ -94,18 +94,19 @@ export default function NewClientPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address <span className="text-gray-400 font-normal text-xs">(Optional)</span></label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address <span className="text-red-500">*</span></label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
+                                    required
                                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
                                     placeholder="jane@example.com"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number <span className="text-gray-400 font-normal text-xs">(Required if no Email)</span></label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number <span className="text-gray-400 font-normal text-xs">(Optional)</span></label>
                                 <input
                                     type="tel"
                                     name="phone"
@@ -117,28 +118,20 @@ export default function NewClientPage() {
                             </div>
                         </div>
 
-                        {formData.email && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required={!!formData.email}
-                                    minLength={6}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
-                                    placeholder="••••••••"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Required for email login. Must be at least 6 characters.</p>
-                            </div>
-                        )}
-                        {!formData.email && (
-                            <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg border border-blue-100 flex gap-2">
-                                <span className="shrink-0">ℹ️</span>
-                                <p>Without an email/password, the client will login using <strong>Phone Number & OTP</strong>.</p>
-                            </div>
-                        )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                minLength={6}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b4332] text-gray-900 bg-white"
+                                placeholder="••••••••"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters.</p>
+                        </div>
                     </div>
                 </div>
 

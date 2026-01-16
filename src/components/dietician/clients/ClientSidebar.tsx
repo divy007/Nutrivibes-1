@@ -35,6 +35,7 @@ export const ClientSidebar = ({ clientId }: { clientId: string }) => {
         { label: 'Profile', icon: User, href: `/dietician/clients/${clientId}` },
         { label: 'Progress', icon: Activity, href: `/dietician/clients/${clientId}/progress` },
         { label: 'Suggest Diet', icon: Utensils, href: `/dietician/clients/${clientId}/suggest-diet` },
+        { label: 'Subscription', icon: CreditCard, href: `/dietician/clients/${clientId}/subscription` },
         { label: 'Counselling', icon: MessageCircle, href: `/dietician/clients/${clientId}/counselling` },
         { label: 'Follow Ups', icon: Clock, href: `/dietician/clients/${clientId}/follow-ups` },
     ];

@@ -17,7 +17,8 @@ const WeightLogSchema = new Schema(
     { timestamps: true }
 );
 
-// Index for faster queries
+// Index for faster queries and 6-month data retention
 WeightLogSchema.index({ clientId: 1, date: -1 });
+WeightLogSchema.index({ date: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.WeightLog || mongoose.model<IWeightLog>('WeightLog', WeightLogSchema);

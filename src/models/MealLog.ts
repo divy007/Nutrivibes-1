@@ -29,7 +29,8 @@ const MealLogSchema = new Schema(
     { timestamps: true }
 );
 
-// Index for faster queries
+// Index for faster queries and 6-month data retention
 MealLogSchema.index({ clientId: 1, date: 1, category: 1 });
+MealLogSchema.index({ date: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.MealLog || mongoose.model<IMealLog>('MealLog', MealLogSchema);

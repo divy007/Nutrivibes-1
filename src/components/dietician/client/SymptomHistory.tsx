@@ -16,6 +16,8 @@ const SYMPTOM_ICONS: Record<string, React.ReactNode> = {
     low_energy: <Frown size={14} className="text-red-400" />,
     stomach_pain: <AlertCircle size={14} className="text-rose-500" />,
     feeling_great: <Smile size={14} className="text-emerald-500" />,
+    headache: <Zap size={14} className="text-orange-400" />,
+    cravings: <Smile size={14} className="text-pink-400" />,
 };
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -24,6 +26,8 @@ const SYMPTOM_LABELS: Record<string, string> = {
     low_energy: 'Low Energy',
     stomach_pain: 'Stomach Pain',
     feeling_great: 'Feeling Great',
+    headache: 'Headache',
+    cravings: 'Cravings',
 };
 
 export const SymptomHistory = ({ logs }: { logs: SymptomLog[] }) => {

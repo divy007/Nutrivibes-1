@@ -7,8 +7,7 @@ export interface IUser extends Document {
     password?: string;
     role: 'DIETICIAN' | 'CLIENT';
     name: string;
-    loginMethod: 'EMAIL_PASSWORD' | 'PHONE_OTP';
-    firebaseUid?: string;
+    loginMethod: 'EMAIL_PASSWORD';
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -43,13 +42,8 @@ const UserSchema: Schema<IUser> = new Schema(
         },
         loginMethod: {
             type: String,
-            enum: ['EMAIL_PASSWORD', 'PHONE_OTP'],
+            enum: ['EMAIL_PASSWORD'],
             default: 'EMAIL_PASSWORD',
-        },
-        firebaseUid: {
-            type: String,
-            unique: true,
-            sparse: true,
         },
     },
     {

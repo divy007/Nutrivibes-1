@@ -19,7 +19,8 @@ const SymptomLogSchema = new Schema(
     { timestamps: true }
 );
 
-// Index for faster queries
+// Index for faster queries and 6-month data retention
 SymptomLogSchema.index({ clientId: 1, date: -1 });
+SymptomLogSchema.index({ date: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.SymptomLog || mongoose.model<ISymptomLog>('SymptomLog', SymptomLogSchema);

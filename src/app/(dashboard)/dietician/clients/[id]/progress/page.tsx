@@ -10,11 +10,14 @@ import {
 } from 'recharts';
 import {
     Activity, TrendingUp, TrendingDown, Scale,
-    Droplet, Target, ChevronRight, Info, Loader2, Plus
+    Droplet, Target, ChevronRight, Info, Loader2, Plus, Ruler, HeartPulse
 } from 'lucide-react';
 import { MeasurementTrackerCard } from '@/components/client/dashboard/MeasurementTrackerCard';
 import { LogMeasurementModal } from '@/components/client/dashboard/LogMeasurementModal';
-import { format, subMonths, isAfter } from 'date-fns';
+import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
+import { MeasurementHistory } from '@/components/dietician/client/MeasurementHistory';
+import { PeriodHistory } from '@/components/dietician/client/PeriodHistory';
+import { format, subMonths, isAfter, isWithinInterval, addDays, startOfDay } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { getLocalDateString } from '@/lib/date-utils';
 
@@ -43,6 +46,14 @@ interface MeasurementLog {
     unit: string;
 }
 
+interface SymptomLog {
+    _id: string;
+    date: string;
+    symptoms: string[];
+    energyLevel: number;
+    notes?: string;
+}
+
 export default function ProgressPage() {
     const params = useParams();
     const clientId = params.id as string;
@@ -51,22 +62,25 @@ export default function ProgressPage() {
     const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
     const [measurementLogs, setMeasurementLogs] = useState<MeasurementLog[]>([]);
     const [periodLogs, setPeriodLogs] = useState<any[]>([]);
+    const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('3m');
     const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
 
     const fetchData = async () => {
         try {
-            const [wLogs, hLogs, mLogs, pLogs] = await Promise.all([
+            const [wLogs, hLogs, mLogs, pLogs, sLogs] = await Promise.all([
                 api.get<WeightLog[]>(`/api/clients/${clientId}/weight-logs`),
                 api.get<WaterLog[]>(`/api/clients/${clientId}/water-intake`),
                 api.get<MeasurementLog[]>(`/api/clients/${clientId}/measurement-logs`),
-                api.get<any[]>(`/api/clients/${clientId}/period-logs`)
+                api.get<any[]>(`/api/clients/${clientId}/period-logs`),
+                api.get<SymptomLog[]>(`/api/clients/${clientId}/symptom-logs`)
             ]);
             setWeightLogs(wLogs);
             setWaterLogs(hLogs);
             setMeasurementLogs(mLogs);
             setPeriodLogs(pLogs);
+            setSymptomLogs(sLogs);
         } catch (err) {
             console.error('Failed to fetch logs:', err);
         } finally {
@@ -104,8 +118,15 @@ export default function ProgressPage() {
                 const logDate = new Date(log.date);
                 let phase = null;
                 if (clientInfo?.gender === 'female' && periodLogs.length > 0) {
+                    // Find the cycle that applies to this weight log date
+                    const targetCycle = periodLogs.find(p => {
+                        const start = startOfDay(new Date(p.startDate));
+                        const cycleEnd = addDays(start, clientInfo.cycleLength || 28);
+                        return isWithinInterval(startOfDay(logDate), { start, end: cycleEnd });
+                    }) || periodLogs[0]; // Fallback to latest cycle if no specific cycle found
+
                     const status = calculateCycleStatus(
-                        new Date(periodLogs[0].startDate),
+                        new Date(targetCycle.startDate),
                         clientInfo.cycleLength || 28,
                         logDate
                     );
@@ -121,6 +142,25 @@ export default function ProgressPage() {
                 };
             });
     }, [weightLogs, timeRange, clientInfo, periodLogs]);
+
+    const filteredMeasurementData = useMemo(() => {
+        const now = new Date();
+        let startDate = subMonths(now, 3);
+        if (timeRange === '1m') startDate = subMonths(now, 1);
+        if (timeRange === '6m') startDate = subMonths(now, 6);
+
+        return [...measurementLogs]
+            .filter(log => isAfter(new Date(log.date), startDate))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(log => ({
+                date: new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(log.date)),
+                chest: log.chest,
+                arms: log.arms,
+                waist: log.waist,
+                hips: log.hips,
+                thigh: log.thigh,
+            }));
+    }, [measurementLogs, timeRange]);
 
     const stats = useMemo(() => {
         if (weightLogs.length === 0) return null;
@@ -310,20 +350,6 @@ export default function ProgressPage() {
                     <div className="flex justify-between items-center">
                         <div className="space-y-1">
                             <h4 className="text-lg font-black text-slate-800">Weight Progress</h4>
-                            <div className="flex gap-3 items-center">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#f43f5e]" />
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Period</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">PMS</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9]" />
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Energy</span>
-                                </div>
-                            </div>
                         </div>
                         <button className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600">
                             View More
@@ -381,25 +407,6 @@ export default function ProgressPage() {
                                         strokeWidth={3}
                                         fillOpacity={1}
                                         fill="url(#colorWeight)"
-                                        dot={(props: any) => {
-                                            const { cx, cy, payload } = props;
-                                            if (!payload.phase) return <circle cx={cx} cy={cy} r={4} fill="#f97316" stroke="#fff" strokeWidth={2} />;
-
-                                            const colors: Record<string, string> = {
-                                                PERIOD: '#f43f5e',
-                                                FOLLICULAR: '#0ea5e9',
-                                                OVULATION: '#8b5cf6',
-                                                LUTEAL: '#f59e0b',
-                                            };
-
-                                            return (
-                                                <circle
-                                                    cx={cx} cy={cy} r={6}
-                                                    fill={colors[payload.phase]}
-                                                    stroke="#fff" strokeWidth={2}
-                                                />
-                                            );
-                                        }}
                                         activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }}
                                     />
                                 </AreaChart>
@@ -460,30 +467,74 @@ export default function ProgressPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Measurement Trend */}
+                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm space-y-6 lg:col-span-2">
+                    <div className="flex justify-between items-center">
+                        <div className="space-y-1">
+                            <h4 className="text-lg font-black text-slate-800">Measurement Trends</h4>
+                            <p className="text-xs font-medium text-slate-400 tracking-wide">Tracking body dimensions over time ({measurementLogs[0]?.unit || 'inch'})</p>
+                        </div>
+                        <div className="flex gap-4">
+                            {[
+                                { key: 'chest', color: '#A3D139', label: 'Chest' },
+                                { key: 'waist', color: '#8DE1D9', label: 'Waist' },
+                                { key: 'hips', color: '#FFB84D', label: 'Hips' },
+                                { key: 'arms', color: '#FF7F50', label: 'Arms' },
+                                { key: 'thigh', color: '#9B9BFF', label: 'Thigh' },
+                            ].map(m => (
+                                <div key={m.key} className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: m.color }} />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{m.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="h-[350px] w-full mt-8">
+                        {filteredMeasurementData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={filteredMeasurementData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis
+                                        dataKey="date"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                                        domain={['dataMin - 5', 'dataMax + 5']}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Line type="monotone" dataKey="chest" stroke="#A3D139" strokeWidth={3} dot={{ r: 3 }} />
+                                    <Line type="monotone" dataKey="waist" stroke="#8DE1D9" strokeWidth={3} dot={{ r: 3 }} />
+                                    <Line type="monotone" dataKey="hips" stroke="#FFB84D" strokeWidth={3} dot={{ r: 3 }} />
+                                    <Line type="monotone" dataKey="arms" stroke="#FF7F50" strokeWidth={3} dot={{ r: 3 }} />
+                                    <Line type="monotone" dataKey="thigh" stroke="#9B9BFF" strokeWidth={3} dot={{ r: 3 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-20">
+                                <Ruler size={48} className="opacity-20" />
+                                <span className="text-xs font-bold uppercase tracking-widest">No measurement data available for chart.</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Bottom Row - Statistics & Vitals (Placeholder) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                    <MeasurementTrackerCard
-                        logs={measurementLogs}
-                        onUpdateClick={() => setIsMeasurementModalOpen(true)}
-                    />
-                </div>
-
-                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm min-h-[400px]">
-                    <div className="flex justify-between items-center mb-12">
-                        <h4 className="text-lg font-black text-slate-800">Vitals Tracker</h4>
-                        <button className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600">
-                            View More
-                        </button>
-                    </div>
-                    <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-4 py-20">
-                        <Activity size={48} className="opacity-20" />
-                        <span className="text-xs font-bold uppercase tracking-widest">No data available for chart.</span>
-                    </div>
-                </div>
+            {/* Bottom Row - Statistics & Vitals */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <SymptomHistory logs={symptomLogs} />
+                <PeriodHistory logs={periodLogs} />
             </div>
+
+            <MeasurementHistory logs={measurementLogs} />
 
             <LogMeasurementModal
                 isOpen={isMeasurementModalOpen}

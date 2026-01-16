@@ -17,7 +17,8 @@ const WaterIntakeSchema = new Schema(
     { timestamps: true }
 );
 
-// Unique index to ensure one record per client per day
+// Indexing and 6-month data retention
 WaterIntakeSchema.index({ clientId: 1, date: 1 }, { unique: true });
+WaterIntakeSchema.index({ date: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.WaterIntake || mongoose.model<IWaterIntake>('WaterIntake', WaterIntakeSchema);

@@ -21,7 +21,8 @@ const PeriodLogSchema = new Schema(
     { timestamps: true }
 );
 
-// Index for faster queries
+// Index for faster queries and 6-month data retention
 PeriodLogSchema.index({ clientId: 1, startDate: -1 });
+PeriodLogSchema.index({ startDate: 1 }, { expireAfterSeconds: 15552000 }); // 6 months
 
 export default mongoose.models.PeriodLog || mongoose.model<IPeriodLog>('PeriodLog', PeriodLogSchema);
