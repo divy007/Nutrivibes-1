@@ -12,9 +12,11 @@ export default function SignupScreen() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { login } = useAuth();
     const router = useRouter();
@@ -22,8 +24,13 @@ export default function SignupScreen() {
     const theme = Colors[colorScheme ?? 'light'];
 
     const handleSignup = async () => {
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !confirmPassword) {
             setError('Please fill in all fields');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
             return;
         }
 
@@ -119,6 +126,28 @@ export default function SignupScreen() {
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                                     {showPassword ? (
+                                        <EyeOff size={20} color={theme.brandForest} />
+                                    ) : (
+                                        <Eye size={20} color={theme.brandForest} />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: theme.brandForest }]}>Confirm Password</Text>
+                            <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                                <Lock size={20} color={theme.brandForest} />
+                                <TextInput
+                                    style={[styles.input, { color: theme.text }]}
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    secureTextEntry={!showConfirmPassword}
+                                    placeholder="Re-enter password"
+                                    placeholderTextColor={theme.brandForest + '80'}
+                                />
+                                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                    {showConfirmPassword ? (
                                         <EyeOff size={20} color={theme.brandForest} />
                                     ) : (
                                         <Eye size={20} color={theme.brandForest} />

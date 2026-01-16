@@ -19,13 +19,13 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
             { width: width, backgroundColor: theme.background, borderColor: highlight ? theme.tint : '#eee', borderWidth: highlight ? 2 : 1 }
         ]}>
             <View style={[styles.header, { backgroundColor: '#fff' }]}>
-                <Text style={[styles.headerText, { color: '#1b4332' }]}>{plan.name}</Text>
+                <Text style={[styles.headerText, { color: theme.brandForest }]}>{plan.name}</Text>
 
                 {/* Hiding Price as per requirement */}
                 {/* <Text style={[styles.priceText, { color: theme.brandEarth }]}>₹{plan.price}</Text> */}
 
-                <Text style={[styles.headerSubText, { color: '#bc6c25' }]}>{plan.durationMonths} Months</Text>
-                {highlight && <View style={[styles.badge, { backgroundColor: '#1b4332' }]}><Text style={styles.badgeText}>Recommended</Text></View>}
+                <Text style={[styles.headerSubText, { color: theme.brandEarth }]}>{plan.durationMonths} Months</Text>
+                {highlight && <View style={[styles.badge, { backgroundColor: theme.brandForest }]}><Text style={styles.badgeText}>Recommended</Text></View>}
             </View>
 
             <ScrollView
@@ -37,13 +37,13 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
                 <View style={{ gap: 16, marginBottom: 24 }}>
                     {features.length > 0 ? features.map((feature: string, index: number) => (
                         <View key={index} style={styles.featureRow}>
-                            <Check size={20} color="#606c38" />
+                            <Check size={20} color={theme.brandSage} />
                             <Text style={[styles.featureText, { color: theme.text }]}>{feature}</Text>
                         </View>
                     )) : (
                         plan.description ? (
                             <View style={styles.featureRow}>
-                                <Check size={20} color="#606c38" />
+                                <Check size={20} color={theme.brandSage} />
                                 <Text style={[styles.featureText, { color: theme.text }]}>{plan.description}</Text>
                             </View>
                         ) : null
@@ -52,7 +52,7 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
 
                 <View style={{ flex: 1 }} />
 
-                <TouchableOpacity style={[styles.button, { backgroundColor: '#bc6c25', marginHorizontal: 0, marginBottom: 0 }]}>
+                <TouchableOpacity style={[styles.button, { backgroundColor: theme.brandEarth, marginHorizontal: 0, marginBottom: 0 }]}>
                     <Text style={styles.buttonText}>Contact to Join</Text>
                 </TouchableOpacity>
             </ScrollView>
@@ -89,7 +89,7 @@ export default function PlansScreen() {
     if (loading) {
         return (
             <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
-                <ActivityIndicator size="large" color="#1b4332" />
+                <ActivityIndicator size="large" color={theme.brandForest} />
             </SafeAreaView>
         );
     }
@@ -97,8 +97,8 @@ export default function PlansScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.staticHeader}>
-                <Text style={[styles.title, { color: '#1b4332' }]}>Choose your plan</Text>
-                <Text style={[styles.subtitle, { color: '#606c38' }]}>Diet & Lifestyle Management</Text>
+                <Text style={[styles.title, { color: theme.brandForest }]}>Choose your plan</Text>
+                <Text style={[styles.subtitle, { color: theme.brandSage }]}>Diet & Lifestyle Management</Text>
             </View>
 
             <ScrollView
