@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Activ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Check } from 'lucide-react-native';
+import { Check, RotateCcw } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import { useRouter } from 'expo-router';
 
@@ -23,8 +23,7 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
             <View style={[styles.header, { backgroundColor: '#fff' }]}>
                 <Text style={[styles.headerText, { color: theme.brandForest }]}>{plan.name}</Text>
 
-                {/* Hiding Price as per requirement */}
-                {/* <Text style={[styles.priceText, { color: theme.brandEarth }]}>₹{plan.price}</Text> */}
+                {/* Price hidden as per requirement */}
 
                 <Text style={[styles.headerSubText, { color: theme.brandEarth }]}>{plan.durationMonths} Months</Text>
                 {highlight && <View style={[styles.badge, { backgroundColor: theme.brandForest }]}><Text style={styles.badgeText}>Recommended</Text></View>}
@@ -70,6 +69,7 @@ export default function PlansScreen() {
     const theme = Colors[colorScheme ?? 'light'];
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         fetchPlans();
@@ -77,6 +77,7 @@ export default function PlansScreen() {
 
     const fetchPlans = async () => {
         try {
+            setRefreshing(true);
             const data = await api.get('/api/plans');
             // Sort plans: Holistic Wellness first, then others
             const sortedPlans = (data as any[]).sort((a, b) => {
@@ -86,7 +87,6 @@ export default function PlansScreen() {
                 if (aName.includes('holistic') && !bName.includes('holistic')) return -1;
                 if (!aName.includes('holistic') && bName.includes('holistic')) return 1;
 
-                // Keep wedding plans at the end if needed, or just default sort
                 if (aName.includes('wedding') && !bName.includes('wedding')) return 1;
                 if (!aName.includes('wedding') && bName.includes('wedding')) return -1;
 
@@ -97,6 +97,7 @@ export default function PlansScreen() {
             console.error('Failed to load plans', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -116,8 +117,17 @@ export default function PlansScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.staticHeader}>
-                <Text style={[styles.title, { color: theme.brandForest }]}>Choose your plan</Text>
-                <Text style={[styles.subtitle, { color: theme.brandSage }]}>Diet & Lifestyle Management</Text>
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                    <Text style={[styles.title, { color: theme.brandForest }]}>Choose your plan</Text>
+                    <Text style={[styles.subtitle, { color: theme.brandSage }]}>Diet & Lifestyle Management</Text>
+                </View>
+                <TouchableOpacity
+                    onPress={fetchPlans}
+                    disabled={refreshing}
+                    style={{ padding: 8, backgroundColor: theme.brandSage + '20', borderRadius: 12 }}
+                >
+                    <RotateCcw size={20} color={theme.brandForest} style={{ opacity: refreshing ? 0.5 : 1 }} />
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -153,19 +163,23 @@ const styles = StyleSheet.create({
     staticHeader: {
         paddingTop: 20,
         paddingBottom: 10,
+        paddingHorizontal: 24,
         backgroundColor: 'transparent',
         zIndex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     title: {
         fontSize: 24,
         fontWeight: '900',
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: 5,
         letterSpacing: 0.5,
     },
     subtitle: {
         fontSize: 16,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: 10,
         fontWeight: '600',
     },

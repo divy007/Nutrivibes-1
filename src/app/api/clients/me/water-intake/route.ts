@@ -67,6 +67,14 @@ export async function POST(req: Request) {
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
 
+        // Log functionality for Live Feed
+        try {
+            const { logActivity } = await import('@/lib/activity-utils');
+            await logActivity(client._id.toString(), 'WATER_LOG', `Client drank water`, `${intake?.currentGlasses || 1}/${intake?.targetGlasses || 8}`);
+        } catch (err) {
+            console.error('Failed to log activity:', err);
+        }
+
         return NextResponse.json(intake);
     } catch (error) {
         console.error('Failed to update water intake:', error);

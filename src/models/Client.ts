@@ -171,7 +171,7 @@ const ClientSchema = new Schema(
 
 // Index for faster lookups
 ClientSchema.index({ userId: 1 });
-ClientSchema.index({ dieticianId: 1 });
+ClientSchema.index({ dieticianId: 1, status: 1 }); // Optimize dashboard keys
 
 // Force model refresh for schema changes in development
 if (process.env.NODE_ENV === 'development' && mongoose.models.Client) {

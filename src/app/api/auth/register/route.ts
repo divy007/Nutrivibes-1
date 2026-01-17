@@ -9,6 +9,7 @@ const registerSchema = z.object({
     name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
     email: z.string().email({ message: 'Invalid email address' }),
     password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+    phone: z.string().min(10, { message: 'Valid phone number is required' }),
 });
 
 export async function POST(req: Request) {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { name, email, password } = validationResult.data;
+        const { name, email, password, phone } = validationResult.data;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
             name,
             email: email.toLowerCase(),
             password,
+            phone,
             role: 'CLIENT',
             loginMethod: 'EMAIL_PASSWORD',
         });
@@ -60,6 +62,7 @@ export async function POST(req: Request) {
         const client = await Client.create({
             name,
             email: email.toLowerCase(),
+            phone,
             userId: user._id,
             dieticianId: dietician._id, // Assign to the first dietician
             registrationSource: 'MOBILE_APP',
@@ -83,8 +86,17 @@ export async function POST(req: Request) {
             token,
         }, { status: 201 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Registration error:', error);
+
+        // Handle MongoDB Duplicate Key Error
+        if (error.code === 11000) {
+            return NextResponse.json(
+                { success: false, message: 'An account with this email or phone already exists.' },
+                { status: 400 }
+            );
+        }
+
         return NextResponse.json(
             { success: false, message: 'Server error' },
             { status: 500 }

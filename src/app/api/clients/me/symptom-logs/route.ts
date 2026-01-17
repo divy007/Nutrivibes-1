@@ -56,6 +56,16 @@ export async function POST(req: Request) {
             { upsert: true, new: true }
         );
 
+        // Log functionality for Live Feed
+        try {
+            const { logActivity } = await import('@/lib/activity-utils');
+            const symptomCount = symptoms?.length || 0;
+            const desc = symptomCount > 0 ? `Client logged ${symptomCount} symptoms` : `Client updated symptom log`;
+            await logActivity(client._id.toString(), 'SYMPTOM_LOG', desc, `Energy: ${energyLevel || '-'}`);
+        } catch (err) {
+            console.error('Failed to log activity:', err);
+        }
+
         return NextResponse.json(updatedLog, { status: 201 });
     } catch (error) {
         console.error('Failed to save symptom log:', error);

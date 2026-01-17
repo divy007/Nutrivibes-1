@@ -7,15 +7,12 @@ import {
   PauseCircle,
   Clock,
   ChevronRight,
-  MessageCircle,
   Zap,
-  Search,
-  Filter,
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
-
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
 
 interface Stats {
   activeClients: number;
@@ -66,8 +63,8 @@ export default function DieticianDashboard() {
 
       <div className="p-6 flex flex-col lg:flex-row gap-6 max-w-[1800px] mx-auto">
 
-        {/* Main Content Area */}
-        <div className="flex-1 space-y-6">
+        {/* Main Content Area (Left) */}
+        <div className="flex-1 space-y-6 min-w-0">
           <h1 className="text-xl font-bold text-slate-800">Homepage</h1>
 
           {/* Summary Cards */}
@@ -176,8 +173,11 @@ export default function DieticianDashboard() {
 
             </div>
           </div>
+        </div>
 
-
+        {/* Right Sidebar - Live Feed */}
+        <div className="w-full lg:w-[320px] 2xl:w-[380px] flex-shrink-0">
+          <ActivityFeed />
         </div>
       </div>
     </div>
@@ -204,5 +204,3 @@ function SummaryCard({ title, count, icon, color, loading }: { title: string, co
     </div>
   );
 }
-
-

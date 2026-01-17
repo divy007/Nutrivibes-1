@@ -5,12 +5,13 @@ import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Mail, Lock, Loader2, Eye, EyeOff, User, ArrowLeft } from 'lucide-react-native';
+import { Mail, Lock, Loader2, Eye, EyeOff, User, ArrowLeft, Phone } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 export default function SignupScreen() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -24,7 +25,7 @@ export default function SignupScreen() {
     const theme = Colors[colorScheme ?? 'light'];
 
     const handleSignup = async () => {
-        if (!name || !email || !password || !confirmPassword) {
+        if (!name || !email || !password || !confirmPassword || !phone) {
             setError('Please fill in all fields');
             return;
         }
@@ -39,18 +40,24 @@ export default function SignupScreen() {
             return;
         }
 
+        if (phone.length < 10) {
+            setError('Please enter a valid phone number');
+            return;
+        }
+
         setLoading(true);
         setError(null);
         try {
             const response = await api.post<any>('/api/auth/register', {
                 name: name.trim(),
                 email: email.trim().toLowerCase(),
+                phone: phone.trim(),
                 password
             });
 
             if (response.token) {
-                Alert.alert('Success', 'Account created successfully!');
-                await login(response.token);
+                Alert.alert('Success', 'Account created successfully! Please log in.');
+                router.replace('/login' as any);
             } else {
                 setError('Registration failed. Please try again.');
             }
@@ -108,6 +115,21 @@ export default function SignupScreen() {
                                     placeholder="email@example.com"
                                     placeholderTextColor={theme.brandForest + '80'}
                                     keyboardType="email-address"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: theme.brandForest }]}>Phone Number</Text>
+                            <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                                <Phone size={20} color={theme.brandForest} />
+                                <TextInput
+                                    style={[styles.input, { color: theme.text }]}
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    placeholder="Your mobile number"
+                                    placeholderTextColor={theme.brandForest + '80'}
+                                    keyboardType="phone-pad"
                                 />
                             </View>
                         </View>

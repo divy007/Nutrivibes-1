@@ -42,6 +42,14 @@ export async function GET(req: Request) {
             });
         }
 
+        // SELF-HEALING: If client is marked DELETED (soft delete) but managed to login (user still exists),
+        // we recover them to LEAD status so they are visible to the Dietician again.
+        if (client.status === 'DELETED') {
+            console.log('Recovering soft-deleted client for active user:', user._id);
+            client.status = 'LEAD';
+            await client.save();
+        }
+
         return NextResponse.json(client);
     } catch (error) {
         console.error('Failed to fetch client profile:', error);

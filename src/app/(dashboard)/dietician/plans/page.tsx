@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
-import { Loader2, Plus, Check, Edit2, X } from 'lucide-react';
+import { Loader2, Plus, Check, Edit2, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function PlansPage() {
@@ -79,6 +79,17 @@ export default function PlansPage() {
             fetchPlans();
         } catch (error) {
             alert('Failed to save plan');
+        }
+    };
+
+    const handleDelete = async (planId: string) => {
+        if (!window.confirm('Are you sure you want to delete this plan?')) return;
+
+        try {
+            await api.del(`/api/plans?id=${planId}`);
+            fetchPlans();
+        } catch (error) {
+            alert('Failed to delete plan');
         }
     };
 
@@ -160,6 +171,15 @@ export default function PlansPage() {
                             title="Edit Plan"
                         >
                             <Edit2 size={16} />
+                        </button>
+
+                        {/* Delete Button */}
+                        <button
+                            onClick={() => handleDelete(plan._id)}
+                            className="absolute top-4 right-14 p-2 bg-red-50 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors z-10"
+                            title="Delete Plan"
+                        >
+                            <Trash2 size={16} />
                         </button>
 
                         <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { User, Phone, Ruler, Weight, UserCircle, Check } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
@@ -144,6 +144,9 @@ export default function CompleteProfileScreen() {
             style={{ flex: 1 }}
         >
             <View style={[styles.container, { backgroundColor: theme.background }]}>
+                {/* Hide Back Button */}
+                <Stack.Screen options={{ headerLeft: () => null, title: 'Complete Profile' }} />
+
                 <View style={styles.header}>
                     <Text style={[styles.headerTitle, { color: theme.brandForest }]}>Complete Profile</Text>
                     <Text style={styles.headerSubtitle}>Please complete your profile to continue</Text>
@@ -313,13 +316,14 @@ export default function CompleteProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Phone Number (Verified)</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f1f5f9', borderColor: '#e2e8f0', opacity: 0.8 }]}>
+                            <Text style={styles.label}>Phone Number</Text>
+                            <View style={[styles.inputContainer, { backgroundColor: '#f1f5f9', borderColor: '#e2e8f0', opacity: 0.7 }]}>
                                 <Phone size={20} color="#94a3b8" />
                                 <TextInput
                                     style={[styles.input, { color: '#64748b' }]}
                                     value={formData.phone}
                                     editable={false}
+                                    selectTextOnFocus={false}
                                     placeholder="Enter phone number"
                                 />
                             </View>

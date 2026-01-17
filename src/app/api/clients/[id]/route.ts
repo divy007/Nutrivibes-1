@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB as dbConnect } from '@/lib/mongodb';
 import Client from '@/models/Client';
+import User from '@/models/User'; // Direct import
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
@@ -37,17 +38,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
-        // // Trigger automatic follow-up generation if dietStartDate was updated
-        // if (body.dietStartDate) {
-        //     try {
-        //         const { generateFollowUps } = await import('@/lib/follow-up-utils');
-        //         await generateFollowUps(client._id.toString(), client.dieticianId.toString(), new Date(body.dietStartDate));
-        //     } catch (err) {
-        //         console.error('Failed to auto-generate follow-ups:', err);
-        //         // We don't fail the client update if follow-up generation fails
-        //     }
-        // }
-
         return NextResponse.json(client);
     } catch {
         return NextResponse.json({ error: 'Failed to update client' }, { status: 400 });
@@ -71,10 +61,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             // Hard delete the associated user account to prevent login
             if (client.userId) {
                 try {
-                    const User = (await import('@/models/User')).default;
                     await User.findByIdAndDelete(client.userId);
+                    console.log(`Deleted associated user account: ${client.userId}`);
                 } catch (userErr) {
-                    console.warn('Failed to delete associated user account:', userErr);
+                    console.error('Failed to delete associated user account:', userErr);
                 }
             }
             return NextResponse.json({ message: 'Client marked as deleted and user account removed' });
@@ -83,13 +73,39 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         // Stage 2: If client is ALREADY 'DELETED', perform PERMANENT removal
         const FollowUp = (await import('@/models/FollowUp')).default;
         const DietPlan = (await import('@/models/DietPlan')).default;
+        const WeightLog = (await import('@/models/WeightLog')).default;
+        const WaterIntake = (await import('@/models/WaterIntake')).default;
+        const MeasurementLog = (await import('@/models/MeasurementLog')).default;
+        const SymptomLog = (await import('@/models/SymptomLog')).default;
+        const PeriodLog = (await import('@/models/PeriodLog')).default;
+        const ActivityLog = (await import('@/models/ActivityLog')).default;
+        // Added missing models
+        const MealLog = (await import('@/models/MealLog')).default;
+        const HealthAssessment = (await import('@/models/HealthAssessment')).default;
+        const Subscription = (await import('@/models/Subscription')).default;
 
         // Cleanup all associated data
         await Promise.all([
             FollowUp.deleteMany({ clientId: id }),
             DietPlan.deleteMany({ clientId: id }),
+            WeightLog.deleteMany({ clientId: id }),
+            WaterIntake.deleteMany({ clientId: id }),
+            MeasurementLog.deleteMany({ clientId: id }),
+            SymptomLog.deleteMany({ clientId: id }),
+            PeriodLog.deleteMany({ clientId: id }),
+            ActivityLog.deleteMany({ clientId: id }),
+            // Delete newly identified models
+            MealLog.deleteMany({ clientId: id }),
+            HealthAssessment.deleteMany({ clientId: id }),
+            Subscription.deleteMany({ clientId: id }),
+
             Client.findByIdAndDelete(id)
         ]);
+
+        // Ensure user is deleted if it wasn't before (for permanent delete)
+        if (client.userId) {
+            await User.findByIdAndDelete(client.userId).catch(() => { });
+        }
 
         return NextResponse.json({ message: 'Client and all associated records permanently deleted' });
     } catch (error: any) {

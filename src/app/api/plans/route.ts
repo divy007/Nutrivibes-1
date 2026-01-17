@@ -82,3 +82,36 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: 'Failed to update plan' }, { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    await connectDB();
+    try {
+        const user = await getAuthUser(req);
+        if (!user || user.role !== 'DIETICIAN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 });
+        }
+
+        // Soft delete: Just set isActive to false
+        const deletedPlan = await Plan.findByIdAndUpdate(
+            id,
+            { $set: { isActive: false } },
+            { new: true }
+        );
+
+        if (!deletedPlan) {
+            return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Plan deleted successfully' });
+    } catch (error) {
+        console.error('Failed to delete plan:', error);
+        return NextResponse.json({ error: 'Failed to delete plan' }, { status: 500 });
+    }
+}

@@ -17,64 +17,50 @@ export async function GET(req: Request) {
 
         const dieticianId = user._id;
 
-        // 1. Active Clients
-        const activeCount = await Client.countDocuments({
-            dieticianId,
-            status: 'ACTIVE'
-        });
+        // Run all independent counts and fetches in parallel
+        const [
+            activeCount,
+            pausedCount,
+            newCount,
+            expiredCount,
+            leadsCount,
+            rawFollowUps,
+            activeClients
+        ] = await Promise.all([
+            // 1. Active
+            Client.countDocuments({ dieticianId, status: 'ACTIVE' }),
+            // 2. Paused
+            Client.countDocuments({ dieticianId, status: 'PAUSED' }),
+            // 3. New (Last 7 days)
+            Client.countDocuments({
+                dieticianId,
+                status: 'NEW',
+                createdAt: { $gte: subDays(new Date(), 7) }
+            }),
+            // 4. Expired
+            Client.countDocuments({ dieticianId, status: 'DELETED' }),
+            // 5. Leads
+            Client.countDocuments({ dieticianId, status: 'LEAD' }),
+            // 6. Follow Ups
+            (async () => {
+                const FollowUp = (await import('@/models/FollowUp')).default;
+                return FollowUp.find({
+                    dieticianId,
+                    status: 'Pending',
+                    date: { $gte: startOfDay(new Date()), $lte: endOfDay(new Date()) }
+                }).populate('clientId', 'name dietStatus status');
+            })(),
+            // 7. Active Clients (for Diet Pending Calc)
+            Client.find({ dieticianId, status: 'ACTIVE' }).select('_id name').lean()
+        ]);
 
-        // 2. Paused Clients
-        const pausedCount = await Client.countDocuments({
-            dieticianId,
-            status: 'PAUSED'
-        });
+        // Filter Follow-ups manually after parallel fetch
+        const activeFollowUps = rawFollowUps.filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
 
-        // 3. New Clients (Last 7 days)
-        const sevenDaysAgo = subDays(new Date(), 7);
-        const newCount = await Client.countDocuments({
-            dieticianId,
-            status: 'NEW',
-            createdAt: { $gte: sevenDaysAgo }
-        });
-
-        // 4. Expired Clients (Soft Deleted)
-        const expiredCount = await Client.countDocuments({
-            dieticianId,
-            status: 'DELETED'
-        });
-
-        // 5. Leads (Unconverted self-registered users)
-        const leadsCount = await Client.countDocuments({
-            dieticianId,
-            status: 'LEAD'
-        });
-
-        // 6. Today's Follow Up (from FollowUp collection, Pending status)
-        const FollowUp = (await import('@/models/FollowUp')).default;
-        const todayStart = startOfDay(new Date());
-        const todayEnd = endOfDay(new Date());
-
-        const followUps = await FollowUp.find({
-            dieticianId,
-            status: 'Pending',
-            date: {
-                $gte: todayStart,
-                $lte: todayEnd
-            }
-        }).populate('clientId', 'name dietStatus status');
-
-        // Filter out follow-ups for DELETED clients
-        const activeFollowUps = followUps.filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
-
-
-
-        // 8. Diet's Pending (Calculate Red/Yellow/Black)
-        // Logic copied from clients/route.ts
-        const activeClients = await Client.find({ dieticianId, status: 'ACTIVE' }).lean();
+        // 8. Optimized Diet Pending Calculation (Batch Query)
         const todayUser = normalizeDateUTC();
         const tomorrow = addDays(todayUser, 1);
         const dayAfterTomorrow = addDays(todayUser, 2);
-
         const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
         const targetDates = [formatDate(todayUser), formatDate(tomorrow), formatDate(dayAfterTomorrow)];
 
@@ -83,61 +69,73 @@ export async function GET(req: Request) {
         let blackCount = 0;
         const dietPendingList: any[] = [];
 
-        // We need to fetch diet plans for all active clients to determine status
-        // Optimization: Fetch all plans for these clients in one go or iterate.
-        // Given complexity of nested days, iterating matching the original logic is safest for consistency.
+        if (activeClients.length > 0) {
+            const DietPlan = (await import('@/models/DietPlan')).default;
+            const activeClientIds = activeClients.map((c: any) => c._id);
 
-        const DietPlan = (await import('@/models/DietPlan')).default;
-
-        await Promise.all(activeClients.map(async (client: any) => {
-            const plans = await DietPlan.find({
-                clientId: client._id,
+            // Fetch ALL relevant plans in ONE query instead of N queries
+            const allPlans = await DietPlan.find({
+                clientId: { $in: activeClientIds },
                 'days.date': {
                     $gte: addDays(todayUser, -7),
                     $lte: addDays(todayUser, 14)
                 }
-            }).lean();
+            }).select('clientId days.date days.status').lean();
 
-            const isPublished = (dateStr: string) => {
-                return plans.some((plan: any) =>
-                    plan.days.some((day: any) => {
-                        const planDateStr = formatDate(normalizeDateUTC(day.date));
-                        return planDateStr === dateStr && day.status === 'PUBLISHED';
-                    })
-                );
-            };
+            // Group plans by Client ID for O(1) lookup
+            const plansByClient = new Map<string, any[]>();
+            allPlans.forEach((plan: any) => {
+                const cid = plan.clientId.toString();
+                if (!plansByClient.has(cid)) plansByClient.set(cid, []);
+                plansByClient.get(cid)?.push(plan);
+            });
 
-            const publishedToday = isPublished(targetDates[0]);
-            const publishedTomorrow = isPublished(targetDates[1]);
-            const publishedLater = isPublished(targetDates[2]);
+            // Calculate status for each client in memory
+            activeClients.forEach((client: any) => {
+                const clientPlans = plansByClient.get(client._id.toString()) || [];
 
-            let dietStatus = 'black';
-            if (!publishedToday) {
-                dietStatus = 'black';
-                blackCount++;
-            } else if (publishedToday && publishedTomorrow && publishedLater) {
-                dietStatus = 'green';
-            } else if (publishedToday && publishedTomorrow) {
-                dietStatus = 'yellow';
-                yellowCount++;
-            } else if (publishedToday) {
-                dietStatus = 'red';
-                redCount++;
-            }
+                const isPublished = (dateStr: string) => {
+                    return clientPlans.some((plan: any) =>
+                        plan.days.some((day: any) => {
+                            // Robust date matching
+                            const planDateStr = formatDate(new Date(day.date));
+                            return planDateStr === dateStr && day.status === 'PUBLISHED';
+                        })
+                    );
+                };
 
-            if (dietStatus !== 'green') {
-                dietPendingList.push({
-                    name: client.name,
-                    color: dietStatus === 'black' ? 'bg-black' : dietStatus === 'red' ? 'bg-rose-500' : 'bg-amber-500',
-                    originalColor: dietStatus // helpful for sorting if needed
-                });
-            }
-        }));
+                const publishedToday = isPublished(targetDates[0]);
+                const publishedTomorrow = isPublished(targetDates[1]);
+                const publishedLater = isPublished(targetDates[2]);
 
-        // Sort pending list by severity (Black > Red > Yellow)
+                let dietStatus = 'black';
+                if (!publishedToday) {
+                    dietStatus = 'black';
+                    blackCount++;
+                } else if (publishedToday && publishedTomorrow && publishedLater) {
+                    dietStatus = 'green';
+                } else if (publishedToday && publishedTomorrow) {
+                    dietStatus = 'yellow';
+                    yellowCount++;
+                } else if (publishedToday) {
+                    dietStatus = 'red';
+                    redCount++;
+                }
+
+                if (dietStatus !== 'green') {
+                    dietPendingList.push({
+                        name: client.name,
+                        color: dietStatus === 'black' ? 'bg-black' : dietStatus === 'red' ? 'bg-rose-500' : 'bg-amber-500',
+                        originalColor: dietStatus
+                    });
+                }
+            });
+        }
+
+        // Sort pending list
         dietPendingList.sort((a, b) => {
-            const priority = { black: 3, red: 2, yellow: 1 };
-            return (priority[b.originalColor as keyof typeof priority] || 0) - (priority[a.originalColor as keyof typeof priority] || 0);
+            const priority: Record<string, number> = { black: 3, red: 2, yellow: 1 };
+            return (priority[b.originalColor as string] || 0) - (priority[a.originalColor as string] || 0);
         });
 
         const dietPendingCount = redCount + yellowCount + blackCount;
@@ -164,7 +162,7 @@ export async function GET(req: Request) {
                     yellow: yellowCount,
                     black: blackCount
                 },
-                dietPendingList: dietPendingList.slice(0, 10) // Limit list size
+                dietPendingList: dietPendingList.slice(0, 10)
             }
         });
     } catch (error) {

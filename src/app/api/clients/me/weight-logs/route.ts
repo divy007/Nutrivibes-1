@@ -55,6 +55,14 @@ export async function POST(req: Request) {
         // Also update the current weight in the client profile
         await Client.findByIdAndUpdate(client._id, { $set: { weight } });
 
+        // Log functionality for Live Feed
+        try {
+            const { logActivity } = await import('@/lib/activity-utils');
+            await logActivity(client._id.toString(), 'WEIGHT_LOG', `Client updated weight to ${weight} ${unit || 'kg'}`, `${weight}${unit || 'kg'}`);
+        } catch (err) {
+            console.error('Failed to log activity:', err);
+        }
+
         return NextResponse.json(newLog, { status: 201 });
     } catch (error) {
         console.error('Failed to save weight log:', error);
