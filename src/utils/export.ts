@@ -60,11 +60,11 @@ export const exportToPDF = async (weekPlan: WeekPlan, clientInfo: ClientInfo) =>
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text('Contact: +91 98765 43210', 14, 26);
+    doc.text('Contact: +91 98243 59944', 14, 26);
 
     doc.setFontSize(16);
     doc.setTextColor(40);
-    doc.text('Diet Plan - 1 Week', 14, 36);
+    doc.text('Diet Plan Week', 14, 36);
 
     // Client Info Box
     const boxTop = 45;
@@ -100,8 +100,15 @@ export const exportToPDF = async (weekPlan: WeekPlan, clientInfo: ClientInfo) =>
     // Changed Format: EEE - MMM d
     const headRow = ['Time / Day', ...weekPlan.days.map(d => format(new Date(d.date), 'EEE - MMM d'))];
 
-    const bodyRows = MEAL_TIMES.map(time => {
-        const rowData: string[] = [`${time}\n${MEAL_LABELS[time]}`];
+    // Extract dynamic meal times from the plan
+    const uniqueTimes = Array.from(new Set(
+        weekPlan.days.flatMap(day => day.meals.map(m => m.time))
+    )).sort();
+
+    const bodyRows = uniqueTimes.map(time => {
+        // Find a label for this time if available, or just use the time
+        const label = MEAL_LABELS[time] || `Meal at ${time}`;
+        const rowData: string[] = [`${time}\n${label}`];
 
         weekPlan.days.forEach(day => {
             const meal = day.meals.find(m => m.time === time);
@@ -249,10 +256,17 @@ export const exportToExcel = async (weekPlan: WeekPlan, clientInfo: ClientInfo) 
     });
     sheet2.columns = columns;
 
+    // Extract dynamic meal times from the plan
+    const uniqueTimes = Array.from(new Set(
+        weekPlan.days.flatMap(day => day.meals.map(m => m.time))
+    )).sort();
+
     // Add Rows
-    MEAL_TIMES.forEach(time => {
+    uniqueTimes.forEach(time => {
+        // Find a label for this time if available, or just use the time
+        const label = MEAL_LABELS[time] || '';
         const rowObj: Record<string, string> = {
-            time: `${time} - ${MEAL_LABELS[time]}`
+            time: `${time}${label ? ' - ' + label : ''}`
         };
 
         weekPlan.days.forEach((day, index) => {

@@ -750,12 +750,27 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
     const handleSaveAsDraft = async () => {
         if (!weekPlan) return;
+
+        // Smart Update: Preserve PUBLISHED status, Mark others as NOT_SAVED (Draft)
+        const daysToSave = weekPlan.days.map(day => {
+            if (day.status === 'PUBLISHED') return day; // Keep Published
+
+            // If has food, mark as draft (NOT_SAVED in DB, 'Draft' in UI)
+            const hasFood = day.meals.some(m => m.foodItems.length > 0);
+            return {
+                ...day,
+                status: hasFood ? 'NOT_SAVED' : 'NO_DIET' as any
+            };
+        });
+
         try {
             const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: weekPlan.days
+                days: daysToSave
             });
+            // Update local state with new statuses
+            setWeekPlan(prev => prev ? { ...prev, days: daysToSave } : null);
             alert('Draft saved successfully');
         } catch (error) {
             alert('Failed to save draft');
@@ -1029,10 +1044,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                     {/* Status Badge */}
                                     <div className="mb-2">
                                         <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${day.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700 border-emerald-300 ring-1 ring-emerald-500' :
-                                            day.status === 'NOT_SAVED' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                                            day.status === 'NOT_SAVED' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                                 'bg-slate-100 text-slate-400 border-slate-200'
                                             }`}>
-                                            {day.status === 'PUBLISHED' ? '✓ Published' : day.status === 'NOT_SAVED' ? 'Not Saved' : 'No Diet'}
+                                            {day.status === 'PUBLISHED' ? '✓ Published' : day.status === 'NOT_SAVED' ? 'Draft' : 'No Diet'}
                                         </span>
                                     </div>
 
