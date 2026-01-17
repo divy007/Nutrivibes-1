@@ -9,7 +9,7 @@ const PROD_URL = 'https://nutrivibesbymansi.vercel.app';
 const LOCAL_URL = 'http://192.168.1.6:3000'; // Change to your Mac's IP for local dev
 
 // Set this to true for production, false for local development
-const IS_PROD = false;
+const IS_PROD = true;
 
 const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
 
