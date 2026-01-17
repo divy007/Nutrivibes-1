@@ -252,7 +252,7 @@ export default function LandingPage() {
                             <span>Android Application Package (APK)</span>
                         </div>
                         <a
-                            href="/application-a095a3c3-ad58-482d-a7aa-93015c732704.apk"
+                            href="/nutrivibes.apk"
                             download
                             className="w-full block bg-white text-brand-forest font-black text-lg py-4 px-8 rounded-xl hover:bg-brand-sage transition-colors shadow-lg"
                         >
