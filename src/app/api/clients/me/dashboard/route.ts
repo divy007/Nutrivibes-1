@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
         const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog] = await Promise.all([
-            WeightLog.find({ clientId: client._id }).sort({ date: -1 }).limit(10).lean(),
+            WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean(),
             WaterIntake.findOne({ clientId: client._id, date: today }).lean(),
             MealLog.find({ clientId: client._id }).sort({ createdAt: -1 }).limit(5).lean(),
             MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean(),

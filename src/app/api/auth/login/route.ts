@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
         if (!user) {
             return NextResponse.json(
-                { success: false, message: 'Invalid Username or Password' },
+                { success: false, message: 'Invalid email address or password' },
                 { status: 401 }
             );
         }
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
         if (!isMatch) {
             return NextResponse.json(
-                { success: false, message: 'Invalid Username or Password' },
+                { success: false, message: 'Invalid email address or password' },
                 { status: 401 }
             );
         }

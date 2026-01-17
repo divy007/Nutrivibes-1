@@ -112,7 +112,7 @@ export default function LogMeasurementModal({ isOpen, onClose, onSave, initialVa
         >
             <View style={styles.overlay}>
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} style={styles.modalContainer}>
                     <View style={[styles.content, { backgroundColor: theme.background }]}>
                         {/* Header */}
                         <View style={styles.header}>

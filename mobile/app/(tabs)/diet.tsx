@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +21,7 @@ const MEAL_SLOTS = [
 ];
 
 export default function DietPlanScreen() {
+    const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekPlan, setWeekPlan] = useState<any>(null);
@@ -97,7 +99,7 @@ export default function DietPlanScreen() {
     const isPublished = dayPlan?.status === 'PUBLISHED';
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View>
@@ -200,7 +202,7 @@ export default function DietPlanScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, paddingHorizontal: 24, paddingTop: 64 },
+    container: { flex: 1, paddingHorizontal: 24 },
     header: { marginBottom: 24 },
     title: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
     subtitle: { fontSize: 16, color: '#94a3b8', fontWeight: '600', marginTop: 2 },

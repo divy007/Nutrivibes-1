@@ -251,7 +251,7 @@ export default function DashboardScreen() {
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={[styles.avatarButton, { backgroundColor: theme.brandSage }]}
+              style={[styles.avatarButton, { backgroundColor: theme.brandSage, zIndex: 2001 }]}
               onPress={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               activeOpacity={0.7}
             >
@@ -259,59 +259,69 @@ export default function DashboardScreen() {
             </TouchableOpacity>
 
             {isProfileMenuOpen && (
-              <View style={[styles.menuDropdown, { backgroundColor: theme.background }]}>
-                <View style={styles.menuHeader}>
-                  <Text style={styles.menuLabel}>Logged in as</Text>
-                  <Text style={[styles.menuEmail, { color: theme.brandForest }]} numberOfLines={1}>
-                    {user?.email}
-                  </Text>
+              <>
+                {/* Transparent Overlay to close menu on outside click */}
+                <TouchableOpacity
+                  style={styles.menuOverlay}
+                  activeOpacity={1}
+                  onPress={() => setIsProfileMenuOpen(false)}
+                />
+                <View style={[styles.menuDropdown, { backgroundColor: theme.background }]}>
+                  <View style={styles.menuHeader}>
+                    <Text style={styles.menuLabel}>Logged in as</Text>
+                    <Text style={[styles.menuEmail, { color: theme.brandForest }]} numberOfLines={1}>
+                      {user?.email}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      router.push('/profile');
+                    }}
+                  >
+                    <UserIcon size={18} color="#64748b" />
+                    <Text style={styles.menuItemText}>Edit Profile</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      router.push('/contact');
+                    }}
+                  >
+                    <Phone size={18} color="#64748b" />
+                    <Text style={styles.menuItemText}>Contact</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.menuDivider} />
+
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={logout}
+                  >
+                    <LogOut size={18} color="#ef4444" />
+                    <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Sign Out</Text>
+                  </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setIsProfileMenuOpen(false);
-                    router.push('/profile');
-                  }}
-                >
-                  <UserIcon size={18} color="#64748b" />
-                  <Text style={styles.menuItemText}>Edit Profile</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setIsProfileMenuOpen(false);
-                    router.push('/contact');
-                  }}
-                >
-                  <Phone size={18} color="#64748b" />
-                  <Text style={styles.menuItemText}>Contact</Text>
-                </TouchableOpacity>
-
-                <View style={styles.menuDivider} />
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={logout}
-                >
-                  <LogOut size={18} color="#ef4444" />
-                  <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Sign Out</Text>
-                </TouchableOpacity>
-              </View>
+              </>
             )}
           </View>
         </View>
 
         <View style={styles.content}>
           {profile?.primaryGoal && (
-            <View style={[styles.goalBanner, { backgroundColor: theme.brandSage + '15', borderColor: theme.brandSage + '30' }]}>
-              <View style={styles.goalIconContainer}>
-                <Target size={18} color={theme.brandForest} />
+            <View style={[styles.goalBanner, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
+              <View style={[styles.goalIconContainer, { backgroundColor: theme.brandSage + '10' }]}>
+                <Target size={20} color={theme.brandSage} />
               </View>
               <View style={styles.goalTextContainer}>
                 <Text style={styles.goalLabel}>Focusing on</Text>
-                <Text style={[styles.goalValue, { color: theme.brandForest }]}>{profile.primaryGoal}</Text>
+                <Text style={[styles.goalValue, { color: theme.brandForest }]}>
+                  {Array.isArray(profile.primaryGoal) ? profile.primaryGoal.join(', ') : profile.primaryGoal}
+                </Text>
               </View>
             </View>
           )}
@@ -433,8 +443,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   goalBanner: {
-    padding: 16,
-    borderRadius: 24,
+    padding: 24,
+    borderRadius: 32,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -564,6 +574,17 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '900',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: -100, // Extend well beyond header
+    right: -100,
+    bottom: -1000, // Cover entire screen height
+    left: -1000, // Cover entire screen width
+    width: 2000,
+    height: 3000,
+    backgroundColor: 'rgba(0,0,0,0)', // Transparent
+    zIndex: 1500, // Below dropdown (2000) but above content
   },
   menuDropdown: {
     position: 'absolute',

@@ -50,6 +50,25 @@ export async function GET(req: Request) {
             await client.save();
         }
 
+        // SELF-HEALING: If profile seems complete but flag is false, fix it.
+        // This handles cases where partial updates might have reset the flag previously.
+        if (client && !client.isProfileComplete) {
+            const hasAllFields = !!(
+                (client.pincode || client.address) && // Allow address as fallback if pincode missing in legacy
+                client.dob &&
+                client.gender &&
+                client.height &&
+                client.weight &&
+                client.primaryGoal && client.primaryGoal.length > 0
+            );
+
+            if (hasAllFields) {
+                console.log('Self-healing: Marking profile as complete for user:', user._id);
+                client.isProfileComplete = true;
+                await client.save();
+            }
+        }
+
         return NextResponse.json(client);
     } catch (error) {
         console.error('Failed to fetch client profile:', error);
@@ -110,13 +129,25 @@ export async function PATCH(req: Request) {
 
         // Check if all required fields are filled to mark profile as complete
         const isProfileComplete = !!(
-            updateFields.city &&
-            updateFields.dob &&
-            updateFields.gender &&
-            updateFields.height &&
-            updateFields.weight &&
-            updateFields.primaryGoal
+            (updateFields.pincode || client.pincode) &&
+            (updateFields.dob || client.dob) &&
+            (updateFields.gender || client.gender) &&
+            (updateFields.height || client.height) &&
+            (updateFields.weight || client.weight) &&
+            (updateFields.primaryGoal || (client.primaryGoal && client.primaryGoal.length > 0))
         );
+
+        // Auto-calculate Age if DOB is provided
+        if (updateFields.dob) {
+            const dobDate = new Date(updateFields.dob);
+            const today = new Date();
+            let age = today.getFullYear() - dobDate.getFullYear();
+            const m = today.getMonth() - dobDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                age--;
+            }
+            updateFields.age = age;
+        }
 
         // Auto-calculate Ideal Weight (Target Weight) using BMI 22 if height is changed/present
         let idealWeight = updateFields.idealWeight;

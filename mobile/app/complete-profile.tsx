@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
 import { useRouter, Stack } from 'expo-router';
-import { User, Phone, Ruler, Weight, UserCircle, Check } from 'lucide-react-native';
+import { User, Phone, Ruler, Weight, UserCircle, Check, Calendar, MapPin, Home } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -10,10 +11,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Target } from 'lucide-react-native';
 import { SelectionOption } from '@/components/ProfileOptions';
 import { PRIMARY_GOALS, DIETARY_PREFERENCES, GENDER_OPTIONS } from '@/constants/Constants';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CompleteProfileScreen() {
     const router = useRouter();
     const { login } = useAuth();
+    const insets = useSafeAreaInsets();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -22,6 +25,8 @@ export default function CompleteProfileScreen() {
     const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
     const [heightFt, setHeightFt] = useState('');
     const [heightIn, setHeightIn] = useState('');
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [date, setDate] = useState(new Date());
 
     const [formData, setFormData] = useState({
         name: '',
@@ -29,12 +34,15 @@ export default function CompleteProfileScreen() {
         phone: '',
         height: '',
         weight: '',
-        age: '',
-        city: '',
+        dob: '',
+        age: '', // Derived from DOB
+        city: '', // Kept for backward compatibility/read but usually replaced by address/pincode
         state: '',
+        address: '',
+        pincode: '',
         gender: '' as 'male' | 'female' | 'other' | '',
         preferences: '',
-        primaryGoal: ''
+        primaryGoal: [] as string[]
     });
 
     useEffect(() => {
@@ -54,12 +62,15 @@ export default function CompleteProfileScreen() {
                 phone: data.phone || '',
                 height: data.height?.toString() || '',
                 weight: data.weight?.toString() || '',
-                age: data.age?.toString() || '',
+                dob: '', // User requested no auto-fill for DOB
+                age: '',
                 city: data.city || '',
                 state: data.state || '',
+                address: data.address || '',
+                pincode: data.pincode || '',
                 gender: data.gender || '',
                 preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
-                primaryGoal: data.primaryGoal || ''
+                primaryGoal: Array.isArray(data.primaryGoal) ? data.primaryGoal : (data.primaryGoal ? [data.primaryGoal] : [])
             });
 
             // Initialize height in ft/in if we have data
@@ -89,29 +100,47 @@ export default function CompleteProfileScreen() {
         }
 
         const isHeightValid = heightUnit === 'cm' ? !!formData.height : (!!heightFt);
-        if (!formData.name || !formData.age || !isHeightValid || !formData.weight || !formData.primaryGoal) {
-            Alert.alert('Missing Information', 'Please fill in all required fields');
+        if (!formData.name || !formData.dob || !isHeightValid || !formData.weight || formData.primaryGoal.length === 0 || !formData.pincode) {
+            Alert.alert('Missing Information', 'Please fill in all mandatory fields');
+            return;
+        }
+
+        // Validate Height and Weight > 0
+        let heightInCm = parseFloat(formData.height);
+        if (heightUnit === 'ft') {
+            const ft = parseFloat(heightFt) || 0;
+            const inches = parseFloat(heightIn) || 0;
+            heightInCm = (ft * 30.48) + (inches * 2.54);
+        } else {
+            heightInCm = parseFloat(formData.height) || 0;
+        }
+
+        const weightValue = parseFloat(formData.weight) || 0;
+
+        if (heightInCm <= 0) {
+            Alert.alert('Invalid Input', 'Height must be greater than zero');
+            return;
+        }
+        if (weightValue <= 0) {
+            Alert.alert('Invalid Input', 'Weight must be greater than zero');
             return;
         }
 
         setSaving(true);
         try {
-            // Convert height to CM if unit is FT
-            let heightInCm = parseFloat(formData.height);
-            if (heightUnit === 'ft') {
-                const ft = parseFloat(heightFt) || 0;
-                const inches = parseFloat(heightIn) || 0;
-                heightInCm = (ft * 30.48) + (inches * 2.54);
-            }
+            // Parse DOB
+            const [day, month, year] = formData.dob.split('/');
+            const dobDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
             await api.patch('/api/clients/me', {
                 name: formData.name,
                 phone: formData.phone,
-                height: heightInCm || undefined,
-                weight: parseFloat(formData.weight) || undefined,
-                age: parseInt(formData.age) || undefined,
-                dob: formData.age ? new Date(new Date().getFullYear() - parseInt(formData.age), 0, 1) : undefined,
-                city: formData.city,
+                height: heightInCm,
+                weight: weightValue,
+                dob: dobDate,
+                city: formData.city, // Optional legacy
+                address: formData.address,
+                pincode: formData.pincode,
                 state: formData.state,
                 gender: formData.gender,
                 dietaryPreferences: [formData.preferences],
@@ -129,6 +158,51 @@ export default function CompleteProfileScreen() {
         }
     };
 
+    const toggleGoal = (goal: string) => {
+        setFormData(prev => {
+            const goals = prev.primaryGoal.includes(goal)
+                ? prev.primaryGoal.filter(g => g !== goal)
+                : [...prev.primaryGoal, goal];
+            return { ...prev, primaryGoal: goals };
+        });
+    };
+
+    const calculateAge = (dob: string) => {
+        if (!dob) return '';
+        const parts = dob.split('/');
+        if (parts.length !== 3) return '';
+
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+
+        const birthDate = new Date(year, month, day);
+        const today = new Date();
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        return age >= 0 ? age.toString() : '';
+    };
+
+    const onDateChange = (event: any, selectedDate?: Date) => {
+        const currentDate = selectedDate || date;
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+        setDate(currentDate);
+
+        if (selectedDate) {
+            const day = currentDate.getDate().toString().padStart(2, '0');
+            const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = currentDate.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
+            setFormData(prev => ({ ...prev, dob: formattedDate }));
+        }
+    };
 
     if (loading) {
         return (
@@ -147,7 +221,9 @@ export default function CompleteProfileScreen() {
                 {/* Hide Back Button */}
                 <Stack.Screen options={{ headerLeft: () => null, title: 'Complete Profile' }} />
 
-                <View style={styles.header}>
+                <Stack.Screen options={{ headerLeft: () => null, title: 'Complete Profile' }} />
+
+                <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                     <Text style={[styles.headerTitle, { color: theme.brandForest }]}>Complete Profile</Text>
                     <Text style={styles.headerSubtitle}>Please complete your profile to continue</Text>
                 </View>
@@ -155,20 +231,26 @@ export default function CompleteProfileScreen() {
                 <ScrollView contentContainerStyle={styles.content}>
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Full Name *</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Full Name</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
+                            <View style={[styles.inputContainer, { backgroundColor: '#f1f5f9', borderColor: '#e2e8f0', opacity: 0.8 }]}>
                                 <User size={20} color="#94a3b8" />
                                 <TextInput
-                                    style={[styles.input, { color: theme.text }]}
+                                    style={[styles.input, { color: '#64748b' }]}
                                     value={formData.name}
-                                    onChangeText={(t) => setFormData({ ...formData, name: t })}
+                                    editable={false}
                                     placeholder="Enter your name"
                                 />
                             </View>
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Gender *</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Gender</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={styles.genderRow}>
                                 {GENDER_OPTIONS.map((opt) => (
                                     <SelectionOption
@@ -184,7 +266,10 @@ export default function CompleteProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Diet Preference *</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Diet Preference</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={{ gap: 8 }}>
                                 <View style={{ flexDirection: 'row', gap: 12 }}>
                                     {DIETARY_PREFERENCES.slice(0, 2).map((opt) => (
@@ -214,14 +299,17 @@ export default function CompleteProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Primary Goal *</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Primary Goal</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={styles.goalGrid}>
                                 {PRIMARY_GOALS.map((goal) => (
                                     <SelectionOption
                                         key={goal}
                                         value={goal}
-                                        selected={formData.primaryGoal === goal}
-                                        onSelect={(val) => setFormData({ ...formData, primaryGoal: val })}
+                                        selected={formData.primaryGoal.includes(goal)}
+                                        onSelect={() => toggleGoal(goal)}
                                         theme={theme}
                                         flex={false}
                                     />
@@ -231,23 +319,57 @@ export default function CompleteProfileScreen() {
 
                         <View style={styles.row}>
                             <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Age *</Text>
-                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <View style={{ width: 20 }} />
-                                    <TextInput
-                                        style={[styles.input, { color: theme.text }]}
-                                        value={formData.age}
-                                        onChangeText={(t) => setFormData({ ...formData, age: t })}
-                                        placeholder="Age"
-                                        keyboardType="numeric"
-                                    />
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Date of Birth</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
                                 </View>
+
+                                <TouchableOpacity
+                                    onPress={() => setShowDatePicker(true)}
+                                    style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}
+                                >
+                                    <View style={{ width: 10 }} />
+                                    <Text style={[styles.input, { color: formData.dob ? theme.text : '#94a3b8', paddingTop: 14 }]}>
+                                        {formData.dob || 'DD/MM/YYYY'}
+                                    </Text>
+                                    <Calendar size={20} color="#94a3b8" />
+                                </TouchableOpacity>
+
+                                {showDatePicker && (
+                                    <View>
+                                        <DateTimePicker
+                                            testID="dateTimePicker"
+                                            value={date}
+                                            mode="date"
+                                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                            onChange={onDateChange}
+                                            maximumDate={new Date()}
+                                        />
+                                        {Platform.OS === 'ios' && (
+                                            <TouchableOpacity
+                                                style={{ alignItems: 'flex-end', padding: 10 }}
+                                                onPress={() => setShowDatePicker(false)}
+                                            >
+                                                <Text style={{ color: theme.brandForest, fontWeight: 'bold' }}>Done</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                )}
+
+                                {calculateAge(formData.dob) ? (
+                                    <Text style={{ fontSize: 12, color: theme.brandForest, fontWeight: '700', marginLeft: 4 }}>
+                                        Age: {calculateAge(formData.dob)} years
+                                    </Text>
+                                ) : null}
                             </View>
                         </View>
 
                         <View style={styles.inputGroup}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text style={styles.label}>Height *</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Height</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={styles.unitToggle}>
                                     <TouchableOpacity
                                         style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive]}
@@ -302,7 +424,10 @@ export default function CompleteProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Weight (kg) *</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Weight (kg)</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                 <Weight size={20} color="#94a3b8" />
                                 <TextInput
@@ -330,14 +455,37 @@ export default function CompleteProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Location</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Address</Text>
+                                {/* Address is Optional per user request (only field not mandatory) */}
+                            </View>
+                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9', height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
+                                <Home size={20} color="#94a3b8" style={{ marginTop: 2 }} />
+                                <TextInput
+                                    style={[styles.input, { color: theme.text, height: '100%' }]}
+                                    value={formData.address}
+                                    onChangeText={(t) => setFormData({ ...formData, address: t })}
+                                    placeholder="Enter your full address"
+                                    multiline
+                                    textAlignVertical="top"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.label}>Pincode</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <UserCircle size={20} color="#94a3b8" />
+                                <MapPin size={20} color="#94a3b8" />
                                 <TextInput
                                     style={[styles.input, { color: theme.text }]}
-                                    value={formData.city}
-                                    onChangeText={(t) => setFormData({ ...formData, city: t })}
-                                    placeholder="City"
+                                    value={formData.pincode}
+                                    onChangeText={(t) => setFormData({ ...formData, pincode: t })}
+                                    placeholder="Enter pincode"
+                                    keyboardType="number-pad"
+                                    maxLength={6}
                                 />
                             </View>
                         </View>
@@ -372,7 +520,6 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingHorizontal: 24,
-        paddingTop: 80,
         paddingBottom: 20,
     },
     headerTitle: {

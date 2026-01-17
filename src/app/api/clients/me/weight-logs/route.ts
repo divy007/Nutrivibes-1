@@ -45,11 +45,30 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Weight is required' }, { status: 400 });
         }
 
-        const newLog = await WeightLog.create({
+        const normalizedDate = normalizeDateUTC(date || undefined);
+
+        // UPSERT LOGIC: Update if exists for this day, otherwise create new
+        // consistent with "last date will be the latest weight" requirement
+        const newLog = await WeightLog.findOneAndUpdate(
+            {
+                clientId: client._id,
+                date: normalizedDate
+            },
+            {
+                $set: {
+                    weight,
+                    unit: unit || 'kg'
+                }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        // CLEANUP: If multiple logs existed for this day (legacy data), delete them.
+        // This fixes the issue where an update might hit an older duplicate while a newer invalid duplicate remains visible.
+        await WeightLog.deleteMany({
             clientId: client._id,
-            weight,
-            unit: unit || 'kg',
-            date: normalizeDateUTC(date || undefined),
+            date: normalizedDate,
+            _id: { $ne: newLog._id }
         });
 
         // Also update the current weight in the client profile

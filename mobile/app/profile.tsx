@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle, Calendar } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -12,6 +13,7 @@ import { PRIMARY_GOALS, DIETARY_PREFERENCES, GENDER_OPTIONS } from '@/constants/
 
 export default function ProfileScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -23,12 +25,13 @@ export default function ProfileScreen() {
         phone: '',
         height: '',
         weight: '',
-        age: '',
+        dob: '',
+        age: '', // Derived for display
         city: '',
         state: '',
         gender: '' as 'male' | 'female' | 'other' | '',
         preferences: '', // Single selection logic for UI
-        primaryGoal: ''
+        primaryGoal: [] as string[]
     });
 
     useEffect(() => {
@@ -44,13 +47,13 @@ export default function ProfileScreen() {
                 phone: data.phone || '',
                 height: data.height?.toString() || '',
                 weight: data.weight?.toString() || '',
-                age: data.dob ? new Date().getFullYear() - new Date(data.dob).getFullYear() : (data.age?.toString() || ''),
+                dob: data.dob ? new Date(data.dob).toLocaleDateString('en-GB') : '', // DD/MM/YYYY
+                age: '', // We use dob now
                 city: data.city || '',
                 state: data.state || '',
                 gender: data.gender || '',
-                // backend returns array, we take first item or join, but for Persona strict logic we take first
                 preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
-                primaryGoal: data.primaryGoal || ''
+                primaryGoal: Array.isArray(data.primaryGoal) ? data.primaryGoal : (data.primaryGoal ? [data.primaryGoal] : [])
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -61,6 +64,20 @@ export default function ProfileScreen() {
     };
 
     const handleSave = async () => {
+        if (!formData.name) { Alert.alert('Missing Field', 'Full Name is required'); return; }
+        if (!formData.gender) { Alert.alert('Missing Field', 'Gender is required'); return; }
+        if (!formData.preferences) { Alert.alert('Missing Field', 'Diet Preference is required'); return; }
+        if (formData.primaryGoal.length === 0) { Alert.alert('Missing Field', 'Please select at least one Primary Goal'); return; }
+        if (!formData.phone) { Alert.alert('Missing Field', 'Phone Number is required'); return; }
+        if (!formData.dob) { Alert.alert('Missing Field', 'Date of Birth is required'); return; }
+        if (!isValidDate(formData.dob)) { Alert.alert('Invalid Date', 'Please enter a valid date in DD/MM/YYYY format'); return; }
+
+        if (!formData.height) { Alert.alert('Missing Field', 'Height is required'); return; }
+        if (parseFloat(formData.height) <= 0) { Alert.alert('Invalid Value', 'Height must be greater than 0'); return; }
+
+        if (!formData.weight) { Alert.alert('Missing Field', 'Weight is required'); return; }
+        if (parseFloat(formData.weight) <= 0) { Alert.alert('Invalid Value', 'Weight must be greater than 0'); return; }
+
         setSaving(true);
         try {
             await api.patch('/api/clients/me', {
@@ -71,8 +88,11 @@ export default function ProfileScreen() {
                 city: formData.city,
                 state: formData.state,
                 gender: formData.gender,
-                // Calculate DOB from Age (approximate to Jan 1st of the birth year)
-                dob: formData.age ? new Date(new Date().getFullYear() - parseInt(formData.age), 0, 1) : undefined,
+                // Convert DD/MM/YYYY to Date object
+                dob: formData.dob ? (() => {
+                    const [day, month, year] = formData.dob.split('/');
+                    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                })() : undefined,
                 dietaryPreferences: formData.preferences ? [formData.preferences] : [],
                 primaryGoal: formData.primaryGoal
             });
@@ -84,6 +104,41 @@ export default function ProfileScreen() {
             setSaving(false);
         }
     };
+
+    const toggleGoal = (goal: string) => {
+        setFormData(prev => {
+            const goals = prev.primaryGoal.includes(goal)
+                ? prev.primaryGoal.filter(g => g !== goal)
+                : [...prev.primaryGoal, goal];
+            return { ...prev, primaryGoal: goals };
+        });
+    };
+
+    const isValidDate = (dateString: string) => {
+        // Regex to check format DD/MM/YYYY
+        const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        if (!regex.test(dateString)) return false;
+
+        const parts = dateString.split('/');
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+
+        // Check month range
+        if (month < 1 || month > 12) return false;
+
+        // Check year (reasonable range, e.g., not future or too old)
+        const currentYear = new Date().getFullYear();
+        if (year < 1900 || year > currentYear) return false;
+
+        // Check days in month
+        const daysInMonth = new Date(year, month, 0).getDate();
+        if (day < 1 || day > daysInMonth) return false;
+
+        return true;
+    };
+
+
 
     if (loading) {
         return (
@@ -102,7 +157,7 @@ export default function ProfileScreen() {
                 style={{ flex: 1 }}
             >
                 <View style={[styles.container, { backgroundColor: theme.background }]}>
-                    <View style={styles.header}>
+                    <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                             <ArrowLeft size={24} color={theme.text} />
                         </TouchableOpacity>
@@ -120,7 +175,10 @@ export default function ProfileScreen() {
 
                         <View style={styles.form}>
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Full Name</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Full Name</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                     <User size={20} color="#94a3b8" />
                                     <TextInput
@@ -133,7 +191,10 @@ export default function ProfileScreen() {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Gender</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Gender</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                     <UserCircle size={20} color="#94a3b8" />
                                     <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
@@ -152,7 +213,10 @@ export default function ProfileScreen() {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Diet Preference</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Diet Preference</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={{ gap: 8 }}>
                                     <View style={{ flexDirection: 'row', gap: 8 }}>
                                         {DIETARY_PREFERENCES.slice(0, 2).map((opt) => (
@@ -182,14 +246,17 @@ export default function ProfileScreen() {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Primary Goal</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Primary Goal (Select Multiple)</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={styles.goalGrid}>
                                     {PRIMARY_GOALS.map((goal) => (
                                         <SelectionOption
                                             key={goal}
                                             value={goal}
-                                            selected={formData.primaryGoal === goal}
-                                            onSelect={(val) => setFormData({ ...formData, primaryGoal: val })}
+                                            selected={formData.primaryGoal.includes(goal)}
+                                            onSelect={() => toggleGoal(goal)}
                                             theme={theme}
                                             flex={false}
                                         />
@@ -198,7 +265,10 @@ export default function ProfileScreen() {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Phone Number</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Phone Number</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                     <Phone size={20} color="#94a3b8" />
                                     <TextInput
@@ -211,9 +281,32 @@ export default function ProfileScreen() {
                                 </View>
                             </View>
 
+                            <View style={styles.inputGroup}>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Date of Birth (DD/MM/YYYY)</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                </View>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Calendar size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.dob}
+                                        onChangeText={(t) => {
+                                            // Simple mask logic or just let them type
+                                            setFormData({ ...formData, dob: t });
+                                        }}
+                                        placeholder="DD/MM/YYYY"
+                                        keyboardType="numbers-and-punctuation"
+                                    />
+                                </View>
+                            </View>
+
                             <View style={styles.row}>
                                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Height (cm)</Text>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text style={styles.label}>Height (cm)</Text>
+                                        <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                    </View>
                                     <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                         <Ruler size={20} color="#94a3b8" />
                                         <TextInput
@@ -226,7 +319,10 @@ export default function ProfileScreen() {
                                     </View>
                                 </View>
                                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Weight (kg)</Text>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        <Text style={styles.label}>Weight (kg)</Text>
+                                        <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                                    </View>
                                     <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                         <Weight size={20} color="#94a3b8" />
                                         <TextInput
@@ -288,7 +384,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingTop: 60,
         paddingBottom: 20,
     },
     backButton: {

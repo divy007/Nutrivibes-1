@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
+import { useRouter } from 'expo-router';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
 import Colors from '@/constants/Colors';
@@ -106,6 +108,8 @@ const ASSESSMENT_QUESTIONS = [
 ];
 
 export default function WellnessAuditScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -201,7 +205,7 @@ export default function WellnessAuditScreen() {
     const progress = (currentStep + 1) / ASSESSMENT_QUESTIONS.length;
 
     return (
-      <View style={[styles.quizContainer, { backgroundColor: theme.background }]}>
+      <View style={[styles.quizContainer, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
         <View style={styles.quizHeader}>
           <TouchableOpacity onPress={() => setIsQuizActive(false)}>
             <ChevronLeft size={24} color={theme.text} />
@@ -236,7 +240,7 @@ export default function WellnessAuditScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
       <View style={styles.landingHeader}>
         <Text style={[styles.title, { color: theme.brandForest }]}>Wellness Audit</Text>
         <Text style={styles.subtitle}>Insights into your metabolic health</Text>
@@ -249,15 +253,23 @@ export default function WellnessAuditScreen() {
             <Text style={styles.scoreUnit}>Score</Text>
           </View>
           <Text style={[styles.riskLevel, { color: theme.brandEarth }]}>{assessment.riskLevel}</Text>
+
           <TouchableOpacity
-            style={[styles.mainButton, { backgroundColor: theme.brandForest }]}
+            style={[styles.mainButton, { backgroundColor: theme.brandForest, marginBottom: 12 }]}
+            onPress={() => router.replace('/(tabs)')}
+          >
+            <Text style={styles.buttonText}>Go to Dashboard</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.secondaryButton, { borderColor: theme.brandSage }]}
             onPress={() => {
               setIsQuizActive(true);
               setCurrentStep(0);
               setUserAnswers([]);
             }}
           >
-            <Text style={styles.buttonText}>Retake Audit</Text>
+            <Text style={[styles.secondaryButtonText, { color: theme.brandSage }]}>Retake Audit</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -281,7 +293,7 @@ export default function WellnessAuditScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 64 },
+  container: { flex: 1, padding: 24 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   landingHeader: { marginBottom: 32 },
   title: { fontSize: 32, fontWeight: '900' },
@@ -296,7 +308,7 @@ const styles = StyleSheet.create({
   scoreValue: { fontSize: 48, fontWeight: '900' },
   scoreUnit: { fontSize: 12, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' },
   riskLevel: { fontSize: 24, fontWeight: '900', marginBottom: 24 },
-  quizContainer: { flex: 1, padding: 24, paddingTop: 64 },
+  quizContainer: { flex: 1, padding: 24 },
   quizHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   quizTitle: { fontSize: 18, fontWeight: '900' },
   progressBarBase: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 3, marginBottom: 40, overflow: 'hidden' },
@@ -306,5 +318,7 @@ const styles = StyleSheet.create({
   questionText: { fontSize: 28, fontWeight: '900', lineHeight: 36, marginBottom: 24 },
   optionsList: { gap: 12 },
   optionButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 1 },
-  optionText: { fontSize: 16, fontWeight: '700' }
+  optionText: { fontSize: 16, fontWeight: '700' },
+  secondaryButton: { paddingVertical: 16, width: '100%', alignItems: 'center', borderRadius: 16, borderWidth: 2, backgroundColor: 'transparent' },
+  secondaryButtonText: { fontWeight: '900', fontSize: 15, textTransform: 'uppercase', letterSpacing: 1 }
 });

@@ -95,6 +95,12 @@ export default function ClientSummaryPage() {
                                     <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tighter">{client.status}</span>
                                 </div>
                                 <span className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{client.phone || 'No Phone'}</span>
+                                {client.age !== undefined && (
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"> • {client.age} Years Old</span>
+                                )}
+                                {client.dob && (
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest block mt-0.5">DOB: {new Date(client.dob).toLocaleDateString()}</span>
+                                )}
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">

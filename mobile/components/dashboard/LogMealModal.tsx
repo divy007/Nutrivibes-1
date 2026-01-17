@@ -49,7 +49,7 @@ export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalPr
         <Modal visible={isOpen} animationType="slide" transparent={true} onRequestClose={onClose}>
             <View style={styles.overlay}>
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} style={styles.modalContainer}>
                     <View style={[styles.content, { backgroundColor: theme.background }]}>
                         <View style={styles.header}>
                             <TouchableOpacity onPress={onClose} style={styles.closeButton}>

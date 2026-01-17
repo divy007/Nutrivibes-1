@@ -20,6 +20,8 @@ export interface IClient extends Document {
     gender?: 'male' | 'female' | 'other';
     city?: string;
     state?: string;
+    address?: string;
+    pincode?: string;
     height?: number;
     weight?: number;
     chest?: number;
@@ -62,7 +64,7 @@ export interface IClient extends Document {
         exerciseFrequency?: string;
         exerciseDuration?: string;
     };
-    primaryGoal?: PrimaryGoal;
+    primaryGoal?: PrimaryGoal[];
     dieticianId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
 }
@@ -76,6 +78,8 @@ const ClientSchema = new Schema(
         gender: { type: String, enum: ['male', 'female', 'other'] },
         city: { type: String },
         state: { type: String },
+        address: { type: String },
+        pincode: { type: String },
         age: { type: Number },
         height: { type: Number },
         weight: { type: Number },
@@ -159,7 +163,7 @@ const ClientSchema = new Schema(
             exerciseDuration: String
         },
         primaryGoal: {
-            type: String,
+            type: [String],
             enum: PRIMARY_GOALS,
             required: false
         },

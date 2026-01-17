@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Modal, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, Modal, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { X } from 'lucide-react-native';
 import { format } from 'date-fns';
@@ -49,7 +49,7 @@ export default function LogWeightModal({ isOpen, onClose, onSave, initialWeight 
                 />
 
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                     style={styles.modalContainer}
                 >
                     <View style={[styles.content, { backgroundColor: theme.background }]}>
@@ -62,57 +62,63 @@ export default function LogWeightModal({ isOpen, onClose, onSave, initialWeight 
                             </TouchableOpacity>
                         </View>
 
-                        <View style={styles.body}>
-                            <Text style={[styles.title, { color: theme.text }]}>Log weight</Text>
+                        <ScrollView
+                            contentContainerStyle={styles.scrollBody}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <View style={styles.body}>
+                                <Text style={[styles.title, { color: theme.text }]}>Log weight</Text>
 
-                            <View style={[styles.inputCard, { backgroundColor: theme.brandSage + '05', borderColor: theme.brandSage + '10' }]}>
-                                <View style={styles.dateBadge}>
-                                    <Text style={styles.dateText}>{format(new Date(), 'dd MMMM yyyy')}</Text>
+                                <View style={[styles.inputCard, { backgroundColor: theme.brandSage + '05', borderColor: theme.brandSage + '10' }]}>
+                                    <View style={styles.dateBadge}>
+                                        <Text style={styles.dateText}>{format(new Date(), 'dd MMMM yyyy')}</Text>
+                                    </View>
+
+                                    <Text style={styles.inputLabel}>Enter Current Weight</Text>
+
+                                    <View style={styles.unitToggle}>
+                                        <TouchableOpacity
+                                            onPress={() => setUnit('kg')}
+                                            style={[styles.unitButton, unit === 'kg' && styles.unitButtonActive]}
+                                        >
+                                            <Text style={[styles.unitButtonText, unit === 'kg' && styles.unitButtonTextActive]}>KG</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() => setUnit('lb')}
+                                            style={[styles.unitButton, unit === 'lb' && styles.unitButtonActive]}
+                                        >
+                                            <Text style={[styles.unitButtonText, unit === 'lb' && styles.unitButtonTextActive]}>LB</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    <View style={styles.weightInputContainer}>
+                                        <TextInput
+                                            style={[styles.input, { color: theme.brandForest }]}
+                                            keyboardType="decimal-pad"
+                                            value={weight}
+                                            onChangeText={setWeight}
+                                            placeholder="0.0"
+                                            placeholderTextColor="#cbd5e1"
+                                            autoFocus
+                                        />
+                                        <Text style={styles.unitSuffix}>{unit.toUpperCase()}</Text>
+                                    </View>
                                 </View>
 
-                                <Text style={styles.inputLabel}>Enter Current Weight</Text>
-
-                                <View style={styles.unitToggle}>
-                                    <TouchableOpacity
-                                        onPress={() => setUnit('kg')}
-                                        style={[styles.unitButton, unit === 'kg' && styles.unitButtonActive]}
-                                    >
-                                        <Text style={[styles.unitButtonText, unit === 'kg' && styles.unitButtonTextActive]}>KG</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => setUnit('lb')}
-                                        style={[styles.unitButton, unit === 'lb' && styles.unitButtonActive]}
-                                    >
-                                        <Text style={[styles.unitButtonText, unit === 'lb' && styles.unitButtonTextActive]}>LB</Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.weightInputContainer}>
-                                    <TextInput
-                                        style={[styles.input, { color: theme.brandForest }]}
-                                        keyboardType="decimal-pad"
-                                        value={weight}
-                                        onChangeText={setWeight}
-                                        placeholder="0.0"
-                                        placeholderTextColor="#cbd5e1"
-                                        autoFocus
-                                    />
-                                    <Text style={styles.unitSuffix}>{unit.toUpperCase()}</Text>
-                                </View>
+                                <TouchableOpacity
+                                    style={[styles.saveButton, { backgroundColor: weight ? theme.brandSage : '#e2e8f0' }]}
+                                    onPress={handleSave}
+                                    disabled={!weight || isSaving}
+                                >
+                                    {isSaving ? (
+                                        <ActivityIndicator color="#FFF" />
+                                    ) : (
+                                        <Text style={styles.saveButtonText}>DONE</Text>
+                                    )}
+                                </TouchableOpacity>
                             </View>
-
-                            <TouchableOpacity
-                                style={[styles.saveButton, { backgroundColor: weight ? theme.brandSage : '#e2e8f0' }]}
-                                onPress={handleSave}
-                                disabled={!weight || isSaving}
-                            >
-                                {isSaving ? (
-                                    <ActivityIndicator color="#FFF" />
-                                ) : (
-                                    <Text style={styles.saveButtonText}>DONE</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
+                        </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
             </View>
@@ -253,5 +259,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '900',
         letterSpacing: 1,
+    },
+    scrollBody: {
+        paddingBottom: 20,
     },
 });

@@ -25,10 +25,11 @@ export default function SignupScreen() {
     const theme = Colors[colorScheme ?? 'light'];
 
     const handleSignup = async () => {
-        if (!name || !email || !password || !confirmPassword || !phone) {
-            setError('Please fill in all fields');
-            return;
-        }
+        if (!name) { setError('Full Name is required'); return; }
+        if (!email) { setError('Email Address is required'); return; }
+        if (!phone) { setError('Phone Number is required'); return; }
+        if (!password) { setError('Password is required'); return; }
+        if (!confirmPassword) { setError('Please confirm your password'); return; }
 
         if (password !== confirmPassword) {
             setError('Passwords do not match');
@@ -40,8 +41,8 @@ export default function SignupScreen() {
             return;
         }
 
-        if (phone.length < 10) {
-            setError('Please enter a valid phone number');
+        if (phone.length !== 10) {
+            setError('Please enter a valid 10-digit phone number');
             return;
         }
 
@@ -90,7 +91,10 @@ export default function SignupScreen() {
 
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.brandForest }]}>Full Name</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Full Name</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <User size={20} color={theme.brandForest} />
                                 <TextInput
@@ -104,7 +108,10 @@ export default function SignupScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.brandForest }]}>Email Address</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Email Address</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Mail size={20} color={theme.brandForest} />
                                 <TextInput
@@ -120,7 +127,10 @@ export default function SignupScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.brandForest }]}>Phone Number</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Phone Number</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Phone size={20} color={theme.brandForest} />
                                 <TextInput
@@ -130,12 +140,16 @@ export default function SignupScreen() {
                                     placeholder="Your mobile number"
                                     placeholderTextColor={theme.brandForest + '80'}
                                     keyboardType="phone-pad"
+                                    maxLength={10}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Password</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Lock size={20} color={theme.brandForest} />
                                 <TextInput
@@ -157,7 +171,10 @@ export default function SignupScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.brandForest }]}>Confirm Password</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Confirm Password</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
                             <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
                                 <Lock size={20} color={theme.brandForest} />
                                 <TextInput
