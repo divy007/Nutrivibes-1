@@ -122,7 +122,10 @@ export default function ClientsPage() {
             return client.status === 'PAUSED';
         }
         if (statusFilter === 'LEADS') {
-            // Leads are either explicitly status 'LEAD' OR incomplete profiles from Mobile App
+            // If they have been converted to NEW/ACTIVE/etc, they are not leads anymore
+            if (['NEW', 'ACTIVE', 'PAUSED'].includes(client.status || '')) return false;
+
+            // Otherwise, they are leads if explicitly LEAD or incomplete mobile profile
             return client.status === 'LEAD' || (client.registrationSource === 'MOBILE_APP' && !client.isProfileComplete);
         }
         if (statusFilter === 'FOLLOW_UPS') {
@@ -184,15 +187,30 @@ export default function ClientsPage() {
     };
 
     const handleDelete = async (e: React.MouseEvent, clientId: string) => {
+        e.preventDefault();
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this client? This action cannot be undone and they will not be able to login again.')) {
-            try {
-                await api.del(`/api/clients/${clientId}`);
+        e.nativeEvent.stopImmediatePropagation();
+
+        // 1. Find Current Status
+        const client = clients.find(c => c._id === clientId);
+        if (!client) return;
+
+        try {
+            await api.del(`/api/clients/${clientId}`);
+
+            // 2. State Update based on previous status
+            if (client.status === 'DELETED') {
+                // Was already deleted -> Hard Delete -> Remove from list
                 setClients(prev => prev.filter(c => c._id !== clientId));
-            } catch (error: any) {
-                console.error('Failed to delete client:', error);
-                alert(error.message || 'Failed to delete client');
+            } else {
+                // Was active/other -> Soft Delete -> Mark as DELETED
+                setClients(prev => prev.map(c =>
+                    c._id === clientId ? { ...c, status: 'DELETED' } : c
+                ));
             }
+        } catch (error: any) {
+            console.error('Failed to delete client:', error);
+            alert(error.message || 'Failed to delete client');
         }
     };
 
@@ -229,12 +247,15 @@ export default function ClientsPage() {
     };
 
     const handleConvertLead = async (e: React.MouseEvent, clientId: string) => {
+        e.preventDefault();
         e.stopPropagation();
-        if (!confirm('Add this lead to your client list?')) return;
+        e.nativeEvent.stopImmediatePropagation();
 
         try {
             await api.patch(`/api/clients/${clientId}`, { status: 'NEW' });
+            // Soft update state
             setClients(prev => prev.map(c => c._id === clientId ? { ...c, status: 'NEW' } : c));
+            alert('Lead successfully converted to Client!');
         } catch (error: any) {
             console.error('Failed to convert lead:', error);
             alert(error.message || 'Failed to convert lead');
@@ -257,9 +278,9 @@ export default function ClientsPage() {
 
     return (
         <div className="p-6 bg-[#FAF9F6] min-h-full">
-            <div className="max-w-[1600px] mx-auto bg-white rounded-[32px] soft-shadow border border-slate-100 overflow-hidden">
+            <div className="max-w-[1600px] mx-auto bg-white rounded-[32px] soft-shadow border border-slate-100 overflow-visible">
                 {/* Header Section */}
-                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white">
+                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white rounded-t-[32px]">
                     <h1 className="text-2xl font-black text-brand-forest">Manage Members</h1>
                 </div>
 
@@ -476,7 +497,7 @@ export default function ClientsPage() {
                 )}
 
                 {/* Pagination (Mock) */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest rounded-b-[32px]">
                     <div className="flex items-center gap-2">
                         Items per page:
                         <span className="flex items-center gap-1 border-b border-slate-300 pb-0.5 cursor-pointer">

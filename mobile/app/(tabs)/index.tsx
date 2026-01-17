@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 
@@ -100,20 +100,43 @@ export default function DashboardScreen() {
   };
 
   const handleSavePeriod = async (startDate: Date, endDate?: Date, intensity?: string) => {
-    // OPTIMISTIC UPDATE
-    const optimisticLog = { startDate, endDate, flowIntensity: intensity };
-    const optimisticStatus = calculateCycleStatus(startDate, profile?.cycleLength || 28);
+    // Check if there's an active period (started within last 10 days)
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
 
-    setLastPeriodLog(optimisticLog);
-    setCycleStatus(optimisticStatus);
-    setIsPeriodModalOpen(false);
+    const hasActivePeriod = lastPeriodLog &&
+      new Date(lastPeriodLog.startDate) > tenDaysAgo &&
+      !lastPeriodLog.endDate;
 
-    try {
-      await api.post('/api/clients/me/period-logs', optimisticLog);
-      // Optional: Refresh from server to ensure sync, but the local update makes it feel instant
-    } catch (error) {
-      console.error('Failed to save period log:', error);
-      // In a real app, you'd show a "Sync Failed" toast and revert
+    if (hasActivePeriod) {
+      // Update existing period with end date if provided
+      const optimisticLog = {
+        ...lastPeriodLog,
+        endDate: endDate || lastPeriodLog.endDate,
+        flowIntensity: intensity || lastPeriodLog.flowIntensity
+      };
+      setLastPeriodLog(optimisticLog);
+      setIsPeriodModalOpen(false);
+
+      try {
+        await api.post('/api/clients/me/period-logs', optimisticLog);
+      } catch (error) {
+        console.error('Failed to update period log:', error);
+      }
+    } else {
+      // Create new period log
+      const optimisticLog = { startDate, endDate, flowIntensity: intensity };
+      const optimisticStatus = calculateCycleStatus(startDate, profile?.cycleLength || 28, new Date());
+
+      setLastPeriodLog(optimisticLog);
+      setCycleStatus(optimisticStatus);
+      setIsPeriodModalOpen(false);
+
+      try {
+        await api.post('/api/clients/me/period-logs', optimisticLog);
+      } catch (error) {
+        console.error('Failed to save period log:', error);
+      }
     }
   };
 
@@ -255,6 +278,17 @@ export default function DashboardScreen() {
                   <Text style={styles.menuItemText}>Edit Profile</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setIsProfileMenuOpen(false);
+                    router.push('/contact');
+                  }}
+                >
+                  <Phone size={18} color="#64748b" />
+                  <Text style={styles.menuItemText}>Contact</Text>
+                </TouchableOpacity>
+
                 <View style={styles.menuDivider} />
 
                 <TouchableOpacity
@@ -382,6 +416,7 @@ export default function DashboardScreen() {
         isOpen={isPeriodModalOpen}
         onClose={() => setIsPeriodModalOpen(false)}
         onSave={handleSavePeriod}
+        lastPeriodLog={lastPeriodLog}
       />
 
       <LogMealModal

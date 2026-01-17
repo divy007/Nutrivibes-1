@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
 
+
 interface Stats {
   activeClients: number;
   newClients: number;
@@ -23,6 +24,16 @@ interface Stats {
   expiredClients: number;
   leadsCount: number;
   todayFollowUps: { name: string; color: string }[];
+  analysis?: {
+    todayCounsellingCount: number;
+    dietPendingCount: number;
+    dietPendingCounts: {
+      red: number;
+      yellow: number;
+      black: number;
+    };
+    dietPendingList: { name: string; color: string }[];
+  };
 }
 
 export default function DieticianDashboard() {
@@ -81,19 +92,7 @@ export default function DieticianDashboard() {
           {/* Today's Task Section */}
           <div className="space-y-4">
             <h2 className="text-base font-bold text-slate-700">Today's Task</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              {/* Counselling Card */}
-              <div className="bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col soft-shadow">
-                <h3 className="text-sm font-black text-brand-earth mb-4">Today's Counselling</h3>
-                <div className="space-y-1 mb-6">
-                  <div className="text-xs font-bold text-slate-600">Total Counselling: <span className="text-slate-900">0</span></div>
-                  <div className="text-xs font-bold text-slate-600">Total Counselling Left: <span className="text-slate-900">0</span></div>
-                </div>
-                <button className="mt-auto text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
-                  View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
-                </button>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
               {/* Follow Ups Card */}
               <div className="bg-white rounded-[24px] border border-slate-100 p-6 soft-shadow">
@@ -138,8 +137,12 @@ export default function DieticianDashboard() {
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-sm font-black text-brand-sage">Diet's Pending</h3>
                   <div className="text-right">
-                    <div className="text-[10px] font-bold text-slate-400">Total Diets Pending: 0</div>
-                    <div className="text-[10px] font-bold text-emerald-600">Yellow: 0 <span className="text-rose-500">Red: 0</span> <span className="text-slate-900">Black: 0</span></div>
+                    <div className="text-[10px] font-bold text-slate-400">Total Diets Pending: {stats?.analysis?.dietPendingCount ?? 0}</div>
+                    <div className="text-[10px] font-bold text-emerald-600">
+                      <span className="text-amber-500">Yellow: {stats?.analysis?.dietPendingCounts.yellow ?? 0}</span>{' '}
+                      <span className="text-rose-500">Red: {stats?.analysis?.dietPendingCounts.red ?? 0}</span>{' '}
+                      <span className="text-slate-900">Black: {stats?.analysis?.dietPendingCounts.black ?? 0}</span>
+                    </div>
                   </div>
                 </div>
                 <table className="w-full text-[10px]">
@@ -150,21 +153,23 @@ export default function DieticianDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {[].map((row: any, i) => (
+                    {(stats?.analysis?.dietPendingList || []).map((row: any, i: number) => (
                       <tr key={i}>
                         <td className="py-2 font-bold text-slate-700">{row.name}</td>
                         <td className="py-2"><div className={`w-3 h-3 rounded-full mx-auto ${row.color}`}></div></td>
                       </tr>
                     ))}
                     {/* Empty State */}
-                    <tr>
-                      <td colSpan={2} className="py-8 text-center text-slate-400 italic">
-                        No pending diets
-                      </td>
-                    </tr>
+                    {(!stats?.analysis?.dietPendingList || stats.analysis.dietPendingList.length === 0) && (
+                      <tr>
+                        <td colSpan={2} className="py-8 text-center text-slate-400 italic">
+                          No pending diets
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
-                <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
+                <Link href="/dietician/clients?status=ACTIVE" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
                   View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
                 </Link>
               </div>

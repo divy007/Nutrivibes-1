@@ -5,10 +5,12 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Check } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
+import { useRouter } from 'expo-router';
 
 const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, width: number }) => {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
+    const router = useRouter();
 
     // Ensure features is an array, backend might return it differently or empty
     const features = Array.isArray(plan.features) ? plan.features : [];
@@ -30,11 +32,11 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
 
             <ScrollView
                 style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+                contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled={true}
             >
-                <View style={{ gap: 16, marginBottom: 24 }}>
+                <View style={{ gap: 16 }}>
                     {features.length > 0 ? features.map((feature: string, index: number) => (
                         <View key={index} style={styles.featureRow}>
                             <Check size={20} color={theme.brandSage} />
@@ -49,13 +51,16 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
                         ) : null
                     )}
                 </View>
+            </ScrollView>
 
-                <View style={{ flex: 1 }} />
-
-                <TouchableOpacity style={[styles.button, { backgroundColor: theme.brandEarth, marginHorizontal: 0, marginBottom: 0 }]}>
+            <View style={[styles.stickyButtonContainer, { backgroundColor: theme.background }]}>
+                <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.brandEarth }]}
+                    onPress={() => router.push('/contact')}
+                >
                     <Text style={styles.buttonText}>Contact to Join</Text>
                 </TouchableOpacity>
-            </ScrollView>
+            </View>
         </View>
     );
 };
@@ -73,7 +78,21 @@ export default function PlansScreen() {
     const fetchPlans = async () => {
         try {
             const data = await api.get('/api/plans');
-            setPlans(data as any[]);
+            // Sort plans: Holistic Wellness first, then others
+            const sortedPlans = (data as any[]).sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+
+                if (aName.includes('holistic') && !bName.includes('holistic')) return -1;
+                if (!aName.includes('holistic') && bName.includes('holistic')) return 1;
+
+                // Keep wedding plans at the end if needed, or just default sort
+                if (aName.includes('wedding') && !bName.includes('wedding')) return 1;
+                if (!aName.includes('wedding') && bName.includes('wedding')) return -1;
+
+                return 0;
+            });
+            setPlans(sortedPlans);
         } catch (error) {
             console.error('Failed to load plans', error);
         } finally {
@@ -220,12 +239,15 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         lineHeight: 22,
     },
+    stickyButtonContainer: {
+        padding: 24,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
     button: {
         padding: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        marginHorizontal: 24,
-        marginBottom: 24,
         borderRadius: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },

@@ -119,7 +119,7 @@ export default function CompleteProfileScreen() {
                 isProfileComplete: true
             });
 
-            router.replace('/(tabs)');
+            router.replace('/audit-prompt');
         } catch (error: any) {
             console.error('Failed to update profile:', error);
             const errorMessage = error.message || 'Failed to complete profile';

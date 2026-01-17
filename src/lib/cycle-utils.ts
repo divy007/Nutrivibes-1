@@ -37,11 +37,12 @@ const PHASE_METADATA: Record<CyclePhase, { title: string; description: string; n
 };
 
 export function calculateCycleStatus(lastPeriodStart: Date, cycleLength: number = 28, referenceDate: Date = new Date()): CycleStatus {
+    // Use UTC methods to avoid timezone issues
     const ref = new Date(referenceDate);
-    ref.setHours(0, 0, 0, 0);
+    ref.setUTCHours(0, 0, 0, 0);
 
     const lastStart = new Date(lastPeriodStart);
-    lastStart.setHours(0, 0, 0, 0);
+    lastStart.setUTCHours(0, 0, 0, 0);
 
     const diff = differenceInDays(ref, lastStart);
     // Handle historical dates (if ref is before lastStart)

@@ -188,7 +188,13 @@ export default function ProgressPage() {
         if (waterLogs.length === 0) return { current: 0, target: 8 };
         // Assuming logs are sorted by date desc, latest is first
         const latest = waterLogs[0];
-        const latestDateStr = new Date(latest.date).toISOString().split('T')[0];
+        // Both should be YYYY-MM-DD in IST timezone
+        const latestDateStr = new Date(latest.date).toLocaleDateString('en-CA', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
         const todayStr = getLocalDateString();
         const isToday = latestDateStr === todayStr;
         return isToday ? { current: latest.currentGlasses, target: latest.targetGlasses } : { current: 0, target: 8 };
@@ -529,9 +535,9 @@ export default function ProgressPage() {
             </div>
 
             {/* Bottom Row - Statistics & Vitals */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className={`grid grid-cols-1 ${clientInfo?.gender === 'male' ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-8`}>
                 <SymptomHistory logs={symptomLogs} />
-                <PeriodHistory logs={periodLogs} />
+                {clientInfo?.gender !== 'male' && <PeriodHistory logs={periodLogs} />}
             </div>
 
             <MeasurementHistory logs={measurementLogs} />

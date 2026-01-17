@@ -190,24 +190,38 @@ export default function ClientSummaryPage() {
 
                     {/* Goals Section */}
                     <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Goals</h3>
-                        <div className="py-8 text-center bg-slate-50/50 rounded border border-dashed border-slate-200">
-                            <span className="text-rose-400 text-xs font-bold">No Goal Found!</span>
-                        </div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Detailed Goals</h3>
+
+                        {(client.counsellingProfile?.medicalGoal || client.counsellingProfile?.loseWeightReasons?.length > 0) ? (
+                            <div className="space-y-4">
+                                {client.counsellingProfile?.medicalGoal && (
+                                    <div>
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Medical Goal</h4>
+                                        <p className="text-sm font-medium text-slate-700">{client.counsellingProfile.medicalGoal}</p>
+                                    </div>
+                                )}
+
+                                {client.counsellingProfile?.loseWeightReasons && client.counsellingProfile.loseWeightReasons.length > 0 && (
+                                    <div>
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivations</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {client.counsellingProfile.loseWeightReasons.map((reason: string, idx: number) => (
+                                                <span key={idx} className="px-3 py-1 rounded-full text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-100">
+                                                    {reason}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center bg-slate-50/50 rounded border border-dashed border-slate-200">
+                                <span className="text-slate-400 text-xs font-medium">No detailed goals recorded</span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Link Profile Section */}
-                    <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Link Profile</h3>
-                            <button className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 rounded hover:bg-slate-200">
-                                <Plus size={16} />
-                            </button>
-                        </div>
-                        <div className="py-4 text-center bg-slate-50/50 rounded border border-slate-100">
-                            <span className="text-slate-400 text-xs font-medium">No Members linked to this account</span>
-                        </div>
-                    </div>
+
 
                     {/* Security & Danger Zone (Existing functionalities) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

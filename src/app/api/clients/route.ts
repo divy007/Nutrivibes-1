@@ -192,15 +192,15 @@ export async function POST(req: Request) {
 
         const client = await Client.create(clientDataCreate);
 
-        // Trigger automatic follow-up generation if dietStartDate was provided
-        if (clientData.dietStartDate) {
-            try {
-                const { generateFollowUps } = await import('@/lib/follow-up-utils');
-                await generateFollowUps((client as any)._id.toString(), user._id.toString(), new Date(clientData.dietStartDate));
-            } catch (err) {
-                console.error('Failed to auto-generate follow-ups for new client:', err);
-            }
-        }
+        // // Trigger automatic follow-up generation if dietStartDate was provided
+        // if (clientData.dietStartDate) {
+        //     try {
+        //         const { generateFollowUps } = await import('@/lib/follow-up-utils');
+        //         await generateFollowUps((client as any)._id.toString(), user._id.toString(), new Date(clientData.dietStartDate));
+        //     } catch (err) {
+        //         console.error('Failed to auto-generate follow-ups for new client:', err);
+        //     }
+        // }
 
         return NextResponse.json(client, { status: 201 });
     } catch (error) {

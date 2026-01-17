@@ -70,7 +70,8 @@ export async function GET(req: Request) {
         if (client.gender === 'female' && lastPeriodLog) {
             cycleStatus = calculateCycleStatus(
                 lastPeriodLog.startDate,
-                client.cycleLength || 28
+                client.cycleLength || 28,
+                today  // Pass normalized IST date as reference
             );
         }
 

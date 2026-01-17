@@ -37,16 +37,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
-        // Trigger automatic follow-up generation if dietStartDate was updated
-        if (body.dietStartDate) {
-            try {
-                const { generateFollowUps } = await import('@/lib/follow-up-utils');
-                await generateFollowUps(client._id.toString(), client.dieticianId.toString(), new Date(body.dietStartDate));
-            } catch (err) {
-                console.error('Failed to auto-generate follow-ups:', err);
-                // We don't fail the client update if follow-up generation fails
-            }
-        }
+        // // Trigger automatic follow-up generation if dietStartDate was updated
+        // if (body.dietStartDate) {
+        //     try {
+        //         const { generateFollowUps } = await import('@/lib/follow-up-utils');
+        //         await generateFollowUps(client._id.toString(), client.dieticianId.toString(), new Date(body.dietStartDate));
+        //     } catch (err) {
+        //         console.error('Failed to auto-generate follow-ups:', err);
+        //         // We don't fail the client update if follow-up generation fails
+        //     }
+        // }
 
         return NextResponse.json(client);
     } catch {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
@@ -95,180 +95,183 @@ export default function ProfileScreen() {
 
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
-        >
-            <View style={[styles.container, { backgroundColor: theme.background }]}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ArrowLeft size={24} color={theme.text} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Profile</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-
-                <ScrollView contentContainerStyle={styles.content}>
-                    <View style={styles.avatarSection}>
-                        <View style={[styles.avatarContainer, { backgroundColor: theme.brandSage }]}>
-                            <Text style={styles.avatarText}>{formData.name?.[0]?.toUpperCase() || 'U'}</Text>
-                        </View>
-                        <Text style={[styles.emailText, { color: '#94a3b8' }]}>{formData.email}</Text>
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <View style={[styles.container, { backgroundColor: theme.background }]}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <ArrowLeft size={24} color={theme.text} />
+                        </TouchableOpacity>
+                        <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Profile</Text>
+                        <View style={{ width: 40 }} />
                     </View>
 
-                    <View style={styles.form}>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Full Name</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <User size={20} color="#94a3b8" />
-                                <TextInput
-                                    style={[styles.input, { color: theme.text }]}
-                                    value={formData.name}
-                                    onChangeText={(t) => setFormData({ ...formData, name: t })}
-                                    placeholder="Enter your name"
-                                />
+                    <ScrollView contentContainerStyle={styles.content}>
+                        <View style={styles.avatarSection}>
+                            <View style={[styles.avatarContainer, { backgroundColor: theme.brandSage }]}>
+                                <Text style={styles.avatarText}>{formData.name?.[0]?.toUpperCase() || 'U'}</Text>
                             </View>
+                            <Text style={[styles.emailText, { color: '#94a3b8' }]}>{formData.email}</Text>
                         </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Gender</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <UserCircle size={20} color="#94a3b8" />
-                                <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
-                                    {GENDER_OPTIONS.map((opt) => (
-                                        <SelectionOption
-                                            key={opt.value}
-                                            value={opt.value}
-                                            label={opt.label}
-                                            selected={formData.gender === opt.value}
-                                            onSelect={(val) => setFormData({ ...formData, gender: val })}
-                                            theme={theme}
-                                        />
-                                    ))}
-                                </View>
-                            </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Diet Preference</Text>
-                            <View style={{ gap: 8 }}>
-                                <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    {DIETARY_PREFERENCES.slice(0, 2).map((opt) => (
-                                        <SelectionOption
-                                            key={opt.value}
-                                            value={opt.value}
-                                            label={opt.label}
-                                            selected={formData.preferences === opt.value}
-                                            onSelect={(val) => setFormData({ ...formData, preferences: val })}
-                                            theme={theme}
-                                        />
-                                    ))}
-                                </View>
-                                <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    {DIETARY_PREFERENCES.slice(2).map((opt) => (
-                                        <SelectionOption
-                                            key={opt.value}
-                                            value={opt.value}
-                                            label={opt.label}
-                                            selected={formData.preferences === opt.value}
-                                            onSelect={(val) => setFormData({ ...formData, preferences: val })}
-                                            theme={theme}
-                                        />
-                                    ))}
-                                </View>
-                            </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Primary Goal</Text>
-                            <View style={styles.goalGrid}>
-                                {PRIMARY_GOALS.map((goal) => (
-                                    <SelectionOption
-                                        key={goal}
-                                        value={goal}
-                                        selected={formData.primaryGoal === goal}
-                                        onSelect={(val) => setFormData({ ...formData, primaryGoal: val })}
-                                        theme={theme}
-                                        flex={false}
-                                    />
-                                ))}
-                            </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Phone Number</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <Phone size={20} color="#94a3b8" />
-                                <TextInput
-                                    style={[styles.input, { color: theme.text }]}
-                                    value={formData.phone}
-                                    onChangeText={(t) => setFormData({ ...formData, phone: t })}
-                                    placeholder="Enter phone number"
-                                    keyboardType="phone-pad"
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.row}>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Height (cm)</Text>
+                        <View style={styles.form}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Full Name</Text>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <Ruler size={20} color="#94a3b8" />
+                                    <User size={20} color="#94a3b8" />
                                     <TextInput
                                         style={[styles.input, { color: theme.text }]}
-                                        value={formData.height}
-                                        onChangeText={(t) => setFormData({ ...formData, height: t })}
-                                        placeholder="0"
-                                        keyboardType="numeric"
+                                        value={formData.name}
+                                        onChangeText={(t) => setFormData({ ...formData, name: t })}
+                                        placeholder="Enter your name"
                                     />
                                 </View>
                             </View>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Weight (kg)</Text>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Gender</Text>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <Weight size={20} color="#94a3b8" />
+                                    <UserCircle size={20} color="#94a3b8" />
+                                    <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
+                                        {GENDER_OPTIONS.map((opt) => (
+                                            <SelectionOption
+                                                key={opt.value}
+                                                value={opt.value}
+                                                label={opt.label}
+                                                selected={formData.gender === opt.value}
+                                                onSelect={(val) => setFormData({ ...formData, gender: val })}
+                                                theme={theme}
+                                            />
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Diet Preference</Text>
+                                <View style={{ gap: 8 }}>
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        {DIETARY_PREFERENCES.slice(0, 2).map((opt) => (
+                                            <SelectionOption
+                                                key={opt.value}
+                                                value={opt.value}
+                                                label={opt.label}
+                                                selected={formData.preferences === opt.value}
+                                                onSelect={(val) => setFormData({ ...formData, preferences: val })}
+                                                theme={theme}
+                                            />
+                                        ))}
+                                    </View>
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        {DIETARY_PREFERENCES.slice(2).map((opt) => (
+                                            <SelectionOption
+                                                key={opt.value}
+                                                value={opt.value}
+                                                label={opt.label}
+                                                selected={formData.preferences === opt.value}
+                                                onSelect={(val) => setFormData({ ...formData, preferences: val })}
+                                                theme={theme}
+                                            />
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Primary Goal</Text>
+                                <View style={styles.goalGrid}>
+                                    {PRIMARY_GOALS.map((goal) => (
+                                        <SelectionOption
+                                            key={goal}
+                                            value={goal}
+                                            selected={formData.primaryGoal === goal}
+                                            onSelect={(val) => setFormData({ ...formData, primaryGoal: val })}
+                                            theme={theme}
+                                            flex={false}
+                                        />
+                                    ))}
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Phone Number</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Phone size={20} color="#94a3b8" />
                                     <TextInput
                                         style={[styles.input, { color: theme.text }]}
-                                        value={formData.weight}
-                                        onChangeText={(t) => setFormData({ ...formData, weight: t })}
-                                        placeholder="0"
-                                        keyboardType="numeric"
+                                        value={formData.phone}
+                                        onChangeText={(t) => setFormData({ ...formData, phone: t })}
+                                        placeholder="Enter phone number"
+                                        keyboardType="phone-pad"
                                     />
                                 </View>
                             </View>
-                        </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Location</Text>
-                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                <UserCircle size={20} color="#94a3b8" />
-                                <TextInput
-                                    style={[styles.input, { color: theme.text }]}
-                                    value={formData.city}
-                                    onChangeText={(t) => setFormData({ ...formData, city: t })}
-                                    placeholder="City"
-                                />
+                            <View style={styles.row}>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>Height (cm)</Text>
+                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <Ruler size={20} color="#94a3b8" />
+                                        <TextInput
+                                            style={[styles.input, { color: theme.text }]}
+                                            value={formData.height}
+                                            onChangeText={(t) => setFormData({ ...formData, height: t })}
+                                            placeholder="0"
+                                            keyboardType="numeric"
+                                        />
+                                    </View>
+                                </View>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>Weight (kg)</Text>
+                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <Weight size={20} color="#94a3b8" />
+                                        <TextInput
+                                            style={[styles.input, { color: theme.text }]}
+                                            value={formData.weight}
+                                            onChangeText={(t) => setFormData({ ...formData, weight: t })}
+                                            placeholder="0"
+                                            keyboardType="numeric"
+                                        />
+                                    </View>
+                                </View>
                             </View>
-                        </View>
 
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Location</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <UserCircle size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.city}
+                                        onChangeText={(t) => setFormData({ ...formData, city: t })}
+                                        placeholder="City"
+                                    />
+                                </View>
+                            </View>
+
+                        </View>
+                    </ScrollView>
+
+                    <View style={[styles.footer, { borderTopColor: '#f1f5f9' }]}>
+                        <TouchableOpacity
+                            style={[styles.saveButton, { backgroundColor: theme.brandSage }]}
+                            onPress={handleSave}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.saveButtonText}>Save Changes</Text>
+                            )}
+                        </TouchableOpacity>
                     </View>
-                </ScrollView>
-
-                <View style={[styles.footer, { borderTopColor: '#f1f5f9' }]}>
-                    <TouchableOpacity
-                        style={[styles.saveButton, { backgroundColor: theme.brandSage }]}
-                        onPress={handleSave}
-                        disabled={saving}
-                    >
-                        {saving ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
-                        )}
-                    </TouchableOpacity>
                 </View>
-            </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+        </>
     );
 }
 

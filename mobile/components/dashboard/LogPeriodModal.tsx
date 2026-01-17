@@ -10,19 +10,34 @@ interface LogPeriodModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (startDate: Date, endDate?: Date, intensity?: string) => Promise<void>;
+    lastPeriodLog?: any;
 }
 
-export default function LogPeriodModal({ isOpen, onClose, onSave }: LogPeriodModalProps) {
+export default function LogPeriodModal({ isOpen, onClose, onSave, lastPeriodLog }: LogPeriodModalProps) {
     const [intensity, setIntensity] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
     const [isSaving, setIsSaving] = useState(false);
 
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
+    // Check if there's an active period (started within last 10 days and no end date)
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+
+    const hasActivePeriod = lastPeriodLog &&
+        new Date(lastPeriodLog.startDate) > tenDaysAgo &&
+        !lastPeriodLog.endDate;
+
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onSave(new Date(), undefined, intensity);
+            if (hasActivePeriod) {
+                // Ending active period
+                await onSave(new Date(lastPeriodLog.startDate), new Date(), intensity);
+            } else {
+                // Starting new period
+                await onSave(new Date(), undefined, intensity);
+            }
             onClose();
         } catch (error) {
             console.error('Failed to save period log:', error);
@@ -62,13 +77,27 @@ export default function LogPeriodModal({ isOpen, onClose, onSave }: LogPeriodMod
                     </View>
 
                     <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-                        <Text style={[styles.title, { color: theme.text }]}>Log Period</Text>
+                        <Text style={[styles.title, { color: theme.text }]}>
+                            {hasActivePeriod ? 'End Period' : 'Log Period'}
+                        </Text>
 
                         <View style={[styles.inputCard, { backgroundColor: '#fff5f5', borderColor: '#ffe4e6' }]}>
                             <View style={styles.dateBadge}>
                                 <CalendarIcon size={14} color="#f43f5e" />
-                                <Text style={styles.dateText}>Started Today: {format(new Date(), 'dd MMM')}</Text>
+                                <Text style={styles.dateText}>
+                                    {hasActivePeriod
+                                        ? `End Date: ${format(new Date(), 'dd MMM yyyy')}`
+                                        : `Start Date: ${format(new Date(), 'dd MMM yyyy')}`
+                                    }
+                                </Text>
                             </View>
+
+                            <Text style={styles.infoText}>
+                                {hasActivePeriod
+                                    ? `Your period started on ${format(new Date(lastPeriodLog.startDate), 'dd MMM')}. Mark it as ended today.`
+                                    : 'Log the first day of your period. The app will automatically track which day you\'re on.'
+                                }
+                            </Text>
 
                             <Text style={styles.inputLabel}>Flow Intensity</Text>
 
@@ -106,7 +135,9 @@ export default function LogPeriodModal({ isOpen, onClose, onSave }: LogPeriodMod
                             {isSaving ? (
                                 <ActivityIndicator color="#FFF" />
                             ) : (
-                                <Text style={styles.saveButtonText}>SAVE LOG</Text>
+                                <Text style={styles.saveButtonText}>
+                                    {hasActivePeriod ? 'END PERIOD' : 'START PERIOD'}
+                                </Text>
                             )}
                         </TouchableOpacity>
                     </ScrollView>
@@ -176,6 +207,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '800',
         color: '#f43f5e',
+    },
+    infoText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#64748b',
+        textAlign: 'center',
+        lineHeight: 18,
+        marginBottom: 20,
     },
     inputLabel: {
         fontSize: 16,
