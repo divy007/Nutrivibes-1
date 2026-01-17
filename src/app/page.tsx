@@ -252,8 +252,9 @@ export default function LandingPage() {
                             <span>Android Application Package (APK)</span>
                         </div>
                         <a
-                            href="/nutrivibes.apk"
-                            download
+                            href="https://github.com/divy007/Nutrivibes-1/releases/latest/download/nutrivibes.apk"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full block bg-white text-brand-forest font-black text-lg py-4 px-8 rounded-xl hover:bg-brand-sage transition-colors shadow-lg"
                         >
                             Download Now

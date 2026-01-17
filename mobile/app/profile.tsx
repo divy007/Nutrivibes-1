@@ -34,6 +34,10 @@ export default function ProfileScreen() {
         primaryGoal: [] as string[]
     });
 
+    const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
+    const [heightFt, setHeightFt] = useState('');
+    const [heightIn, setHeightIn] = useState('');
+
     useEffect(() => {
         fetchProfile();
     }, []);
@@ -55,6 +59,15 @@ export default function ProfileScreen() {
                 preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
                 primaryGoal: Array.isArray(data.primaryGoal) ? data.primaryGoal : (data.primaryGoal ? [data.primaryGoal] : [])
             });
+
+            // Initialize height in ft/in if we have data
+            if (data.height) {
+                const totalInches = data.height / 2.54;
+                const feet = Math.floor(totalInches / 12);
+                const inches = Math.round(totalInches % 12);
+                setHeightFt(feet.toString());
+                setHeightIn(inches.toString());
+            }
         } catch (error) {
             console.error('Failed to fetch profile:', error);
             Alert.alert('Error', 'Failed to load profile data');
@@ -72,8 +85,16 @@ export default function ProfileScreen() {
         if (!formData.dob) { Alert.alert('Missing Field', 'Date of Birth is required'); return; }
         if (!isValidDate(formData.dob)) { Alert.alert('Invalid Date', 'Please enter a valid date in DD/MM/YYYY format'); return; }
 
-        if (!formData.height) { Alert.alert('Missing Field', 'Height is required'); return; }
-        if (parseFloat(formData.height) <= 0) { Alert.alert('Invalid Value', 'Height must be greater than 0'); return; }
+        let heightInCm = 0;
+        if (heightUnit === 'ft') {
+            const ft = parseFloat(heightFt) || 0;
+            const inches = parseFloat(heightIn) || 0;
+            heightInCm = (ft * 30.48) + (inches * 2.54);
+        } else {
+            heightInCm = parseFloat(formData.height) || 0;
+        }
+
+        if (heightInCm <= 0) { Alert.alert('Invalid Value', 'Height must be greater than 0'); return; }
 
         if (!formData.weight) { Alert.alert('Missing Field', 'Weight is required'); return; }
         if (parseFloat(formData.weight) <= 0) { Alert.alert('Invalid Value', 'Weight must be greater than 0'); return; }
@@ -83,7 +104,7 @@ export default function ProfileScreen() {
             await api.patch('/api/clients/me', {
                 name: formData.name,
                 phone: formData.phone,
-                height: parseFloat(formData.height) || undefined,
+                height: heightInCm,
                 weight: parseFloat(formData.weight) || undefined,
                 city: formData.city,
                 state: formData.state,
@@ -301,38 +322,79 @@ export default function ProfileScreen() {
                                 </View>
                             </View>
 
-                            <View style={styles.row}>
-                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                            <View style={styles.inputGroup}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <View style={{ flexDirection: 'row' }}>
-                                        <Text style={styles.label}>Height (cm)</Text>
+                                        <Text style={styles.label}>Height</Text>
                                         <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
                                     </View>
+                                    <View style={styles.unitToggle}>
+                                        <TouchableOpacity
+                                            style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive]}
+                                            onPress={() => setHeightUnit('cm')}
+                                        >
+                                            <Text style={[styles.unitText, heightUnit === 'cm' && styles.unitTextActive]}>CM</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.unitButton, heightUnit === 'ft' && styles.unitButtonActive]}
+                                            onPress={() => setHeightUnit('ft')}
+                                        >
+                                            <Text style={[styles.unitText, heightUnit === 'ft' && styles.unitTextActive]}>FT/IN</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                {heightUnit === 'cm' ? (
                                     <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
                                         <Ruler size={20} color="#94a3b8" />
                                         <TextInput
                                             style={[styles.input, { color: theme.text }]}
                                             value={formData.height}
                                             onChangeText={(t) => setFormData({ ...formData, height: t })}
-                                            placeholder="0"
+                                            placeholder="Height in cm"
                                             keyboardType="numeric"
                                         />
                                     </View>
+                                ) : (
+                                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                            <TextInput
+                                                style={[styles.input, { color: theme.text }]}
+                                                value={heightFt}
+                                                onChangeText={setHeightFt}
+                                                placeholder="Ft"
+                                                keyboardType="numeric"
+                                            />
+                                            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#94a3b8' }}>ft</Text>
+                                        </View>
+                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                            <TextInput
+                                                style={[styles.input, { color: theme.text }]}
+                                                value={heightIn}
+                                                onChangeText={setHeightIn}
+                                                placeholder="In"
+                                                keyboardType="numeric"
+                                            />
+                                            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#94a3b8' }}>in</Text>
+                                        </View>
+                                    </View>
+                                )}
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.label}>Weight (kg)</Text>
+                                    <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
                                 </View>
-                                <View style={[styles.inputGroup, { flex: 1 }]}>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        <Text style={styles.label}>Weight (kg)</Text>
-                                        <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
-                                    </View>
-                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                        <Weight size={20} color="#94a3b8" />
-                                        <TextInput
-                                            style={[styles.input, { color: theme.text }]}
-                                            value={formData.weight}
-                                            onChangeText={(t) => setFormData({ ...formData, weight: t })}
-                                            placeholder="0"
-                                            keyboardType="numeric"
-                                        />
-                                    </View>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Weight size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.weight}
+                                        onChangeText={(t) => setFormData({ ...formData, weight: t })}
+                                        placeholder="0"
+                                        keyboardType="numeric"
+                                    />
                                 </View>
                             </View>
 
@@ -507,5 +569,32 @@ const styles = StyleSheet.create({
     goalLabel: {
         fontSize: 13,
         fontWeight: '700',
+    },
+    unitToggle: {
+        flexDirection: 'row',
+        backgroundColor: '#f1f5f9',
+        borderRadius: 10,
+        padding: 2,
+    },
+    unitButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    unitButtonActive: {
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    unitText: {
+        fontSize: 10,
+        fontWeight: '900',
+        color: '#64748b',
+    },
+    unitTextActive: {
+        color: '#0f172a',
     },
 });
