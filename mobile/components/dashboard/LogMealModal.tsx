@@ -93,6 +93,7 @@ export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalPr
                                 <TextInput
                                     style={styles.foodInput}
                                     placeholder="Food name (e.g. Oats)"
+                                    placeholderTextColor="#94a3b8"
                                     value={searchTerm}
                                     onChangeText={setSearchTerm}
                                 />
@@ -100,6 +101,7 @@ export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalPr
                                     <TextInput
                                         style={[styles.foodInput, { flex: 1, marginBottom: 0 }]}
                                         placeholder="Quantity (e.g. 1 bowl)"
+                                        placeholderTextColor="#94a3b8"
                                         value={quantity}
                                         onChangeText={setQuantity}
                                     />
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
     dropdownItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12 },
     dropdownText: { fontWeight: '700', color: '#64748b', fontSize: 14 },
     inputArea: { backgroundColor: '#FFF', borderRadius: 24, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 24 },
-    foodInput: { height: 50, backgroundColor: '#f8fafc', borderRadius: 12, paddingHorizontal: 16, fontWeight: '600', marginBottom: 12, fontSize: 14 },
+    foodInput: { height: 50, backgroundColor: '#f8fafc', borderRadius: 12, paddingHorizontal: 16, fontWeight: '600', marginBottom: 12, fontSize: 14, color: '#1e293b' },
     row: { flexDirection: 'row', gap: 12 },
     addButton: { paddingHorizontal: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     addButtonText: { color: '#FFF', fontWeight: '900', fontSize: 13 },
