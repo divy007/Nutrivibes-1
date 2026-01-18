@@ -55,3 +55,6 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# Ignore APK files in public to save space
+public/*.apk

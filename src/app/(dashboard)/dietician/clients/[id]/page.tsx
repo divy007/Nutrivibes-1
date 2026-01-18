@@ -89,7 +89,18 @@ export default function ClientSummaryPage() {
                             <div className="mt-4 flex flex-col gap-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{client.preferences || 'No Preferences Set'}</span>
                                 {client.primaryGoal && (
-                                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest leading-none mt-1">Goal: {client.primaryGoal}</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest leading-none mr-1">Goal:</span>
+                                        {Array.isArray(client.primaryGoal) ? (
+                                            client.primaryGoal.map((goal, idx) => (
+                                                <span key={idx} className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-none">
+                                                    {goal}{idx < (client.primaryGoal?.length || 0) - 1 ? ', ' : ''}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-none">{client.primaryGoal}</span>
+                                        )}
+                                    </div>
                                 )}
                                 <div className="mt-2">
                                     <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tighter">{client.status}</span>
@@ -104,12 +115,9 @@ export default function ClientSummaryPage() {
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                            <button onClick={() => router.push(`/dietician/clients/${client._id}/profile/edit`)} className="text-orange-500 hover:bg-orange-50 p-1 rounded transition-colors">
-                                <Pencil size={16} />
-                            </button>
-                            <span className="text-[10px] font-bold text-slate-300">{client.state || 'N/A'}</span>
+                            {client.state && <span className="text-[10px] font-bold text-slate-300">{client.state}</span>}
                             <div className="mt-auto">
-                                <span className="text-xs font-bold text-slate-400">{client.city || 'N/A'}</span>
+                                {client.city && <span className="text-xs font-bold text-slate-400">{client.city}</span>}
                             </div>
                         </div>
                     </div>
