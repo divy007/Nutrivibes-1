@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import { RegionChart } from '@/components/dietician/analytics/RegionChart';
 
 interface Stats {
   activeClients: number;
@@ -173,6 +174,18 @@ export default function DieticianDashboard() {
 
             </div>
           </div>
+
+          {/* Analytics Section */}
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-700">Analytics</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-[24px] border border-slate-100 p-6 soft-shadow">
+                <h3 className="text-sm font-black text-brand-sage mb-4">Top Client Areas (By Pincode)</h3>
+                <RegionChart />
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* Right Sidebar - Live Feed */}
@@ -180,27 +193,26 @@ export default function DieticianDashboard() {
           <ActivityFeed />
         </div>
       </div>
-    </div>
-  );
+      );
 }
 
-function SummaryCard({ title, count, icon, color, loading }: { title: string, count: number, icon: any, color: string, loading?: boolean }) {
+      function SummaryCard({title, count, icon, color, loading}: {title: string, count: number, icon: any, color: string, loading?: boolean }) {
   return (
-    <div className={`bg-white rounded-[24px] p-6 border border-slate-100 soft-shadow flex items-center justify-between min-h-[110px] relative overflow-hidden group hover:scale-[1.02] transition-all`}>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.replace('border-', 'bg-')}`}></div>
-      <div className="bg-brand-cream/50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
-        {icon}
+      <div className={`bg-white rounded-[24px] p-6 border border-slate-100 soft-shadow flex items-center justify-between min-h-[110px] relative overflow-hidden group hover:scale-[1.02] transition-all`}>
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.replace('border-', 'bg-')}`}></div>
+        <div className="bg-brand-cream/50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
+          {icon}
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</div>
+          {loading ? (
+            <div className="flex justify-end pt-1">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-200" />
+            </div>
+          ) : (
+            <div className="text-3xl font-black text-brand-forest">{count}</div>
+          )}
+        </div>
       </div>
-      <div className="text-right">
-        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</div>
-        {loading ? (
-          <div className="flex justify-end pt-1">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-200" />
-          </div>
-        ) : (
-          <div className="text-3xl font-black text-brand-forest">{count}</div>
-        )}
-      </div>
-    </div>
-  );
+      );
 }
