@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db';
+import { getAuthUser } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
 
 export async function GET(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'dietician') {
+        const user = await getAuthUser(req);
+        if (!user || user.role !== 'DIETICIAN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
+        await connectDB();
 
         const regions = await Client.aggregate([
             {
                 $match: {
-                    dieticianId: session.user.id,
+                    dieticianId: user._id,
                     status: { $ne: 'DELETED' },
                     pincode: { $exists: true, $ne: '' }
                 }
