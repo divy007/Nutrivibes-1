@@ -37,6 +37,7 @@
       "expo-secure-store",
       "@react-native-community/datetimepicker"
     ],
+    "jsEngine": "hermes",
     "experiments": {
       "typedRoutes": true
     },

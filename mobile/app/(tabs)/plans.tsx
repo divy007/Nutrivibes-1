@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
         borderStyle: 'dashed',
+        borderRadius: 1, // Required for iOS/Android when using dashed/dotted borders
     },
     headerText: {
         fontSize: 20,

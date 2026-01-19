@@ -5,7 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { api } from '@/lib/api-client';
-import { ChevronLeft, Clock, Flame, Info, List, ChefHat } from 'lucide-react-native';
+import { ChevronLeft, Clock, Flame, Info, List, ChefHat, ChevronDown, ChevronUp } from 'lucide-react-native';
 
 export default function RecipeDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -16,6 +16,11 @@ export default function RecipeDetailScreen() {
 
     const [recipe, setRecipe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState({ ingredients: true, instructions: true });
+
+    const toggleSection = (section: 'ingredients' | 'instructions') => {
+        setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     useEffect(() => {
         const fetchRecipe = async () => {
@@ -87,51 +92,71 @@ export default function RecipeDetailScreen() {
 
                     {/* Ingredients Section */}
                     <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <List size={20} color={theme.brandForest} />
-                            <Text style={[styles.sectionTitle, { color: theme.brandForest }]}>Ingredients</Text>
-                        </View>
-                        <View style={[styles.card, { backgroundColor: '#FFF', borderColor: theme.brandSage + '20' }]}>
-                            {recipe.ingredients.map((ing: string, i: number) => {
-                                const isHeader = ing.trim().endsWith(':');
-                                return (
-                                    <View key={i} style={[styles.ingredientRow, isHeader && styles.ingredientHeaderRow]}>
-                                        {!isHeader && <View style={[styles.bullet, { backgroundColor: theme.brandSage }]} />}
-                                        <Text style={[
-                                            isHeader ? styles.ingredientHeaderText : styles.ingredientText,
-                                            { color: isHeader ? theme.brandForest : theme.text }
-                                        ]}>
-                                            {ing}
-                                        </Text>
-                                    </View>
-                                );
-                            })}
-                        </View>
+                        <TouchableOpacity
+                            style={styles.sectionHeader}
+                            onPress={() => toggleSection('ingredients')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                                <List size={20} color={theme.brandForest} />
+                                <Text style={[styles.sectionTitle, { color: theme.brandForest }]}>Ingredients</Text>
+                            </View>
+                            {expanded.ingredients ? <ChevronUp size={20} color={theme.brandForest} /> : <ChevronDown size={20} color={theme.brandForest} />}
+                        </TouchableOpacity>
+
+                        {expanded.ingredients && (
+                            <View style={[styles.card, { backgroundColor: '#FFF', borderColor: theme.brandSage + '20' }]}>
+                                {recipe.ingredients.map((ing: string, i: number) => {
+                                    const isHeader = ing.trim().endsWith(':');
+                                    return (
+                                        <View key={i} style={[styles.ingredientRow, isHeader && styles.ingredientHeaderRow]}>
+                                            {!isHeader && <View style={[styles.bullet, { backgroundColor: theme.brandSage }]} />}
+                                            <Text style={[
+                                                isHeader ? styles.ingredientHeaderText : styles.ingredientText,
+                                                { color: isHeader ? theme.brandForest : theme.text }
+                                            ]}>
+                                                {ing}
+                                            </Text>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </View>
 
                     {/* Instructions Section */}
                     <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Info size={20} color={theme.brandForest} />
-                            <Text style={[styles.sectionTitle, { color: theme.brandForest }]}>Instructions</Text>
-                        </View>
-                        <View style={[styles.card, { backgroundColor: '#FFF', borderColor: theme.brandSage + '20' }]}>
-                            {recipe.instructions.map((inst: string, i: number) => {
-                                const isHeader = inst.trim().endsWith(':');
-                                return (
-                                    <View key={i} style={[styles.instructionRow, isHeader && styles.instructionHeaderRow]}>
-                                        {isHeader ? (
-                                            <Text style={[styles.instructionHeaderText, { color: theme.brandForest }]}>{inst}</Text>
-                                        ) : (
-                                            <View style={{ flexDirection: 'row', gap: 12 }}>
-                                                <Text style={[styles.stepNumber, { color: theme.brandSage }]}>{i + 1}</Text>
-                                                <Text style={[styles.instructionText, { color: theme.text }]}>{inst}</Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                );
-                            })}
-                        </View>
+                        <TouchableOpacity
+                            style={styles.sectionHeader}
+                            onPress={() => toggleSection('instructions')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                                <Info size={20} color={theme.brandForest} />
+                                <Text style={[styles.sectionTitle, { color: theme.brandForest }]}>Instructions</Text>
+                            </View>
+                            {expanded.instructions ? <ChevronUp size={20} color={theme.brandForest} /> : <ChevronDown size={20} color={theme.brandForest} />}
+                        </TouchableOpacity>
+
+                        {expanded.instructions && (
+                            <View style={[styles.card, { backgroundColor: '#FFF', borderColor: theme.brandSage + '20' }]}>
+                                {recipe.instructions.map((inst: string, i: number) => {
+                                    const isHeader = inst.trim().endsWith(':');
+                                    return (
+                                        <View key={i} style={[styles.instructionRow, isHeader && styles.instructionHeaderRow]}>
+                                            {isHeader ? (
+                                                <Text style={[styles.instructionHeaderText, { color: theme.brandForest }]}>{inst}</Text>
+                                            ) : (
+                                                <View style={{ flexDirection: 'row', gap: 12 }}>
+                                                    <Text style={[styles.stepNumber, { color: theme.brandSage }]}>{i + 1}</Text>
+                                                    <Text style={[styles.instructionText, { color: theme.text }]}>{inst}</Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </View>
 
                     {/* Serving Size & Note */}
