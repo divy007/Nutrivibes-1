@@ -12,6 +12,8 @@ export interface FoodItem {
     isThyroidFriendly?: boolean;
     isWeightLossFriendly?: boolean;
     isDiabetesFriendly?: boolean;
+    recipeId?: string;
+    isRecipe?: boolean;
 }
 
 export interface MealTiming {

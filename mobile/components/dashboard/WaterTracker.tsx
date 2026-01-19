@@ -11,7 +11,7 @@ interface WaterTrackerProps {
     onAdd: () => void;
 }
 
-export default function WaterTracker({ currentGlasses, targetGlasses, onAdd }: WaterTrackerProps) {
+const WaterTracker = React.memo(function WaterTracker({ currentGlasses, targetGlasses, onAdd }: WaterTrackerProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -61,6 +61,9 @@ export default function WaterTracker({ currentGlasses, targetGlasses, onAdd }: W
         </View>
     );
 }
+);
+
+export default WaterTracker;
 
 const styles = StyleSheet.create({
     card: {

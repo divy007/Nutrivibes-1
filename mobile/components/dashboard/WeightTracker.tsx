@@ -12,7 +12,7 @@ interface WeightTrackerProps {
     onPress: () => void;
 }
 
-export default function WeightTracker({ currentWeight, startWeight, idealWeight, onPress }: WeightTrackerProps) {
+const WeightTracker = React.memo(function WeightTracker({ currentWeight, startWeight, idealWeight, onPress }: WeightTrackerProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -71,6 +71,9 @@ export default function WeightTracker({ currentWeight, startWeight, idealWeight,
         </View>
     );
 }
+);
+
+export default WeightTracker;
 
 const styles = StyleSheet.create({
     card: {

@@ -117,7 +117,9 @@ export default function ProfileScreen() {
                 dietaryPreferences: formData.preferences ? [formData.preferences] : [],
                 primaryGoal: formData.primaryGoal
             });
-            Alert.alert('Success', 'Profile updated successfully');
+            Alert.alert('Success', 'Profile updated successfully', [
+                { text: 'OK', onPress: () => router.replace('/(tabs)') }
+            ]);
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to update profile');

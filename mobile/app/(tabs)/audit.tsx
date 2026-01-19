@@ -173,7 +173,9 @@ export default function WellnessAuditScreen() {
     else if (totalScore <= 89) riskLevel = 'Better';
 
     try {
-      console.log('Submitting audit payload:', { answers, categoryScores, totalScore, riskLevel });
+      if (__DEV__) {
+        console.log('Submitting audit payload:', { answers, categoryScores, totalScore, riskLevel });
+      }
       const result = await api.post('/api/clients/me/health-assessment', {
         answers,
         categoryScores,

@@ -10,7 +10,7 @@ interface MealLogCardProps {
     onAdd: () => void;
 }
 
-export default function MealLogCard({ logs, onAdd }: MealLogCardProps) {
+const MealLogCard = React.memo(function MealLogCard({ logs, onAdd }: MealLogCardProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -61,6 +61,9 @@ export default function MealLogCard({ logs, onAdd }: MealLogCardProps) {
         </View>
     );
 }
+);
+
+export default MealLogCard;
 
 const styles = StyleSheet.create({
     card: {

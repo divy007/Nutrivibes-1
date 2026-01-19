@@ -14,7 +14,8 @@ import {
     LayoutDashboard,
     Users,
     Activity,
-    Calendar
+    Calendar,
+    ChefHat
 } from 'lucide-react';
 
 interface NavItem {
@@ -91,6 +92,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                 { name: 'Follow-ups', href: '/dietician/clients?status=FOLLOW_UPS' },
             ]
         },
+        { name: 'Recipes', href: '/dietician/recipes', icon: ChefHat },
         { name: 'Subscription Plans', href: '/dietician/plans', icon: Settings },
     ];
 

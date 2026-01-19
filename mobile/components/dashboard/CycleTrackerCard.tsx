@@ -20,7 +20,7 @@ interface Props {
     onLogPress: () => void;
 }
 
-export const CycleTrackerCard = ({ status, onLogPress }: Props) => {
+export const CycleTrackerCard = React.memo(({ status, onLogPress }: Props) => {
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
@@ -106,7 +106,7 @@ export const CycleTrackerCard = ({ status, onLogPress }: Props) => {
             </TouchableOpacity>
         </View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     card: {

@@ -57,7 +57,13 @@ export default function LogMeasurementModal({ isOpen, onClose, onSave, initialVa
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onSave(values, unit, new Date());
+            // Parse strings to numbers before saving
+            const numericValues = Object.keys(values).reduce((acc: any, key) => {
+                acc[key] = parseFloat(values[key]) || 0;
+                return acc;
+            }, {});
+
+            await onSave(numericValues, unit, new Date());
             onClose();
         } catch (error) {
             console.error('Failed to save measurements:', error);
@@ -68,7 +74,7 @@ export default function LogMeasurementModal({ isOpen, onClose, onSave, initialVa
 
     const renderStepper = (item: any) => {
         const Icon = item.icon;
-        const value = values[item.key] || 0;
+        const value = values[item.key]; // Don't default to 0 to allow empty string
 
         return (
             <View key={item.key} style={styles.stepperRow}>
@@ -88,7 +94,14 @@ export default function LogMeasurementModal({ isOpen, onClose, onSave, initialVa
                     </TouchableOpacity>
 
                     <View style={styles.valueContainer}>
-                        <Text style={[styles.valueText, { color: theme.brandForest }]}>{value}</Text>
+                        <TextInput
+                            style={[styles.valueText, { color: theme.brandForest, minWidth: 80, textAlign: 'center' }]}
+                            value={value?.toString()}
+                            onChangeText={(text) => setValues((prev: any) => ({ ...prev, [item.key]: text }))}
+                            keyboardType="numeric"
+                            returnKeyType="done"
+                            maxLength={5}
+                        />
                         <Text style={styles.unitText}>{unit}</Text>
                     </View>
 

@@ -10,6 +10,9 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { User as UserIcon, LogOut, Target, Sparkles, X, Phone } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner-native';
 
 import WeightTracker from '@/components/dashboard/WeightTracker';
 import WaterTracker from '@/components/dashboard/WaterTracker';
@@ -26,13 +29,18 @@ import { getLocalDateString } from '@/lib/date-utils';
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [weightLogs, setWeightLogs] = useState<any[]>([]);
-  const [waterData, setWaterData] = useState<any>(null);
-  const [mealLogs, setMealLogs] = useState<any[]>([]);
-  const [measurementLogs, setMeasurementLogs] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data, isLoading, refetch, isRefetching } = useDashboardData(!!user);
+
+  // Derived state from Query Data
+  const profile = data?.profile;
+  const weightLogs = data?.weightLogs || [];
+  const waterData = data?.waterData;
+  const mealLogs = data?.mealLogs || [];
+  const measurementLogs = data?.measurementLogs || [];
+  const cycleStatus = data?.cycleStatus;
+  const lastPeriodLog = data?.lastPeriodLog;
+
   const [showWelcome, setShowWelcome] = useState(false);
 
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
@@ -41,49 +49,27 @@ export default function DashboardScreen() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSavingSymptoms, setIsSavingSymptoms] = useState(false);
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
-  const [cycleStatus, setCycleStatus] = useState<any>(null);
-  const [lastPeriodLog, setLastPeriodLog] = useState<any>(null);
 
   const colorScheme = useColorScheme();
   const theme = (Colors as any)[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
-  const fetchData = useCallback(async () => {
-    try {
-      const today = getLocalDateString();
-      const data = await api.get<any>(`/api/clients/me/dashboard?date=${today}`);
-      setProfile(data.profile);
-      setWeightLogs(data.weightLogs || []);
-      setWaterData(data.waterData);
-      setMealLogs(data.mealLogs || []);
-      setMeasurementLogs(data.measurementLogs || []);
-      setCycleStatus(data.cycleStatus);
-      setLastPeriodLog(data.lastPeriodLog);
-
-      // Check if welcome banner should be shown
-      if (data.profile && data.profile.status === 'LEAD' && data.profile.registrationSource === 'MOBILE_APP') {
+  // Welcome Banner Effect
+  useEffect(() => {
+    const checkWelcome = async () => {
+      if (profile && profile.status === 'LEAD' && profile.registrationSource === 'MOBILE_APP') {
         const dismissed = await AsyncStorage.getItem('welcome_banner_dismissed');
         if (!dismissed) {
           setShowWelcome(true);
         }
       }
-    } catch (error: any) {
-      console.error('Failed to fetch dashboard data:', error);
-      const errorMessage = error.message || 'Failed to fetch dashboard data';
-      Alert.alert('Dashboard Error', errorMessage);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    };
+    checkWelcome();
+  }, [profile]);
 
-  useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user, fetchData]);
 
-  const handleSaveSymptoms = async (symptoms: string[], energyLevel: number) => {
+
+  const handleSaveSymptoms = useCallback(async (symptoms: string[], energyLevel: number) => {
     setIsSavingSymptoms(true);
     try {
       const today = getLocalDateString();
@@ -97,9 +83,9 @@ export default function DashboardScreen() {
     } finally {
       setIsSavingSymptoms(false);
     }
-  };
+  }, []);
 
-  const handleSavePeriod = async (startDate: Date, endDate?: Date, intensity?: string) => {
+  const handleSavePeriod = useCallback(async (startDate: Date, endDate?: Date, intensity?: string) => {
     // Check if there's an active period (started within last 10 days)
     const tenDaysAgo = new Date();
     tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
@@ -115,103 +101,138 @@ export default function DashboardScreen() {
         endDate: endDate || lastPeriodLog.endDate,
         flowIntensity: intensity || lastPeriodLog.flowIntensity
       };
-      setLastPeriodLog(optimisticLog);
       setIsPeriodModalOpen(false);
 
       try {
         await api.post('/api/clients/me/period-logs', optimisticLog);
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       } catch (error) {
         console.error('Failed to update period log:', error);
       }
     } else {
       // Create new period log
       const optimisticLog = { startDate, endDate, flowIntensity: intensity };
-      const optimisticStatus = calculateCycleStatus(startDate, profile?.cycleLength || 28, new Date());
 
-      setLastPeriodLog(optimisticLog);
-      setCycleStatus(optimisticStatus);
       setIsPeriodModalOpen(false);
 
       try {
         await api.post('/api/clients/me/period-logs', optimisticLog);
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       } catch (error) {
         console.error('Failed to save period log:', error);
       }
     }
-  };
+  }, [lastPeriodLog, queryClient]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
-  const dismissWelcome = async () => {
+  const dismissWelcome = useCallback(async () => {
     setShowWelcome(false);
     try {
       await AsyncStorage.setItem('welcome_banner_dismissed', 'true');
     } catch (e) {
       console.error('Failed to save welcome dismissal:', e);
     }
-  };
+  }, []);
 
   // Logic to determine weight values
   const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : (profile?.weight || 0);
   const startWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : currentWeight;
   const idealWeight = profile?.idealWeight || (profile?.weight || 0);
 
-  const handleAddWater = async () => {
-    // OPTIMISTIC UPDATE
-    if (waterData) {
-      setWaterData({
-        ...waterData,
-        currentGlasses: waterData.currentGlasses + 1
-      });
-    }
-
-    try {
+  const addWaterMutation = useMutation({
+    mutationFn: async () => {
       const today = getLocalDateString();
-      await api.post('/api/clients/me/water-intake', {
+      return api.post('/api/clients/me/water-intake', {
         increment: 1,
         date: today
       });
-    } catch (error) {
-      console.error('Failed to add water:', error);
-      // Revert if failed
-      setWaterData((prev: any) => ({ ...prev, currentGlasses: prev.currentGlasses - 1 }));
-    }
-  };
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
+      const previousData = queryClient.getQueryData(['dashboard']);
 
-  const handleSaveWeight = async (weight: number, unit: 'kg' | 'lb', date: Date) => {
-    try {
-      await api.post('/api/clients/me/weight-logs', { weight, unit, date });
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to save weight:', error);
-      throw error;
-    }
-  };
+      queryClient.setQueryData(['dashboard'], (old: any) => {
+        if (!old || !old.waterData) return old;
+        return {
+          ...old,
+          waterData: {
+            ...old.waterData,
+            currentGlasses: old.waterData.currentGlasses + 1
+          }
+        };
+      });
 
-  const handleSaveMeasurement = async (measurements: any, unit: string, date: Date) => {
-    try {
-      await api.post('/api/clients/me/measurement-logs', { ...measurements, unit, date });
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to save measurement:', error);
-      throw error;
-    }
-  };
+      return { previousData };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(['dashboard'], context?.previousData);
+      toast.error('Failed to add water');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
 
-  const handleSaveMeal = async (category: string, items: { name: string; quantity: string }[]) => {
-    try {
-      await api.post('/api/clients/me/meal-logs', { category, items });
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to save meal:', error);
-      throw error;
-    }
-  };
+  const handleAddWater = useCallback(() => {
+    addWaterMutation.mutate();
+    toast.success('Water logged!', { duration: 1000 });
+  }, [addWaterMutation]);
 
-  if (loading && !refreshing) {
+  const weightMutation = useMutation({
+    mutationFn: async (vars: { weight: number, unit: string, date: Date }) => {
+      return api.post('/api/clients/me/weight-logs', vars);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Weight updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update weight');
+    }
+  });
+
+  const handleSaveWeight = useCallback(async (weight: number, unit: 'kg' | 'lb', date: Date) => {
+    await weightMutation.mutateAsync({ weight, unit, date });
+  }, [weightMutation]);
+
+  const measureMutation = useMutation({
+    mutationFn: async (vars: { measurements: any, unit: string, date: Date }) => {
+      return api.post('/api/clients/me/measurement-logs', { ...vars.measurements, unit: vars.unit, date: vars.date });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Measurements updated');
+    },
+    onError: () => {
+      toast.error('Failed to update measurements');
+    }
+  });
+
+  const handleSaveMeasurement = useCallback(async (measurements: any, unit: string, date: Date) => {
+    await measureMutation.mutateAsync({ measurements, unit, date });
+  }, [measureMutation]);
+
+  const mealMutation = useMutation({
+    mutationFn: async (vars: { category: string, items: { name: string; quantity: string }[] }) => {
+      return api.post('/api/clients/me/meal-logs', vars);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Meal logged!');
+    },
+    onError: () => {
+      toast.error('Failed to log meal');
+    }
+  });
+
+  const handleSaveMeal = useCallback(async (category: string, items: { name: string; quantity: string }[]) => {
+    await mealMutation.mutateAsync({ category, items });
+  }, [mealMutation]);
+
+  if (isLoading) {
     return (
       <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
         <View style={[styles.scrollContent, { paddingTop: insets.top + 24 }]}>
@@ -239,7 +260,7 @@ export default function DashboardScreen() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.brandSage} />
+          <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={theme.brandSage} />
         }
       >
         <View style={styles.header}>

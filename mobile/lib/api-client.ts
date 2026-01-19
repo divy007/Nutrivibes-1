@@ -8,13 +8,15 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 const PROD_URL = 'https://nutrivibesbymansi.vercel.app';
 const LOCAL_URL = 'http://192.168.1.6:3000'; // Change to your Mac's IP for local dev
 
-// Set this to true for production, false for local development
-const IS_PROD = true;
+// Automatically set to true in production builds (eas build --profile production)
+const IS_PROD = !__DEV__;
 
 const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
 
-console.log(`🌐 API Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-console.log(`🔗 API URL: ${BASE_URL}`);
+if (__DEV__) {
+    console.log(`🌐 API Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    console.log(`🔗 API URL: ${BASE_URL}`);
+}
 
 export const setAuthToken = async (token: string): Promise<void> => {
     await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
@@ -65,7 +67,10 @@ export const apiRequest = async <T>(
     const url = `${BASE_URL}${path}`;
 
     // Debug: Log the request
-    console.log(`📡 API Request: ${config.method || 'GET'} ${url}`);
+    // Debug: Log the request
+    if (__DEV__) {
+        console.log(`📡 API Request: ${config.method || 'GET'} ${url}`);
+    }
 
     try {
         const response = await fetch(url, config);

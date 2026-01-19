@@ -31,6 +31,7 @@ export async function connectDB() {
         const opts = {
             bufferCommands: false,
             dbName: 'diet_planner',
+            maxPoolSize: 10, // Optimize for Vercel serverless environment
         };
 
         console.log('Establishing new MongoDB connection...');

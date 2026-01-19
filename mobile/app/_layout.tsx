@@ -46,6 +46,10 @@ export default function RootLayout() {
 }
 
 import { SessionProvider } from '@/context/AuthContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
+import { Toaster } from 'sonner-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // ... imports
 
@@ -54,16 +58,21 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
-      <SessionProvider>
-        <Stack>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="complete-profile" options={{ headerShown: false }} />
-          <Stack.Screen name="audit-prompt" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </SessionProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider>
+            <Stack>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="signup" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="complete-profile" options={{ headerShown: false }} />
+              <Stack.Screen name="audit-prompt" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+          </SessionProvider>
+        </QueryClientProvider>
+        <Toaster />
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }

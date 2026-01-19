@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ const MEAL_SLOTS = [
 ];
 
 export default function DietPlanScreen() {
+    const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -168,25 +170,42 @@ export default function DietPlanScreen() {
                                 </View>
 
                                 <View style={styles.slotContent}>
-                                    {mealEntry.foodItems.map((item: any, idx: number) => (
-                                        <View key={idx} style={styles.foodItem}>
-                                            <View style={[styles.foodDot, { backgroundColor: theme.brandSage }]} />
-                                            <Text style={[styles.foodName, { color: theme.text }]}>{item.name}</Text>
-                                            <Text style={styles.foodPortion}>
-                                                {item.quantity ? (
-                                                    // specific quantity available (e.g. "1 bowl", "100g")
-                                                    <Text style={{ fontWeight: '700', color: theme.brandForest }}>{item.quantity}</Text>
-                                                ) : (
-                                                    // fallback to portion if no specific quantity
-                                                    item.portion
-                                                )}
-                                                {/* Show portion in brackets if it exists, adds context, and isn't just "1 serving" redundancy */}
-                                                {item.quantity && item.portion && item.portion.toLowerCase() !== '1 serving' && (
-                                                    <Text style={{ fontWeight: '400' }}> ({item.portion})</Text>
-                                                )}
-                                            </Text>
-                                        </View>
-                                    ))}
+                                    {mealEntry.foodItems.map((item: any, idx: number) => {
+                                        const isRecipe = !!item.recipeId;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={idx}
+                                                style={styles.foodItem}
+                                                disabled={!isRecipe}
+                                                activeOpacity={0.7}
+                                                onPress={() => isRecipe && router.push(`/recipe/${item.recipeId}`)}
+                                            >
+                                                <View style={[styles.foodDot, { backgroundColor: isRecipe ? theme.tint : theme.brandSage }]} />
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={[styles.foodName, { color: isRecipe ? theme.tint : theme.text }]}>{item.name}</Text>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                                        <Text style={styles.foodPortion}>
+                                                            {item.quantity ? (
+                                                                <Text style={{ fontWeight: '700', color: theme.brandForest }}>{item.quantity}</Text>
+                                                            ) : (
+                                                                item.portion
+                                                            )}
+                                                            {item.quantity && item.portion && item.portion.toLowerCase() !== '1 serving' && (
+                                                                <Text style={{ fontWeight: '400' }}> ({item.portion})</Text>
+                                                            )}
+                                                        </Text>
+                                                        {isRecipe && (
+                                                            <View style={{ backgroundColor: theme.tint + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                                                <Text style={{ fontSize: 9, fontWeight: '800', color: theme.tint, textTransform: 'uppercase' }}>Recipe</Text>
+                                                            </View>
+                                                        )}
+                                                    </View>
+                                                </View>
+                                                {isRecipe && <ChevronRight size={14} color={theme.tint} style={{ opacity: 0.5 }} />}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
                                 </View>
                             </View>
                         );

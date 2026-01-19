@@ -36,6 +36,7 @@ import { api } from '@/lib/api-client';
 import { CounsellingDrawer } from '@/components/dietician/client/CounsellingDrawer';
 import { FollowUpNotesSection } from '@/components/dietician/client/FollowUpNotesSection';
 import { FollowUpHistoryDrawer } from '@/components/dietician/client/FollowUpHistoryDrawer';
+import { RecipeDetailDrawer } from '@/components/dietician/recipes/RecipeDetailDrawer';
 
 const DEFAULT_MEAL_TIMINGS: MealTiming[] = [
     { mealNumber: 1, time: '06:30' },
@@ -126,6 +127,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isSavingNotes, setIsSavingNotes] = useState(false);
+
+    // --- Recipe Drawer State ---
+    const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+    const [isRecipeDrawerOpen, setIsRecipeDrawerOpen] = useState(false);
 
 
     // --- State ---
@@ -808,6 +813,23 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+
+
+    const handleFoodClick = async (item: FoodItem) => {
+        if (!item.recipeId) return;
+
+        // Optimistic check: if we somehow had full recipe data on item, use it (unlikely with current model)
+        // Otherwise fetch
+        try {
+            const data = await api.get<any>(`/api/dietician/recipes/${item.recipeId}`);
+            setSelectedRecipe(data);
+            setIsRecipeDrawerOpen(true);
+        } catch (error) {
+            console.error('Failed to fetch recipe details', error);
+            alert('Failed to load recipe details');
+        }
+    };
+
     const handleSaveFollowUpNotes = async (data: { notes: string }) => {
         setIsSavingNotes(true);
         try {
@@ -1030,6 +1052,12 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     history={clientInfo?.followUpHistory || []}
                 />
 
+                <RecipeDetailDrawer
+                    isOpen={isRecipeDrawerOpen}
+                    onClose={() => setIsRecipeDrawerOpen(false)}
+                    recipe={selectedRecipe}
+                />
+
                 {/* Planner Grid */}
                 <div className="overflow-x-auto pb-4 custom-scrollbar">
                     <div className="min-w-[1200px] flex flex-col gap-4">
@@ -1167,6 +1195,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                             isActiveSwap={actionState.type === 'swap' && isSource}
                                             isPasteMode={actionState.type === 'copy' && actionState.sourceType === 'slot'}
                                             disabled={day.status === 'PUBLISHED'}
+                                            onFoodClick={handleFoodClick}
                                         />
                                     );
                                 })}

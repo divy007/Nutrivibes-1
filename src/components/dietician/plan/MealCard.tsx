@@ -15,6 +15,7 @@ interface MealCardProps {
     isActiveSwap?: boolean;
     isPasteMode?: boolean;
     disabled?: boolean;
+    onFoodClick?: (item: FoodItem) => void;
 }
 
 export const MealCard: React.FC<MealCardProps> = ({
@@ -30,7 +31,8 @@ export const MealCard: React.FC<MealCardProps> = ({
     isActiveCopy,
     isActiveSwap,
     isPasteMode,
-    disabled
+    disabled,
+    onFoodClick
 }) => {
     const hasFood = foodItems.length > 0;
 
@@ -93,13 +95,24 @@ export const MealCard: React.FC<MealCardProps> = ({
                 {hasFood ? (
                     <ul className="space-y-3 mb-4">
                         {foodItems.map((item) => (
-                            <li key={item.id} className="flex items-start text-sm">
+                            <li
+                                key={item.id}
+                                className={`flex items-start text-sm ${onFoodClick && item.recipeId ? 'cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 py-0.5 transition-colors' : ''}`}
+                                onClick={(e) => {
+                                    if (onFoodClick && item.recipeId) {
+                                        e.stopPropagation();
+                                        onFoodClick(item);
+                                    }
+                                }}
+                            >
                                 <span
                                     className="mr-2 mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: disabled ? '#cbd5e1' : '#9c6644' }} // Grey if disabled, Warm Brown if active
                                 />
                                 <div className="text-slate-700 leading-snug flex-1 min-w-0">
-                                    <span className={`font-medium break-words ${disabled ? 'text-slate-400' : ''}`}>{item.name}</span>
+                                    <span className={`font-medium break-words ${disabled ? 'text-slate-400' : ''} ${item.recipeId ? 'underline decoration-dotted decoration-slate-400 underline-offset-2' : ''}`}>
+                                        {item.name}
+                                    </span>
                                 </div>
                             </li>
                         ))}

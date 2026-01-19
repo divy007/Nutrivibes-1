@@ -30,7 +30,7 @@ const COLORS = {
     thigh: '#9B9BFF',
 };
 
-export default function MeasurementTracker({ logs, onUpdateClick }: MeasurementTrackerProps) {
+const MeasurementTracker = React.memo(function MeasurementTracker({ logs, onUpdateClick }: MeasurementTrackerProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -101,6 +101,9 @@ export default function MeasurementTracker({ logs, onUpdateClick }: MeasurementT
         </View>
     );
 }
+);
+
+export default MeasurementTracker;
 
 const styles = StyleSheet.create({
     card: {
