@@ -165,7 +165,7 @@ export default function ClientDashboard() {
                 <div className="text-center space-y-4">
                     <img
                         src="/brand-logo.png"
-                        alt="NutriVibes"
+                        alt="DateWithDiet"
                         className="h-20 w-auto mx-auto animate-pulse"
                     />
                     <Loader2 className="w-8 h-8 animate-spin text-brand-sage mx-auto" />

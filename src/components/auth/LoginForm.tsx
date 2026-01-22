@@ -87,7 +87,7 @@ export default function LoginForm() {
                 <div className="flex justify-center mb-2">
                     <img
                         src="/brand-logo.png"
-                        alt="NutriVibes Logo"
+                        alt="DateWithDiet Logo"
                         className="h-28 w-auto object-contain"
                     />
                 </div>

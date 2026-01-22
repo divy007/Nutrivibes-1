@@ -13,13 +13,13 @@ export default function LandingPage() {
                             <div className="relative w-10 h-10 mr-3">
                                 <Image
                                     src="/brand-logo.png"
-                                    alt="NutriVibes Logo"
+                                    alt="DateWithDiet Logo"
                                     fill
                                     className="object-contain"
                                 />
                             </div>
                             <span className="text-2xl font-black text-brand-forest tracking-tight">
-                                NutriVibes
+                                DateWithDiet
                             </span>
                         </div>
                         <div className="flex items-center gap-4">
@@ -66,7 +66,7 @@ export default function LandingPage() {
                             </h1>
                             <p className="text-xl text-gray-600 mb-10 leading-relaxed">
                                 Connect directly with Dt. Mansi Anajwala. Get personalized diet plans,
-                                track your progress, and achieve your health goals with NutriVibes.
+                                track your progress, and achieve your health goals with DateWithDiet.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                                 <a
@@ -139,7 +139,7 @@ export default function LandingPage() {
             <section className="py-24 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
-                        <h2 className="text-base font-bold text-brand-forest uppercase tracking-widest mb-2">Why NutriVibes?</h2>
+                        <h2 className="text-base font-bold text-brand-forest uppercase tracking-widest mb-2">Why DateWithDiet?</h2>
                         <h3 className="text-3xl lg:text-4xl font-black text-gray-900">Everything you need to succeed</h3>
                     </div>
 
@@ -188,7 +188,7 @@ export default function LandingPage() {
                                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-forest text-white flex items-center justify-center font-bold text-lg">1</div>
                                     <div>
                                         <h4 className="text-xl font-bold text-gray-900 mb-2">Download the App</h4>
-                                        <p className="text-gray-600">Get the latest version of NutriVibes directly from this page.</p>
+                                        <p className="text-gray-600">Get the latest version of DateWithDiet directly from this page.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
@@ -244,7 +244,7 @@ export default function LandingPage() {
                 <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                     <h2 className="text-3xl lg:text-4xl font-black text-white mb-6">Ready to transform your health?</h2>
                     <p className="text-xl text-brand-sage/90 mb-10 max-w-2xl mx-auto">
-                        Download the official NutriVibes app now. Compatible with Android devices running Android 6.0 and above.
+                        Download the official DateWithDiet app now. Compatible with Android devices running Android 6.0 and above.
                     </p>
                     <div className="bg-white/10 backdrop-blur-sm p-8 rounded-3xl border border-white/20 max-w-lg mx-auto">
                         <div className="text-white font-bold mb-4 flex items-center justify-center gap-2">
@@ -275,12 +275,12 @@ export default function LandingPage() {
                                 <div className="relative w-8 h-8">
                                     <Image
                                         src="/brand-logo.png"
-                                        alt="NutriVibes Logo"
+                                        alt="DateWithDiet Logo"
                                         fill
                                         className="object-contain"
                                     />
                                 </div>
-                                <span className="text-xl font-bold text-white">NutriVibes</span>
+                                <span className="text-xl font-bold text-white">DateWithDiet</span>
                             </div>
                             <p className="text-sm leading-relaxed">
                                 Empowering your wellness journey through personalized nutrition and expert guidance.
@@ -291,7 +291,7 @@ export default function LandingPage() {
                             <ul className="space-y-2 text-sm">
                                 <li>Dt. Mansi Anajwala</li>
                                 <li>Support: +91 98765 43210</li>
-                                <li>Email: contact@nutrivibes.com</li>
+                                <li>Email: contact@datewithdiet.com</li>
                             </ul>
                         </div>
                         <div>
@@ -312,7 +312,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                     <div className="text-center text-xs text-gray-600">
-                        &copy; {new Date().getFullYear()} NutriVibes. All rights reserved.
+                        &copy; {new Date().getFullYear()} DateWithDiet. All rights reserved.
                     </div>
                 </div>
             </footer>

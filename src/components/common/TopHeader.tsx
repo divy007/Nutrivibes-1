@@ -117,7 +117,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                     <div className="h-10 w-auto flex items-center justify-center p-1 bg-white rounded-lg shadow-inner overflow-hidden">
                         <img
                             src="/brand-logo.png"
-                            alt="NutriVibes Logo"
+                            alt="DateWithDiet Logo"
                             className="h-full w-auto object-contain"
                         />
                     </div>

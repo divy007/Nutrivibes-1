@@ -52,7 +52,7 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                 <div className="text-center space-y-4">
                     <img
                         src="/brand-logo.png"
-                        alt="NutriVibes"
+                        alt="DateWithDiet"
                         className="h-16 w-auto mx-auto animate-pulse"
                     />
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-sage mx-auto"></div>

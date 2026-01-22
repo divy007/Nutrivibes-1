@@ -8,8 +8,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Nutrivibes",
-  description: "Your Personalized Diet Planner",
+  title: "DateWithDiet",
+  description: "Fall in Love with Healthy Eating",
 };
 
 export default function RootLayout({

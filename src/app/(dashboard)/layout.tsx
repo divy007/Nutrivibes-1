@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="text-center space-y-4">
                     <img
                         src="/brand-logo.png"
-                        alt="NutriVibes"
+                        alt="DateWithDiet"
                         className="h-20 w-auto mx-auto animate-pulse"
                     />
                     <div className="flex items-center justify-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">

@@ -79,7 +79,7 @@ export default function SignupScreen() {
 
                     <View style={styles.header}>
                         <Image source={require('@/assets/images/brand-logo.png')} style={styles.logo} resizeMode="contain" />
-                        <Text style={[styles.title, { color: theme.brandForest }]}>Join NutriVibes</Text>
+                        <Text style={[styles.title, { color: theme.brandForest }]}>Join DateWithDiet</Text>
                         <Text style={styles.subtitle}>Start your wellness journey today</Text>
                     </View>
 

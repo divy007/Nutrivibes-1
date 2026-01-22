@@ -355,7 +355,7 @@ export default function DashboardScreen() {
                     <Sparkles size={24} color="#fff" />
                   </View>
                   <View style={[styles.leadTextContainer, { backgroundColor: 'transparent' }]}>
-                    <Text style={styles.leadTitle}>Welcome to NutriVibes!</Text>
+                    <Text style={styles.leadTitle}>Welcome to DateWithDiet!</Text>
                     <Text style={styles.leadSubtitle}>
                       Your dietician will review your profile and reach out soon. Start logging your water and weight to kickstart your journey!
                     </Text>

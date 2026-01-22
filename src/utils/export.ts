@@ -56,7 +56,7 @@ export const exportToPDF = async (weekPlan: WeekPlan, clientInfo: ClientInfo) =>
 
     doc.setFontSize(22);
     doc.setTextColor(27, 67, 50); // #1b4332 Dark Green
-    doc.text('NutriVibes by Dt. Mansi Anajwala', 14, 20);
+    doc.text('DateWithDiet by Dt. Mansi Anajwala', 14, 20);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -145,6 +145,25 @@ export const exportToPDF = async (weekPlan: WeekPlan, clientInfo: ClientInfo) =>
             0: { cellWidth: 30, fontStyle: 'bold', fillColor: [245, 245, 245] }
         },
         didDrawPage: (data) => {
+            // Watermark Logic
+            if (logoData) {
+                const pageSize = doc.internal.pageSize;
+                const pageWidth = pageSize.getWidth();
+                const pageHeight = pageSize.getHeight();
+                const imgWidth = 100; // Large size for watermark
+                const imgHeight = 100;
+
+                // Set transparency
+                doc.saveGraphicsState();
+                doc.setGState(new (doc as any).GState({ opacity: 0.1 }));
+
+                // Draw centered image
+                doc.addImage(logoData, 'JPEG', (pageWidth - imgWidth) / 2, (pageHeight - imgHeight) / 2, imgWidth, imgHeight);
+
+                // Restore transparency
+                doc.restoreGraphicsState();
+            }
+
             // Footer
             const str = `Generated on ${format(new Date(), 'PPpp')}`;
             doc.setFontSize(8);
@@ -205,7 +224,7 @@ export const exportToPDF = async (weekPlan: WeekPlan, clientInfo: ClientInfo) =>
 
 export const exportToExcel = async (weekPlan: WeekPlan, clientInfo: ClientInfo) => {
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'NutriVibes';
+    workbook.creator = 'DateWithDiet';
     workbook.created = new Date();
 
     // --- Sheet 1: Client Details ---
