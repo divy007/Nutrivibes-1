@@ -7,7 +7,7 @@ import MealLog from '@/models/MealLog';
 import MeasurementLog from '@/models/MeasurementLog';
 import DietPlan from '@/models/DietPlan';
 import PeriodLog from '@/models/PeriodLog';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthPayload } from '@/lib/auth';
 import { startOfDay, startOfWeek } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { normalizeDateUTC } from '@/lib/date-utils';
@@ -15,12 +15,12 @@ import { normalizeDateUTC } from '@/lib/date-utils';
 export async function GET(req: Request) {
     await connectDB();
     try {
-        const user = await getAuthUser(req);
+        const user = getAuthPayload(req);
         if (!user || user.role !== 'CLIENT') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const client = await Client.findOne({ userId: user._id });
+        const client = await Client.findOne({ userId: user.userId });
         if (!client) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }

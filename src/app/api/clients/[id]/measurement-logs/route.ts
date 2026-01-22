@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const logs = await MeasurementLog.find({ clientId: id }).sort({ date: -1 });
+        const logs = await MeasurementLog.find({ clientId: id }).sort({ date: -1 }).lean();
         return NextResponse.json(logs);
     } catch (error) {
         console.error('Failed to fetch measurement logs:', error);

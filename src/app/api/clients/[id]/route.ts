@@ -62,7 +62,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             if (client.userId) {
                 try {
                     await User.findByIdAndDelete(client.userId);
-                    console.log(`Deleted associated user account: ${client.userId}`);
+
                 } catch (userErr) {
                     console.error('Failed to delete associated user account:', userErr);
                 }

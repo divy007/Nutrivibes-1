@@ -25,7 +25,12 @@ export async function GET(req: NextRequest) {
         const skip = (page - 1) * limit;
 
         const [recipes, total] = await Promise.all([
-            Recipe.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Recipe.find(query)
+                .select('-ingredients -instructions -note')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
             Recipe.countDocuments(query)
         ]);
 

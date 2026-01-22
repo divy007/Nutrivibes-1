@@ -39,15 +39,13 @@ export const verifyToken = (token: string): TokenPayload | null => {
     }
 };
 
-export const getAuthUser = async (request: Request): Promise<IUser | null> => {
+export const getAuthPayload = (request: Request): TokenPayload | null => {
     try {
         // Try to get token from Authorization header first
         let token = request.headers.get('Authorization')?.replace('Bearer ', '');
-        console.log('[getAuthUser] Token from header:', token);
 
         // If not in header, try to get from cookies
         if (!token || token === 'null' || token === 'undefined') {
-            console.log('[getAuthUser] No valid header token, checking cookies');
             // Extract cookies from the request
             const cookieHeader = request.headers.get('cookie');
             if (cookieHeader) {
@@ -59,12 +57,41 @@ export const getAuthUser = async (request: Request): Promise<IUser | null> => {
 
                 // Check all possible token keys
                 token = cookies['token_client'] || cookies['token_dietician'] || cookies['token'];
-                console.log('[getAuthUser] Token from cookies:', token ? 'Found' : 'Not Found');
             }
         }
 
         if (!token || token === 'null' || token === 'undefined') {
-            console.log('[getAuthUser] No token found in header or cookies');
+            return null;
+        }
+
+        return verifyToken(token);
+    } catch {
+        return null;
+    }
+};
+
+export const getAuthUser = async (request: Request): Promise<IUser | null> => {
+    try {
+        // Try to get token from Authorization header first
+        let token = request.headers.get('Authorization')?.replace('Bearer ', '');
+
+        // If not in header, try to get from cookies
+        if (!token || token === 'null' || token === 'undefined') {
+            // Extract cookies from the request
+            const cookieHeader = request.headers.get('cookie');
+            if (cookieHeader) {
+                const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+                    const [key, value] = cookie.trim().split('=');
+                    acc[key] = value;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                // Check all possible token keys
+                token = cookies['token_client'] || cookies['token_dietician'] || cookies['token'];
+            }
+        }
+
+        if (!token || token === 'null' || token === 'undefined') {
             return null;
         }
 

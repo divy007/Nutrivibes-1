@@ -94,13 +94,13 @@ export default function CounsellingPage() {
     };
 
     const handleFinishFlow = async (formData: any) => {
-        console.log('Starting handleFinishFlow', formData);
+
         try {
             if (!client) {
                 console.error('No client data found!');
                 return;
             }
-            console.log('Sending PATCH request to', `/api/clients/${client._id}`);
+
             const payload = {
                 status: 'ACTIVE',
                 // Basic info updates
@@ -154,7 +154,7 @@ export default function CounsellingPage() {
             };
 
             const response = await api.patch(`/api/clients/${client._id}`, payload);
-            console.log('PATCH response:', response);
+
 
             setShowFlow(false);
             // Refresh global client data to update header and other views

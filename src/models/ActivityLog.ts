@@ -27,12 +27,12 @@ const ActivityLogSchema = new mongoose.Schema({
     },
     timestamp: {
         type: Date,
-        default: Date.now,
-        index: true
+        default: Date.now
     }
 });
 
 // Index for fetching dietician's feed efficiently
 ActivityLogSchema.index({ dieticianId: 1, timestamp: -1 });
+ActivityLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 2592000 }); // 30 days TTL
 
 export default mongoose.models.ActivityLog || mongoose.model('ActivityLog', ActivityLogSchema);

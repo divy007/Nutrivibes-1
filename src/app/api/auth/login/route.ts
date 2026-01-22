@@ -11,7 +11,7 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: Request) {
-    console.log('POST /api/auth/login hit');
+
     try {
         await connectDB();
 

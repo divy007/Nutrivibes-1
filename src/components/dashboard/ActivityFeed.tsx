@@ -24,7 +24,7 @@ export default function ActivityFeed() {
     // Optimized Request Strategy:
     // 1. Poll every 30s (instead of 10s) to reduce server load
     // 2. Instant update when window is focused (Smart Polling)
-    const { data: activities, error } = useSWR('/api/dietician/activity-feed', fetcher, {
+    const { data: activities, error } = useSWR('/api/dietician/activity-feed?limit=10', fetcher, {
         refreshInterval: 30000,
         revalidateOnFocus: true,
         dedupingInterval: 5000

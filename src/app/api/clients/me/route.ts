@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         if (!client && user.phone) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
-                console.log('Found orphaned client record by phone, claiming it for user:', user._id);
+
                 client.userId = user._id;
                 // If it was deleted, move it back to LEAD so it shows up in dashboard
                 if (client.status === 'DELETED') {
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
         // SELF-HEALING: If client is marked DELETED (soft delete) but managed to login (user still exists),
         // we recover them to LEAD status so they are visible to the Dietician again.
         if (client.status === 'DELETED') {
-            console.log('Recovering soft-deleted client for active user:', user._id);
+
             client.status = 'LEAD';
             await client.save();
         }
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
             );
 
             if (hasAllFields) {
-                console.log('Self-healing: Marking profile as complete for user:', user._id);
+
                 client.isProfileComplete = true;
                 await client.save();
             }
@@ -85,7 +85,7 @@ export async function PATCH(req: Request) {
         }
 
         const body = await req.json();
-        console.log('Update request body:', body);
+
 
         let client = await Client.findOne({ userId: user._id });
 
@@ -93,7 +93,7 @@ export async function PATCH(req: Request) {
         if (!client && user.phone) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
-                console.log('Found orphaned client record by phone during PATCH, claiming it:', user._id);
+
                 client.userId = user._id;
                 // Important: Don't change status to LEAD yet if it's already ACTIVE/NEW, 
                 // but if it was DELETED/LEAD, ensure it's LEAD for conversion.

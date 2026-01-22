@@ -14,8 +14,8 @@ const IS_PROD = !__DEV__;
 const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
 
 if (__DEV__) {
-    console.log(`🌐 API Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-    console.log(`🔗 API URL: ${BASE_URL}`);
+
+
 }
 
 export const setAuthToken = async (token: string): Promise<void> => {
@@ -69,7 +69,7 @@ export const apiRequest = async <T>(
     // Debug: Log the request
     // Debug: Log the request
     if (__DEV__) {
-        console.log(`📡 API Request: ${config.method || 'GET'} ${url}`);
+
     }
 
     try {

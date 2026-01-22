@@ -28,5 +28,6 @@ const FollowUpSchema = new Schema(
 // Index for faster lookups
 FollowUpSchema.index({ clientId: 1, date: 1 });
 FollowUpSchema.index({ dieticianId: 1, date: 1 });
+FollowUpSchema.index({ dieticianId: 1, status: 1 }); // Optimize pending follow-ups query
 
 export default mongoose.models.FollowUp || mongoose.model<IFollowUp>('FollowUp', FollowUpSchema);

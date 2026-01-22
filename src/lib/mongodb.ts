@@ -23,7 +23,7 @@ if (!cached) {
 
 export async function connectDB() {
     if (cached!.conn) {
-        console.log('Using cached MongoDB connection');
+
         return cached!.conn;
     }
 
@@ -34,10 +34,10 @@ export async function connectDB() {
             maxPoolSize: 10, // Optimize for Vercel serverless environment
         };
 
-        console.log('Establishing new MongoDB connection...');
+
 
         cached!.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-            console.log('MongoDB connected successfully');
+
             return mongoose;
         });
     }

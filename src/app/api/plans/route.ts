@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
         // Return all active plans. Both Dietician and Client might need to see them (though mostly Dietician)
         // Sort by price ascending
-        const plans = await Plan.find({ isActive: true }).sort({ price: 1 });
+        const plans = await Plan.find({ isActive: true }).sort({ price: 1 }).lean();
         return NextResponse.json(plans);
     } catch (error) {
         console.error('Failed to fetch plans:', error);

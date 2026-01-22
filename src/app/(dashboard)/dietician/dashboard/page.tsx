@@ -189,7 +189,7 @@ export default function DieticianDashboard() {
         </div>
 
         {/* Right Sidebar - Live Feed */}
-        <div className="w-full lg:w-[320px] 2xl:w-[380px] flex-shrink-0">
+        <div className="w-full lg:w-[320px] 2xl:w-[380px] flex-shrink-0 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
           <ActivityFeed />
         </div>
       </div>

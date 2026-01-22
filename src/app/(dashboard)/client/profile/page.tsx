@@ -105,9 +105,9 @@ export default function ClientProfilePage() {
                 weight: finalWeight,
             };
 
-            console.log('Sending update payload:', updatePayload);
+
             const token = getAuthToken();
-            console.log('Client Profile Page - Auth Token:', token);
+
 
             const response = await fetch('/api/clients/me', {
                 method: 'PATCH',

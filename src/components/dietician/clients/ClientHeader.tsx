@@ -119,7 +119,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 onClose={() => setIsPreferenceModalOpen(false)}
                 clientInfo={clientInfo}
                 onUpdate={(newPref: string) => {
-                    console.log('ClientHeader: Updating preferences to', newPref);
+
                     onClientInfoChange({ ...clientInfo, preferences: newPref });
                 }}
             />

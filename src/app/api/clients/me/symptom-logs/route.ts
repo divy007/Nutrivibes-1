@@ -18,7 +18,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const logs = await SymptomLog.find({ clientId: client._id }).sort({ date: -1 }).limit(30);
+        const logs = await SymptomLog.find({ clientId: client._id }).sort({ date: -1 }).limit(30).lean();
         return NextResponse.json(logs);
     } catch (error) {
         console.error('Failed to fetch symptom logs:', error);

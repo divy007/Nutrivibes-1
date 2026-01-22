@@ -174,7 +174,7 @@ export default function WellnessAuditScreen() {
 
     try {
       if (__DEV__) {
-        console.log('Submitting audit payload:', { answers, categoryScores, totalScore, riskLevel });
+
       }
       const result = await api.post('/api/clients/me/health-assessment', {
         answers,

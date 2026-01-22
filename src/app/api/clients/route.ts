@@ -33,7 +33,9 @@ export async function GET(req: Request) {
                     $gte: addDays(today, -7),
                     $lte: addDays(today, 14)
                 }
-            }).lean();
+            })
+                .select('days.date days.status')
+                .lean();
 
 
 
@@ -145,7 +147,7 @@ export async function POST(req: Request) {
 
         let newUserId;
         if (linkedUser) {
-            console.log('Linking existing User to new Client profile:', linkedUser._id);
+
             newUserId = linkedUser._id;
 
             // If user exists but was placeholder "App User" and we have a real name now, update it

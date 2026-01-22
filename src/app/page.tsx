@@ -258,7 +258,7 @@ export default function LandingPage() {
                                 <span className="text-lg">Android Application Package (APK)</span>
                             </div>
                             <a
-                                href="https://github.com/divy007/Nutrivibes-1/releases/download/v1.0/nutrivibes.apk"
+                                href="https://github.com/divy007/Nutrivibes-1/releases/download/v1.0/DateWithDiet.apk"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full flex items-center justify-center gap-3 bg-white text-brand-forest font-black text-xl py-6 px-10 rounded-2xl hover:bg-gray-50 transition-all transform hover:-translate-y-1 shadow-xl"

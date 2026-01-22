@@ -21,7 +21,7 @@ export async function GET(
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
-        const logs = await PeriodLog.find({ clientId: client._id }).sort({ startDate: -1 });
+        const logs = await PeriodLog.find({ clientId: client._id }).sort({ startDate: -1 }).lean();
         return NextResponse.json(logs);
     } catch (error) {
         console.error('Failed to fetch period logs:', error);

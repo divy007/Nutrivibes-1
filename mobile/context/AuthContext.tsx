@@ -48,11 +48,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const checkToken = async () => {
         try {
             const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-            console.log('SessionProvider: Stored token found:', !!token);
+
             if (token) {
                 setMobileToken(token);
                 const profile: any = await api.get('/api/clients/me');
-                console.log('SessionProvider: Profile fetched:', profile?.name);
+
                 setUser(profile);
             }
         } catch (error) {
@@ -71,13 +71,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const inAuthGroup = segments[0] === '(tabs)';
         const inLoginGroup = segments[0] === 'login';
 
-        console.log(`Auth Guard: User=${!!user}, Loading=${loading}, Segment=${segments[0]}`);
+
 
         if (!user && inAuthGroup) {
-            console.log('Auth Guard: Redirecting to Login');
+
             router.replace('/login');
         } else if (user && inLoginGroup) {
-            console.log('Auth Guard: Redirecting to Dashboard');
+
             if (!user.isProfileComplete) {
                 router.replace('/complete-profile' as any);
             } else {
@@ -87,7 +87,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }, [user, loading, segments]);
 
     const login = async (token: string) => {
-        console.log('SessionProvider: Login start');
+
         await setMobileToken(token);
         try {
             const profile: any = await api.get('/api/clients/me');
