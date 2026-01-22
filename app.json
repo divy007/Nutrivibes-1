@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "3e5e52c8-565d-4e5f-b8ad-4ccbed72b060"
+      }
+    },
+    "android": {
+      "package": "com.mansianajwala.nutrivibes"
+    }
+  }
+}
