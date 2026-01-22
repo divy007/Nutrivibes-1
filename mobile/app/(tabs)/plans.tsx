@@ -210,8 +210,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
-        borderStyle: 'dashed',
-        borderRadius: 1, // Required for iOS/Android when using dashed/dotted borders
+        // borderStyle: 'solid', // Default is solid
+        // borderRadius: 1, // Removed workaround
     },
     headerText: {
         fontSize: 20,

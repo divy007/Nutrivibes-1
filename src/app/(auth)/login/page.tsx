@@ -21,7 +21,7 @@ export default function LoginPage() {
             <LoginForm />
 
             <div className="text-center text-sm text-white">
-                <p>&copy; {new Date().getFullYear()} Nutrivibes.</p>
+                <p>&copy; {new Date().getFullYear()} DateWithDiet.</p>
             </div>
         </div>
     );

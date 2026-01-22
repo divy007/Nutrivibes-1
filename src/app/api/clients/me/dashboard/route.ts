@@ -34,7 +34,7 @@ export async function GET(req: Request) {
         const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog] = await Promise.all([
             WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean(),
             WaterIntake.findOne({ clientId: client._id, date: today }).lean(),
-            MealLog.find({ clientId: client._id }).sort({ createdAt: -1 }).limit(5).lean(),
+            MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean(),
             MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean(),
             DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }), // Keep as document for day processing if needed, or lean and remove toObject
             PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean(),
