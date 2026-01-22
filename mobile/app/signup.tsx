@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, padding: 32, justifyContent: 'center' },
     backButton: { position: 'absolute', top: 60, left: 32, zIndex: 10 },
     header: { alignItems: 'center', marginBottom: 40 },
-    logo: { width: 100, height: 100, marginBottom: 16 },
+    logo: { width: 250, height: 100, marginBottom: 16 },
     title: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
     subtitle: { fontSize: 16, color: '#64748b', marginTop: 8, fontWeight: '500', textAlign: 'center' },
     form: { gap: 20 },

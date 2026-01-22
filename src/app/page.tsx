@@ -10,7 +10,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
                         <div className="flex items-center gap-3 group cursor-pointer">
-                            <div className="relative w-10 h-10 transition-transform group-hover:scale-110 duration-300">
+                            <div className="relative w-40 h-12 transition-transform group-hover:scale-105 duration-300">
                                 <Image
                                     src="/brand-logo.png"
                                     alt="DateWithDiet Logo"
@@ -18,9 +18,6 @@ export default function LandingPage() {
                                     className="object-contain"
                                 />
                             </div>
-                            <span className="text-2xl font-black text-brand-forest tracking-tighter">
-                                DateWithDiet
-                            </span>
                         </div>
                         <div className="flex items-center gap-6">
                             <Link
@@ -283,15 +280,14 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-4 gap-12 mb-16">
                         <div className="col-span-1 md:col-span-1">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="relative w-9 h-9">
+                                <div className="relative w-32 h-10">
                                     <Image
                                         src="/brand-logo.png"
                                         alt="DateWithDiet Logo"
                                         fill
-                                        className="object-contain"
+                                        className="object-contain object-left"
                                     />
                                 </div>
-                                <span className="text-xl font-black text-brand-forest tracking-tight">DateWithDiet</span>
                             </div>
                             <p className="text-gray-500 text-sm leading-relaxed mb-6">
                                 Empowering your wellness journey through personalized nutrition and expert guidance.
