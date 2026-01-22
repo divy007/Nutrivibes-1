@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
                     </p>
                     <p className="font-medium text-brand-forest">
                         Dt. Mansi Anajwala<br />
-                        Email: contact@datewithdiet.com
+                        Email: mansianajwala2000@gmail.com
                     </p>
                 </section>
             </div>
