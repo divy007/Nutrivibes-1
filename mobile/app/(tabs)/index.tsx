@@ -23,6 +23,7 @@ import LogMeasurementModal from '@/components/dashboard/LogMeasurementModal';
 import LogMealModal from '@/components/dashboard/LogMealModal';
 import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
 import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
+import CycleSettingsModal from '@/components/dashboard/CycleSettingsModal';
 import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
 import { getLocalDateString } from '@/lib/date-utils';
 
@@ -45,7 +46,9 @@ export default function DashboardScreen() {
 
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
+  const [isCycleSettingsOpen, setIsCycleSettingsOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
+  const [editMealData, setEditMealData] = useState<{ category: string, items: any[] } | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSavingSymptoms, setIsSavingSymptoms] = useState(false);
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
@@ -123,6 +126,18 @@ export default function DashboardScreen() {
       }
     }
   }, [lastPeriodLog, queryClient]);
+
+  const handleSaveCycleSettings = useCallback(async (length: number) => {
+    try {
+      await api.patch('/api/client/profile', { cycleLength: length });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setIsCycleSettingsOpen(false);
+      toast.success('Cycle settings updated');
+    } catch (error) {
+      console.error('Failed to update cycle settings:', error);
+      toast.error('Failed to update settings');
+    }
+  }, [queryClient]);
 
   const onRefresh = useCallback(() => {
     refetch();
@@ -216,7 +231,7 @@ export default function DashboardScreen() {
   }, [measureMutation]);
 
   const mealMutation = useMutation({
-    mutationFn: async (vars: { category: string, items: { name: string; quantity: string }[] }) => {
+    mutationFn: async (vars: { category: string, items: { name: string; quantity: string }[], date?: Date }) => {
       return api.post('/api/clients/me/meal-logs', vars);
     },
     onSuccess: () => {
@@ -229,8 +244,18 @@ export default function DashboardScreen() {
   });
 
   const handleSaveMeal = useCallback(async (category: string, items: { name: string; quantity: string }[]) => {
-    await mealMutation.mutateAsync({ category, items });
+    await mealMutation.mutateAsync({ category, items, date: new Date() });
   }, [mealMutation]);
+
+  const handleEditMeal = useCallback((category: string, items: any[]) => {
+    setEditMealData({ category, items });
+    setIsMealModalOpen(true);
+  }, []);
+
+  const handleCloseMealModal = useCallback(() => {
+    setIsMealModalOpen(false);
+    setEditMealData(null); // Reset edit data on close
+  }, []);
 
   if (isLoading) {
     return (
@@ -394,6 +419,7 @@ export default function DashboardScreen() {
                 <CycleTrackerCard
                   status={cycleStatus}
                   onLogPress={() => setIsPeriodModalOpen(true)}
+                  onSettingsPress={() => setIsCycleSettingsOpen(true)}
                 />
               </View>
             </View>
@@ -418,7 +444,11 @@ export default function DashboardScreen() {
 
           <MealLogCard
             logs={mealLogs}
-            onAdd={() => setIsMealModalOpen(true)}
+            onAdd={() => {
+              setEditMealData(null); // Ensure fresh add
+              setIsMealModalOpen(true);
+            }}
+            onEdit={handleEditMeal}
           />
         </View>
       </ScrollView>
@@ -450,10 +480,19 @@ export default function DashboardScreen() {
         lastPeriodLog={lastPeriodLog}
       />
 
+      <CycleSettingsModal
+        isOpen={isCycleSettingsOpen}
+        onClose={() => setIsCycleSettingsOpen(false)}
+        onSave={handleSaveCycleSettings}
+        initialLength={profile?.cycleLength}
+      />
+
       <LogMealModal
         isOpen={isMealModalOpen}
-        onClose={() => setIsMealModalOpen(false)}
+        onClose={handleCloseMealModal}
         onSave={handleSaveMeal}
+        initialCategory={editMealData?.category}
+        initialItems={editMealData?.items}
       />
     </View >
   );

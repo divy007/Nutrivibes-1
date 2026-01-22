@@ -8,9 +8,10 @@ import { Utensils, Coffee, Sun, Moon, Plus } from 'lucide-react-native';
 interface MealLogCardProps {
     logs: any[];
     onAdd: () => void;
+    onEdit: (category: string, items: any[]) => void;
 }
 
-const MealLogCard = React.memo(function MealLogCard({ logs, onAdd }: MealLogCardProps) {
+const MealLogCard = React.memo(function MealLogCard({ logs, onAdd, onEdit }: MealLogCardProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -40,8 +41,16 @@ const MealLogCard = React.memo(function MealLogCard({ logs, onAdd }: MealLogCard
             <View style={styles.mealList}>
                 {categories.map((cat) => {
                     const log = logs.find(l => l.category === cat.name);
+
+                    const Wrapper = log ? TouchableOpacity : View;
+
                     return (
-                        <View key={cat.name} style={styles.mealItem}>
+                        <Wrapper
+                            key={cat.name}
+                            style={styles.mealItem}
+                            onPress={() => log && onEdit(cat.name, log.items)}
+                            activeOpacity={0.7}
+                        >
                             <View style={[styles.mealIcon, { backgroundColor: cat.color + '15' }]}>
                                 <cat.icon size={16} color={cat.color} />
                             </View>
@@ -54,7 +63,7 @@ const MealLogCard = React.memo(function MealLogCard({ logs, onAdd }: MealLogCard
                             {log && (
                                 <View style={[styles.dot, { backgroundColor: cat.color }]} />
                             )}
-                        </View>
+                        </Wrapper>
                     );
                 })}
             </View>

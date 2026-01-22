@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Calendar, ChevronRight, Info, Activity, Clock } from 'lucide-react-native';
+import { Calendar, ChevronRight, Info, Activity, Clock, Settings } from 'lucide-react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -18,9 +18,10 @@ interface CycleStatus {
 interface Props {
     status: CycleStatus | null;
     onLogPress: () => void;
+    onSettingsPress: () => void;
 }
 
-export const CycleTrackerCard = React.memo(({ status, onLogPress }: Props) => {
+export const CycleTrackerCard = React.memo(({ status, onLogPress, onSettingsPress }: Props) => {
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
@@ -28,10 +29,15 @@ export const CycleTrackerCard = React.memo(({ status, onLogPress }: Props) => {
         return (
             <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
                 <View style={styles.header}>
-                    <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '10' }]}>
-                        <Calendar size={20} color={theme.brandSage} />
+                    <View style={styles.headerLeft}>
+                        <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '10' }]}>
+                            <Calendar size={20} color={theme.brandSage} />
+                        </View>
+                        <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
                     </View>
-                    <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
+                    <TouchableOpacity onPress={onSettingsPress} style={styles.settingsButton}>
+                        <Settings size={20} color="#94a3b8" />
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.emptyStateContent}>
@@ -62,10 +68,15 @@ export const CycleTrackerCard = React.memo(({ status, onLogPress }: Props) => {
         <View style={[styles.card, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
             {/* Header */}
             <View style={styles.header}>
-                <View style={[styles.iconContainer, { backgroundColor: currentPhaseColor + '15' }]}>
-                    <Calendar size={20} color={currentPhaseColor} />
+                <View style={styles.headerLeft}>
+                    <View style={[styles.iconContainer, { backgroundColor: currentPhaseColor + '15' }]}>
+                        <Calendar size={20} color={currentPhaseColor} />
+                    </View>
+                    <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
                 </View>
-                <Text style={[styles.label, { color: theme.brandForest }]}>Cycle Tracker</Text>
+                <TouchableOpacity onPress={onSettingsPress} style={styles.settingsButton}>
+                    <Settings size={20} color="#94a3b8" />
+                </TouchableOpacity>
             </View>
 
             {/* Main Content: Day X & Phase */}
@@ -121,9 +132,17 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    headerLeft: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        marginBottom: 20,
+    },
+    settingsButton: {
+        padding: 4,
     },
     iconContainer: {
         width: 40,

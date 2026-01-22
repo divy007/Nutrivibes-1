@@ -175,7 +175,8 @@ export default function ClientDashboard() {
     }
 
     // Default weights if not set (for demo/UI)
-    const currentWeight = profile?.weight || 0;
+    // Prioritize the latest log entry for current weight to ensure immediate updates are reflected
+    const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : (profile?.weight || 0);
     const idealWeight = profile?.idealWeight || currentWeight;
 
     // Attempt to find start weight (oldest log or profile creation weight)

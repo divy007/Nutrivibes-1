@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils } from 'lucide-react';
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
+import { calculateCycleStatus, CycleStatus } from '@/lib/cycle-utils';
 
 export default function ClientSummaryPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
@@ -19,24 +20,36 @@ export default function ClientSummaryPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
-    // Symptom state
+    // Symptom & Cycle state
     const [symptomLogs, setSymptomLogs] = useState<any[]>([]);
+    const [periodLogs, setPeriodLogs] = useState<any[]>([]);
     const [symptomsLoading, setSymptomsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchSymptoms = async () => {
+        const fetchData = async () => {
             if (!client?._id) return;
             try {
-                const data = await api.get<any[]>(`/api/clients/${client._id}/symptom-logs`);
-                setSymptomLogs(data);
+                const [symptoms, periods] = await Promise.all([
+                    api.get<any[]>(`/api/clients/${client._id}/symptom-logs`),
+                    client.gender === 'female' ? api.get<any[]>(`/api/clients/${client._id}/period-logs`) : Promise.resolve([])
+                ]);
+                setSymptomLogs(symptoms);
+                setPeriodLogs(periods);
             } catch (err) {
-                console.error('Failed to fetch symptoms:', err);
+                console.error('Failed to fetch logs:', err);
             } finally {
                 setSymptomsLoading(false);
             }
         };
-        fetchSymptoms();
-    }, [client?._id]);
+        fetchData();
+    }, [client?._id, client?.gender]);
+
+    const latestPeriod = periodLogs.length > 0 ? periodLogs[0] : null;
+    let cycleStatus: CycleStatus | null = null;
+
+    if (client?.gender === 'female' && latestPeriod) {
+        cycleStatus = calculateCycleStatus(latestPeriod.startDate, client.cycleLength || 28);
+    }
 
     const handlePasswordReset = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -273,8 +286,67 @@ export default function ClientSummaryPage() {
                     </div>
                 </div>
 
-                {/* Right Column: Persona */}
+                {/* Right Column: Persona & Cycle */}
                 <div className="space-y-6">
+
+                    {/* Cycle Widget (Females Only) */}
+                    {client.gender === 'female' && (
+                        <div className="bg-white rounded-lg border border-pink-100 overflow-hidden shadow-sm">
+                            <div className="p-4 border-b border-pink-50 bg-pink-50/30 flex justify-between items-center">
+                                <h3 className="text-xs font-bold text-pink-700 uppercase tracking-widest flex items-center gap-2">
+                                    <Activity size={14} />
+                                    Cycle Tracker
+                                </h3>
+                                <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest bg-white px-2 py-1 rounded-full border border-pink-100">
+                                    {client.cycleLength || 28} Day Cycle
+                                </span>
+                            </div>
+
+                            {cycleStatus ? (
+                                <div className="p-6">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-3xl font-black text-slate-800">{cycleStatus.dayOfCycle}</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Day</span>
+                                            </div>
+                                            <span className="text-sm font-bold text-pink-500 uppercase tracking-wider">{cycleStatus.phaseInfo.title}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="flex items-center justify-end gap-1 text-slate-400 mb-1">
+                                                <Clock size={12} />
+                                                <span className="text-[10px] font-bold uppercase tracking-wider">Next Period</span>
+                                            </div>
+                                            <span className="text-xl font-bold text-slate-700">{cycleStatus.daysUntilNextPeriod} Days</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-pink-50 rounded-lg p-4 border border-pink-100 mb-4">
+                                        <div className="flex gap-3">
+                                            <div className="mt-0.5">
+                                                <Zap size={16} className="text-pink-500" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-bold text-pink-700 uppercase tracking-widest mb-1">Nutrition Focus</h4>
+                                                <p className="text-xs font-medium text-slate-600 leading-relaxed">
+                                                    {cycleStatus.phaseInfo.nutritionTip}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-slate-400 italic text-center">
+                                        {cycleStatus.phaseInfo.description}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center">
+                                    <Calendar className="w-8 h-8 text-pink-200 mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No log data avaiable</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Persona Details Card */}
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">

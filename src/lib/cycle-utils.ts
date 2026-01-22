@@ -1,4 +1,5 @@
 import { differenceInDays, addDays } from 'date-fns';
+import { normalizeDateUTC } from './date-utils';
 
 export type CyclePhase = 'PERIOD' | 'FOLLICULAR' | 'OVULATION' | 'LUTEAL';
 
@@ -37,12 +38,9 @@ const PHASE_METADATA: Record<CyclePhase, { title: string; description: string; n
 };
 
 export function calculateCycleStatus(lastPeriodStart: Date, cycleLength: number = 28, referenceDate: Date = new Date()): CycleStatus {
-    // Use UTC methods to avoid timezone issues
-    const ref = new Date(referenceDate);
-    ref.setUTCHours(0, 0, 0, 0);
-
-    const lastStart = new Date(lastPeriodStart);
-    lastStart.setUTCHours(0, 0, 0, 0);
+    // Standardize both dates to UTC midnight of their respective IST days
+    const ref = normalizeDateUTC(referenceDate);
+    const lastStart = normalizeDateUTC(lastPeriodStart);
 
     const diff = differenceInDays(ref, lastStart);
     // Handle historical dates (if ref is before lastStart)

@@ -5,6 +5,8 @@ import WeightLog from '@/models/WeightLog';
 import { getAuthUser } from '@/lib/auth';
 import { normalizeDateUTC } from '@/lib/date-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     await connectDB();
     try {
@@ -47,29 +49,47 @@ export async function POST(req: Request) {
 
         const normalizedDate = normalizeDateUTC(date || undefined);
 
-        // UPSERT LOGIC: Update if exists for this day, otherwise create new
-        // consistent with "last date will be the latest weight" requirement
-        const newLog = await WeightLog.findOneAndUpdate(
-            {
-                clientId: client._id,
-                date: normalizedDate
-            },
-            {
-                $set: {
-                    weight,
-                    unit: unit || 'kg'
-                }
-            },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
+        // Date Range for "This Day" to catch logs with time components
+        const startOfDay = new Date(normalizedDate);
+        const endOfDay = new Date(normalizedDate);
+        endOfDay.setUTCHours(23, 59, 59, 999);
 
-        // CLEANUP: If multiple logs existed for this day (legacy data), delete them.
-        // This fixes the issue where an update might hit an older duplicate while a newer invalid duplicate remains visible.
-        await WeightLog.deleteMany({
+        // Find ANY log for this day
+        let existingLog = await WeightLog.findOne({
             clientId: client._id,
-            date: normalizedDate,
-            _id: { $ne: newLog._id }
+            date: {
+                $gte: startOfDay,
+                $lte: endOfDay
+            }
         });
+
+        let savedLog;
+
+        if (existingLog) {
+            // Update existing log and force normalize the date to cleanup time component
+            existingLog.weight = weight;
+            existingLog.unit = unit || 'kg';
+            existingLog.date = normalizedDate; // Normalize the date
+            savedLog = await existingLog.save();
+
+            // Delete any other duplicates that might exist for this day
+            await WeightLog.deleteMany({
+                clientId: client._id,
+                date: {
+                    $gte: startOfDay,
+                    $lte: endOfDay
+                },
+                _id: { $ne: existingLog._id }
+            });
+        } else {
+            // Create new log
+            savedLog = await WeightLog.create({
+                clientId: client._id,
+                date: normalizedDate,
+                weight,
+                unit: unit || 'kg'
+            });
+        }
 
         // Also update the current weight in the client profile
         await Client.findByIdAndUpdate(client._id, { $set: { weight } });
@@ -82,7 +102,7 @@ export async function POST(req: Request) {
             console.error('Failed to log activity:', err);
         }
 
-        return NextResponse.json(newLog, { status: 201 });
+        return NextResponse.json(savedLog, { status: 201 });
     } catch (error) {
         console.error('Failed to save weight log:', error);
         return NextResponse.json({ error: 'Failed to save weight log' }, { status: 500 });

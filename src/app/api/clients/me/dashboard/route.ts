@@ -12,6 +12,8 @@ import { startOfDay, startOfWeek } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { normalizeDateUTC } from '@/lib/date-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     await connectDB();
     try {
@@ -39,6 +41,8 @@ export async function GET(req: Request) {
             DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }), // Keep as document for day processing if needed, or lean and remove toObject
             PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean(),
         ]);
+
+        console.log('[DEBUG-DASHBOARD-GET] Fetched weightLogs:', weightLogs.length, 'Top Log:', weightLogs[0]);
 
         // Process diet plan to only show PUBLISHED items
         let processedDietPlan = null;

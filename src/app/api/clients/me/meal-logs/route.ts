@@ -3,7 +3,9 @@ import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import MealLog from '@/models/MealLog';
 import { getAuthUser } from '@/lib/auth';
-import { startOfDay } from 'date-fns';
+import { normalizeDateUTC } from '@/lib/date-utils';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     await connectDB();
@@ -20,7 +22,7 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const dateParam = searchParams.get('date');
-        const queryDate = dateParam ? startOfDay(new Date(dateParam)) : startOfDay(new Date());
+        const queryDate = normalizeDateUTC(dateParam || undefined);
 
         const logs = await MealLog.find({
             clientId: client._id,
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid meal data' }, { status: 400 });
         }
 
-        const queryDate = date ? startOfDay(new Date(date)) : startOfDay(new Date());
+        const queryDate = normalizeDateUTC(date || undefined);
 
         // Update if exists for this category and date, else create
         const log = await MealLog.findOneAndUpdate(

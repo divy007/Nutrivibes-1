@@ -9,11 +9,13 @@ interface LogMealModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (category: string, items: { name: string; quantity: string }[]) => Promise<void>;
+    initialCategory?: string;
+    initialItems?: { name: string; quantity: string }[];
 }
 
 const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Evening Snack', 'Early Morning'];
 
-export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalProps) {
+export default function LogMealModal({ isOpen, onClose, onSave, initialCategory, initialItems }: LogMealModalProps) {
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
     const [searchTerm, setSearchTerm] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -23,6 +25,16 @@ export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalPr
 
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
+
+    // Sync state when modal opens or initial values change
+    React.useEffect(() => {
+        if (isOpen) {
+            setSelectedCategory(initialCategory || CATEGORIES[0]);
+            setAddedItems(initialItems || []);
+            setSearchTerm('');
+            setQuantity('');
+        }
+    }, [isOpen, initialCategory, initialItems]);
 
     const handleAddItem = () => {
         if (!searchTerm || !quantity) return;
@@ -36,7 +48,8 @@ export default function LogMealModal({ isOpen, onClose, onSave }: LogMealModalPr
         setIsSaving(true);
         try {
             await onSave(selectedCategory, addedItems);
-            setAddedItems([]);
+            // Don't clear immediately if we might re-open, but onClose handles unmount usually.
+            // setAddedItems([]); // Handled by useEffect on next open
             onClose();
         } catch (error) {
             console.error('Failed to save meal:', error);
