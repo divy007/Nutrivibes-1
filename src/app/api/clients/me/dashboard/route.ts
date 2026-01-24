@@ -7,6 +7,7 @@ import MealLog from '@/models/MealLog';
 import MeasurementLog from '@/models/MeasurementLog';
 import DietPlan from '@/models/DietPlan';
 import PeriodLog from '@/models/PeriodLog';
+import HealthAssessment from '@/models/HealthAssessment';
 import { getAuthPayload } from '@/lib/auth';
 import { startOfDay, startOfWeek } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
@@ -33,16 +34,15 @@ export async function GET(req: Request) {
         const today = normalizeDateUTC(clientDate || undefined);
         const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
-        const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog] = await Promise.all([
+        const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog, assessment] = await Promise.all([
             WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean(),
             WaterIntake.findOne({ clientId: client._id, date: today }).lean(),
             MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean(),
             MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean(),
-            DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }), // Keep as document for day processing if needed, or lean and remove toObject
+            DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }),
             PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean(),
+            HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean()
         ]);
-
-        console.log('[DEBUG-DASHBOARD-GET] Fetched weightLogs:', weightLogs.length, 'Top Log:', weightLogs[0]);
 
         // Process diet plan to only show PUBLISHED items
         let processedDietPlan = null;
@@ -87,7 +87,8 @@ export async function GET(req: Request) {
             measurementLogs,
             dietPlan: processedDietPlan,
             cycleStatus,
-            lastPeriodLog
+            lastPeriodLog,
+            assessment
         });
     } catch (error: any) {
         console.error('Failed to fetch dashboard summary - Full error:', error);

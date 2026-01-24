@@ -48,7 +48,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
         return NextResponse.json(dietPlan);
     } catch (error) {
-        console.error('Save diet plan error:', error);
         return NextResponse.json({ error: 'Failed to save diet plan' }, { status: 500 });
     }
 }

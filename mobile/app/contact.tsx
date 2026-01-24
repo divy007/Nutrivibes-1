@@ -18,7 +18,7 @@ export default function ContactScreen() {
     };
 
     const handleEmail = () => {
-        Linking.openURL('mailto:mansianajwala2000@gmail.com');
+        Linking.openURL('mailto:datewithdiet.fit@gmail.com');
     };
 
     return (
@@ -70,7 +70,7 @@ export default function ContactScreen() {
                             <View style={[styles.contactButtonText, { backgroundColor: 'transparent' }]}>
                                 <Text style={styles.contactLabel}>Email</Text>
                                 <Text style={styles.contactValue}>
-                                    mansianajwala2000@gmail.com
+                                    datewithdiet.fit@gmail.com
                                 </Text>
                             </View>
                         </TouchableOpacity>

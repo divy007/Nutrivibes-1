@@ -190,7 +190,7 @@ export default function ProgressPage() {
         const latest = waterLogs[0];
         // Both should be YYYY-MM-DD in IST timezone
         const latestDateStr = new Date(latest.date).toLocaleDateString('en-CA', {
-            timeZone: 'Asia/Kolkata',
+            timeZone: 'UTC',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'

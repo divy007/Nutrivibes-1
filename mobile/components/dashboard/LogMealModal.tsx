@@ -11,11 +11,12 @@ interface LogMealModalProps {
     onSave: (category: string, items: { name: string; quantity: string }[]) => Promise<void>;
     initialCategory?: string;
     initialItems?: { name: string; quantity: string }[];
+    existingLogs?: any[];
 }
 
 const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Evening Snack', 'Early Morning'];
 
-export default function LogMealModal({ isOpen, onClose, onSave, initialCategory, initialItems }: LogMealModalProps) {
+export default function LogMealModal({ isOpen, onClose, onSave, initialCategory, initialItems, existingLogs = [] }: LogMealModalProps) {
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
     const [searchTerm, setSearchTerm] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -26,15 +27,30 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
-    // Sync state when modal opens or initial values change
+    // Helper to find items for a category
+    const getItemsForCategory = (category: string) => {
+        const log = existingLogs.find(l => l.category === category);
+        return log ? log.items : [];
+    };
+
+    // Sync state when modal opens
     React.useEffect(() => {
         if (isOpen) {
-            setSelectedCategory(initialCategory || CATEGORIES[0]);
-            setAddedItems(initialItems || []);
+            const cat = initialCategory || CATEGORIES[0];
+            setSelectedCategory(cat);
+            // Use initialItems if provided (Edit Mode), otherwise look up in existingLogs (Add Mode but might exist)
+            setAddedItems(initialItems || getItemsForCategory(cat));
             setSearchTerm('');
             setQuantity('');
         }
-    }, [isOpen, initialCategory, initialItems]);
+    }, [isOpen, initialCategory, initialItems, existingLogs]);
+
+    const handleCategoryChange = (cat: string) => {
+        setSelectedCategory(cat);
+        // When changing category, load its existing items so we append/edit instead of overwrite
+        setAddedItems(getItemsForCategory(cat));
+        setShowCategoryDropdown(false);
+    }
 
     const handleAddItem = () => {
         if (!searchTerm || !quantity) return;
@@ -48,8 +64,6 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
         setIsSaving(true);
         try {
             await onSave(selectedCategory, addedItems);
-            // Don't clear immediately if we might re-open, but onClose handles unmount usually.
-            // setAddedItems([]); // Handled by useEffect on next open
             onClose();
         } catch (error) {
             console.error('Failed to save meal:', error);
@@ -89,10 +103,7 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
                                             <TouchableOpacity
                                                 key={cat}
                                                 style={[styles.dropdownItem, selectedCategory === cat && { backgroundColor: theme.brandSage + '10' }]}
-                                                onPress={() => {
-                                                    setSelectedCategory(cat);
-                                                    setShowCategoryDropdown(false);
-                                                }}
+                                                onPress={() => handleCategoryChange(cat)}
                                             >
                                                 <Text style={[styles.dropdownText, selectedCategory === cat && { color: theme.brandForest }]}>{cat}</Text>
                                                 {selectedCategory === cat && <Check size={14} color={theme.brandForest} />}

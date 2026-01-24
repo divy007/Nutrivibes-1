@@ -12,6 +12,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Ensure Client model is registered (prevent tree-shaking)
+        const _ = Client;
+
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');

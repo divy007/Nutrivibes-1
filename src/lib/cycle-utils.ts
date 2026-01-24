@@ -38,7 +38,7 @@ const PHASE_METADATA: Record<CyclePhase, { title: string; description: string; n
 };
 
 export function calculateCycleStatus(lastPeriodStart: Date, cycleLength: number = 28, referenceDate: Date = new Date()): CycleStatus {
-    // Standardize both dates to UTC midnight of their respective IST days
+    // Standardize both dates to UTC midnight
     const ref = normalizeDateUTC(referenceDate);
     const lastStart = normalizeDateUTC(lastPeriodStart);
 

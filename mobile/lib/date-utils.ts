@@ -1,7 +1,7 @@
 import { startOfDay } from 'date-fns';
 
 // Constants
-const APP_TIMEZONE = 'Asia/Kolkata';
+const APP_TIMEZONE = 'UTC';
 
 /**
  * Normalizes a date or date string to a UTC Date object at 00:00:0.000Z

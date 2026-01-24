@@ -298,7 +298,7 @@ export default function LandingPage() {
                             <ul className="space-y-4 text-sm text-gray-600">
                                 <li className="font-medium">Dt. Mansi Anajwala</li>
                                 <li>+91 98765 43210</li>
-                                <li>Email: mansianajwala2000@gmail.com</li>
+                                <li>Email: datewithdiet.fit@gmail.com</li>
                             </ul>
                         </div>
                         <div>

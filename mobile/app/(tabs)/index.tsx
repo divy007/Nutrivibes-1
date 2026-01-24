@@ -493,6 +493,7 @@ export default function DashboardScreen() {
         onSave={handleSaveMeal}
         initialCategory={editMealData?.category}
         initialItems={editMealData?.items}
+        existingLogs={mealLogs}
       />
     </View >
   );

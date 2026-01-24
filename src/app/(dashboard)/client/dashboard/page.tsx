@@ -70,20 +70,14 @@ export default function ClientDashboard() {
     const fetchData = async () => {
         try {
             const today = getLocalDateString();
-            const [profileData, logsData, waterIntakeData, mealLogsData, measurementLogsData, assessmentData] = await Promise.all([
-                api.get<ClientProfile>('/api/clients/me'),
-                api.get<WeightLog[]>('/api/clients/me/weight-logs'),
-                api.get<WaterData>(`/api/clients/me/water-intake?date=${today}`),
-                api.get<MealLog[]>('/api/clients/me/meal-logs'),
-                api.get<MeasurementLog[]>('/api/clients/me/measurement-logs'),
-                api.get<any>('/api/clients/me/health-assessment')
-            ]);
-            setProfile(profileData);
-            setWeightLogs(logsData);
-            setWaterData(waterIntakeData);
-            setMealLogs(mealLogsData);
-            setMeasurementLogs(measurementLogsData);
-            setAssessment(assessmentData);
+            const dashboardData = await api.get<any>(`/api/clients/me/dashboard?date=${today}`);
+
+            setProfile(dashboardData.profile);
+            setWeightLogs(dashboardData.weightLogs);
+            setWaterData(dashboardData.waterData);
+            setMealLogs(dashboardData.mealLogs);
+            setMeasurementLogs(dashboardData.measurementLogs);
+            setAssessment(dashboardData.assessment);
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
         } finally {

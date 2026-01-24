@@ -10,8 +10,12 @@ export async function GET(req: Request) {
     await connectDB();
     try {
         const user = await getAuthUser(req);
-        if (!user || user.role !== 'CLIENT') {
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (user.role !== 'CLIENT') {
+            return NextResponse.json({ error: 'This app is for Clients only. Please login with a Client account.' }, { status: 403 });
         }
 
         let client = await Client.findOne({ userId: user._id });
@@ -20,7 +24,6 @@ export async function GET(req: Request) {
         if (!client && user.phone) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
-
                 client.userId = user._id;
                 // If it was deleted, move it back to LEAD so it shows up in dashboard
                 if (client.status === 'DELETED') {
@@ -45,7 +48,6 @@ export async function GET(req: Request) {
         // SELF-HEALING: If client is marked DELETED (soft delete) but managed to login (user still exists),
         // we recover them to LEAD status so they are visible to the Dietician again.
         if (client.status === 'DELETED') {
-
             client.status = 'LEAD';
             await client.save();
         }
@@ -63,16 +65,15 @@ export async function GET(req: Request) {
             );
 
             if (hasAllFields) {
-
                 client.isProfileComplete = true;
                 await client.save();
             }
         }
 
         return NextResponse.json(client);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to fetch client profile:', error);
-        return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
+        return NextResponse.json({ error: `Failed to fetch profile: ${error.message}` }, { status: 500 });
     }
 }
 
