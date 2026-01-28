@@ -110,10 +110,18 @@ export const apiRequest = async <T>(
 
     try {
         const response = await fetch(endpoint, config);
-        const data = await response.json();
+
+        let data;
+        const text = await response.text();
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (e) {
+            console.error('API Response Parse Error. Status:', response.status, 'Raw body:', text);
+            throw new Error(`Failed to parse API response: ${text.substring(0, 100)}...`);
+        }
 
         if (!response.ok) {
-            throw new Error(data.message || data.error || 'API request failed');
+            throw new Error(data.message || data.error || `API request failed: ${response.status}`);
         }
 
         return data as APIResponse<T>;

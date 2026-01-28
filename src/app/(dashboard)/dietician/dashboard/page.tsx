@@ -74,7 +74,7 @@ export default function DieticianDashboard() {
               <SummaryCard title="Active Clients" count={stats?.activeClients ?? 0} icon={<Users className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
             </Link>
             <Link href="/dietician/clients?status=NEW">
-              <SummaryCard title="New Clients (Last 7 days)" count={stats?.newClients ?? 0} icon={<UserPlus className="text-brand-sage" />} color="border-brand-sage" loading={loading} />
+              <SummaryCard title="New Clients" count={stats?.newClients ?? 0} icon={<UserPlus className="text-brand-sage" />} color="border-brand-sage" loading={loading} />
             </Link>
             <Link href="/dietician/clients?status=PAUSED">
               <SummaryCard title="Paused Clients" count={stats?.pausedClients ?? 0} icon={<PauseCircle className="text-rose-400" />} color="border-rose-400" loading={loading} />

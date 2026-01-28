@@ -106,6 +106,12 @@ export default function LoginScreen() {
                                     )}
                                 </TouchableOpacity>
                             </View>
+                            <TouchableOpacity
+                                onPress={() => Alert.alert('Reset Password', 'Please contact your dietician to reset your password.')}
+                                style={{ alignSelf: 'flex-end' }}
+                            >
+                                <Text style={{ color: theme.brandForest, fontWeight: '600', fontSize: 13 }}>Forgot Password?</Text>
+                            </TouchableOpacity>
                         </View>
 
                         <TouchableOpacity

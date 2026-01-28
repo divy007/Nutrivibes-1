@@ -55,6 +55,7 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                     ? data.dietaryPreferences.join(', ')
                     : '',
                 status: data.status || 'ACTIVE',
+                previousStatus: data.previousStatus,
                 primaryGoal: data.primaryGoal,
                 updatedAt: data.updatedAt,
                 assessment: assessmentData,

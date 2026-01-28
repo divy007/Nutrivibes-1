@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap } from 'lucide-react';
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap, UserPlus } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
@@ -272,7 +272,58 @@ export default function ClientSummaryPage() {
                                 <h3 className="text-xs font-bold text-red-600 uppercase tracking-widest">Danger Zone</h3>
                             </div>
                             {!showDeleteConfirm ? (
-                                <button onClick={() => setShowDeleteConfirm(true)} className="w-full py-2 border border-red-200 text-xs font-bold text-red-600 rounded hover:bg-red-50">Delete Client</button>
+                                <>
+                                    {client.status === 'DELETED' ? (
+                                        <div className="flex flex-col gap-3">
+                                            <button
+                                                onClick={async () => {
+                                                    const previousStatus = client.previousStatus || 'ACTIVE';
+                                                    if (!confirm(`Recover as '${previousStatus}'? The client will be restored to their state before deletion.`)) return;
+                                                    setDeleteLoading(true);
+                                                    try {
+                                                        await api.patch(`/api/clients/${client._id}`, { recoverAction: 'RESTORE_PREVIOUS' });
+                                                        alert('Account recovered successfully!');
+                                                        refreshClient();
+                                                    } catch (err: any) {
+                                                        const message = err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to recover account';
+                                                        alert(`Error: ${message}`);
+                                                    } finally {
+                                                        setDeleteLoading(false);
+                                                    }
+                                                }}
+                                                disabled={deleteLoading}
+                                                className="w-full bg-emerald-100 text-emerald-700 py-3 rounded-xl font-bold hover:bg-emerald-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+                                                Recover Last State
+                                                {client.previousStatus && <span className="text-xs opacity-75">({client.previousStatus})</span>}
+                                            </button>
+
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Recover as a NEW client? Their status will be reset to NEW.')) return;
+                                                    setDeleteLoading(true);
+                                                    try {
+                                                        await api.patch(`/api/clients/${client._id}`, { recoverAction: 'RESTORE_NEW' });
+                                                        alert('Account recovered and reset to NEW!');
+                                                        refreshClient();
+                                                    } catch (err: any) {
+                                                        const message = err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to recover account';
+                                                        alert(`Error: ${message}`);
+                                                    } finally {
+                                                        setDeleteLoading(false);
+                                                    }
+                                                }}
+                                                disabled={deleteLoading}
+                                                className="w-full bg-sky-100 text-sky-700 py-3 rounded-xl font-bold hover:bg-sky-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                                                Recover as New Client
+                                            </button>
+                                        </div>
+                                    ) : null}
+                                    <button onClick={() => setShowDeleteConfirm(true)} className="w-full py-2 border border-red-200 text-xs font-bold text-red-600 rounded hover:bg-red-50">Delete Client</button>
+                                </>
                             ) : (
                                 <div className="flex flex-col gap-2">
                                     <p className="text-[10px] text-red-600 font-bold">Are you sure?</p>

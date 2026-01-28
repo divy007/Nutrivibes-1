@@ -43,6 +43,7 @@ export interface IClient extends Document {
     }[];
     mealTimings?: { mealNumber: number; time: string }[];
     status: 'LEAD' | 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED' | 'DELETED';
+    previousStatus?: 'LEAD' | 'NEW' | 'ACTIVE' | 'INACTIVE' | 'PAUSED';
     registrationSource: 'DIETICIAN' | 'MOBILE_APP';
     pausedUntil?: Date;
     isProfileComplete: boolean;
@@ -106,6 +107,7 @@ const ClientSchema = new Schema(
             time: String
         }],
         status: { type: String, enum: ['LEAD', 'NEW', 'ACTIVE', 'INACTIVE', 'PAUSED', 'DELETED'], default: 'NEW' },
+        previousStatus: { type: String, enum: ['LEAD', 'NEW', 'ACTIVE', 'INACTIVE', 'PAUSED'] },
         registrationSource: { type: String, enum: ['DIETICIAN', 'MOBILE_APP'], default: 'DIETICIAN' },
         pausedUntil: { type: Date },
         isProfileComplete: { type: Boolean, default: false },

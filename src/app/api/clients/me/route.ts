@@ -25,10 +25,6 @@ export async function GET(req: Request) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
                 client.userId = user._id;
-                // If it was deleted, move it back to LEAD so it shows up in dashboard
-                if (client.status === 'DELETED') {
-                    client.status = 'LEAD';
-                }
                 await client.save();
             }
         }
@@ -45,11 +41,8 @@ export async function GET(req: Request) {
             });
         }
 
-        // SELF-HEALING: If client is marked DELETED (soft delete) but managed to login (user still exists),
-        // we recover them to LEAD status so they are visible to the Dietician again.
         if (client.status === 'DELETED') {
-            client.status = 'LEAD';
-            await client.save();
+            return NextResponse.json({ error: 'Your account has been deleted. Please contact your dietician to recover it.' }, { status: 403 });
         }
 
         // SELF-HEALING: If profile seems complete but flag is false, fix it.
@@ -220,5 +213,44 @@ export async function PATCH(req: Request) {
             error: `Update failed: ${errorMessage}`,
             details: errorMessage
         }, { status: 400 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    await connectDB();
+    try {
+        const user = await getAuthUser(req);
+        if (!user || user.role !== 'CLIENT') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const client = await Client.findOne({ userId: user._id });
+        if (!client) {
+            return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
+        }
+
+        // Soft delete: Mark as DELETED
+        client.status = 'DELETED';
+        await client.save();
+
+        // Important: We do NOT delete the User record here.
+        // This ensures the client can potentially be recovered by the Dietician
+        // and log in with the same credentials.
+
+        const response = NextResponse.json({ message: 'Account deleted successfully' });
+
+        // Clear the auth cookie to force logout
+        response.cookies.set('token_client', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 0,
+            path: '/',
+        });
+
+        return response;
+    } catch (error: any) {
+        console.error('Failed to delete client account:', error);
+        return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 });
     }
 }

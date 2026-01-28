@@ -59,8 +59,9 @@ export interface ClientInfo {
     averagePeriodDuration?: number;
     preferences: string;
     mealTimings?: MealTiming[];
-    status?: string;
-    primaryGoal?: string;
+    status: string;
+    previousStatus?: string;
+    primaryGoal?: string[];
     registrationSource?: 'DIETICIAN' | 'MOBILE_APP';
     isProfileComplete?: boolean;
     hasFollowUpToday?: boolean;

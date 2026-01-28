@@ -31,11 +31,10 @@ export async function GET(req: Request) {
             Client.countDocuments({ dieticianId, status: 'ACTIVE' }),
             // 2. Paused
             Client.countDocuments({ dieticianId, status: 'PAUSED' }),
-            // 3. New (Last 7 days)
+            // 3. New
             Client.countDocuments({
                 dieticianId,
-                status: 'NEW',
-                createdAt: { $gte: subDays(new Date(), 7) }
+                status: 'NEW'
             }),
             // 4. Expired
             Client.countDocuments({ dieticianId, status: 'DELETED' }),

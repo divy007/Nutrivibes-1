@@ -305,7 +305,8 @@ export default function LandingPage() {
                             <h5 className="text-gray-900 font-bold mb-6">Legal</h5>
                             <ul className="space-y-4 text-sm text-gray-600">
                                 <li><Link href="/privacy-policy" className="hover:text-brand-forest transition-colors">Privacy Policy</Link></li>
-                                <li><a href="#" className="hover:text-brand-forest transition-colors">Terms of Service</a></li>
+                                <li><Link href="/terms-of-service" className="hover:text-brand-forest transition-colors">Terms of Service</Link></li>
+                                <li><Link href="/account-deletion" className="hover:text-brand-forest transition-colors">Delete Account</Link></li>
                             </ul>
                         </div>
                         <div>
