@@ -94,9 +94,9 @@ export const MealCard: React.FC<MealCardProps> = ({
             <div className="p-4 flex-1 flex flex-col">
                 {hasFood ? (
                     <ul className="space-y-3 mb-4">
-                        {foodItems.map((item) => (
+                        {foodItems.map((item, index) => (
                             <li
-                                key={item.id}
+                                key={`${item.id}-${index}`}
                                 className={`flex items-start text-sm ${onFoodClick && item.recipeId ? 'cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 py-0.5 transition-colors' : ''}`}
                                 onClick={(e) => {
                                     if (onFoodClick && item.recipeId) {

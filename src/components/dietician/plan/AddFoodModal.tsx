@@ -83,12 +83,15 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
         const term = searchTerm.toLowerCase();
 
         // Search both lists
-        const foods = foodItems.filter(item =>
+        const recipes = allRecipes.filter(item =>
             item.name.toLowerCase().includes(term)
         ).slice(0, 5);
 
-        const recipes = allRecipes.filter(item =>
-            item.name.toLowerCase().includes(term)
+        // Filter out foods that have the same name as a recipe we found
+        const recipeNames = new Set(recipes.map(r => r.name.toLowerCase()));
+
+        const foods = foodItems.filter(item =>
+            item.name.toLowerCase().includes(term) && !recipeNames.has(item.name.toLowerCase())
         ).slice(0, 5);
 
         // Combine them
@@ -100,7 +103,22 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
 
         let itemToAdd: FoodItem;
 
-        if (selectedFood) {
+        // "Generic Logic": Check if we have a recipe for this name, regardless of source
+        const nameToCheck = selectedFood ? selectedFood.name : searchTerm;
+        const matchingRecipe = allRecipes.find(r => r.name.toLowerCase() === nameToCheck.toLowerCase());
+
+        if (matchingRecipe) {
+            // Auto-upgrade to recipe
+            itemToAdd = {
+                id: matchingRecipe._id,
+                name: matchingRecipe.name,
+                category: mealCategory as any || 'snack',
+                portion: '1 serving',
+                quantity: quantity || '1 serving',
+                recipeId: matchingRecipe._id,
+                isRecipe: true,
+            };
+        } else if (selectedFood) {
             itemToAdd = selectedFood;
         } else {
             // Manual entry logic (for custom text that isn't in suggestions)

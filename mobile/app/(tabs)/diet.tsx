@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
@@ -28,6 +28,7 @@ export default function DietPlanScreen() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekPlan, setWeekPlan] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const isFocused = useIsFocused();
 
     useEffect(() => {
@@ -44,11 +45,43 @@ export default function DietPlanScreen() {
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
-    const weekStart = React.useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate]);
+    const getLocalDateFromStr = (dateStr: string) => {
+        const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
+    const weekStart = React.useMemo(() => {
+        if ((user as any)?.dietStartDate) {
+            const dietStart = getLocalDateFromStr((user as any).dietStartDate);
+            // Calculate the start of the week relative to the diet start day
+            const startDayIndex = dietStart.getDay(); // 0-6
+            const currentDayIndex = selectedDate.getDay();
+            const diff = (currentDayIndex - startDayIndex + 7) % 7;
+            const start = addDays(selectedDate, -diff);
+            // strip time to be safe? usually handled by logic, but ensuring 00:00 might be good. 
+            // actually selectedDate usually comes from state, best to just return the date object.
+            return start;
+        }
+        return startOfWeek(selectedDate, { weekStartsOn: 1 });
+    }, [selectedDate, user]);
+
     const weekDays = React.useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)), [weekStart]);
 
     useEffect(() => {
         if (user) {
+            // Check if diet starts in the future
+            if ((user as any)?.dietStartDate) {
+                const dietStart = getLocalDateFromStr((user as any).dietStartDate);
+                const today = new Date();
+                // Reset time components for accurate date comparison
+                today.setHours(0, 0, 0, 0);
+
+                // If diet starts in the future (strictly greater), jump to it so user sees the plan
+                if (dietStart > today) {
+                    setSelectedDate(dietStart);
+                }
+            }
+
             // We fetch the plan for the current week starting today.
             // The dietician-set start date is respected because the API 
             // will return 'NO_DIET' for days before the diet actually begins.
@@ -96,6 +129,15 @@ export default function DietPlanScreen() {
             setLoading(false);
         }
     };
+
+    const handleRefresh = React.useCallback(async () => {
+        setRefreshing(true);
+        try {
+            await fetchDietPlan();
+        } finally {
+            setRefreshing(false);
+        }
+    }, [weekStart]);
 
     const dayPlan = weekPlan?.days?.find((d: any) => isSameDay(new Date(d.date), selectedDate));
     const isPublished = dayPlan?.status === 'PUBLISHED';
@@ -147,7 +189,18 @@ export default function DietPlanScreen() {
                 </ScrollView>
             </View>
 
-            <ScrollView contentContainerStyle={styles.mealList} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.mealList}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={theme.brandForest}
+                        colors={[theme.brandForest]}
+                    />
+                }
+            >
                 <View style={styles.statusBanner}>
                     <Text style={[styles.statusLabel, { color: isPublished ? theme.brandSage : '#94a3b8' }]}>
                         {isPublished ? '✓ Plan Published by Dietician' : '○ No plan for today'}

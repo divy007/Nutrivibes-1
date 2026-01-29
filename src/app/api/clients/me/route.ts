@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import User from '@/models/User';
 import WeightLog from '@/models/WeightLog';
+import DietPlan from '@/models/DietPlan';
 import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
 
@@ -92,7 +93,15 @@ export async function PATCH(req: Request) {
                 // Important: Don't change status to LEAD yet if it's already ACTIVE/NEW, 
                 // but if it was DELETED/LEAD, ensure it's LEAD for conversion.
                 if (['DELETED', 'LEAD'].includes(client.status)) {
+                    // "Recover as new client": 
+                    // 1. Reset status to LEAD
                     client.status = 'LEAD';
+
+                    // 2. Clear suggested diet info (Fresh Start)
+                    client.dietStartDate = undefined;
+
+                    // 3. Delete existing diet plans
+                    await DietPlan.deleteMany({ clientId: client._id });
                 }
                 await client.save();
             }
@@ -150,6 +159,13 @@ export async function PATCH(req: Request) {
             // BMI 22 is generally considered the middle of healthy range
             idealWeight = parseFloat((22 * heightInM * heightInM).toFixed(1));
         }
+
+        // Filter out undefined/null/empty string values from updateFields to prevent wiping data
+        Object.keys(updateFields).forEach(key => {
+            if (updateFields[key] === undefined || updateFields[key] === null || updateFields[key] === '') {
+                delete updateFields[key];
+            }
+        });
 
         const updateData = {
             ...updateFields,

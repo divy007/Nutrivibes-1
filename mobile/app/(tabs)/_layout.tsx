@@ -62,6 +62,7 @@ export default function TabLayout() {
         name="diet"
         options={{
           title: 'Diet Plan',
+          headerShown: false,
           tabBarIcon: ({ color }) => <Calendar size={24} color={color} />,
         }}
       />

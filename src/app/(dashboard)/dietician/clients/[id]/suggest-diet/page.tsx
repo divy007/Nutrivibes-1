@@ -249,7 +249,11 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 setClientInfo(info);
 
                 if (data.dietStartDate) {
-                    const start = startOfWeek(new Date(data.dietStartDate), { weekStartsOn: 1 });
+                    // Use the diet start date directly, ensuring we parse it as local time to avoid timezone shifts
+                    const dateStr = typeof data.dietStartDate === 'string'
+                        ? data.dietStartDate.split('T')[0]
+                        : new Date(data.dietStartDate).toISOString().split('T')[0];
+                    const start = new Date(dateStr);
                     setCurrentWeekStart(start);
                     // Initial diet fetch will be triggered by the next useEffect
                 } else {
