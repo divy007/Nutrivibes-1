@@ -206,11 +206,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         return NextResponse.json(client);
     } catch (error: any) {
-        console.error('Failed to update client:', error);
+        console.error('Failed to update client:', JSON.stringify(error, null, 2)); // Log full structure
+
+        // Mongoose Validation Error Support
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map((err: any) => err.message).join(', ');
+            return NextResponse.json({
+                error: `Validation Failed: ${messages}`,
+                details: error
+            }, { status: 400 });
+        }
+
         return NextResponse.json({
             error: 'Failed to update client',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 400 });
+            details: error instanceof Error ? error.message : JSON.stringify(error)
+        }, { status: 500 }); // Changed to 500 for better visibility if it's not a bad request
     }
 }
 
