@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
@@ -21,7 +22,6 @@ export async function GET(req: Request) {
 
         let client = await Client.findOne({ userId: user._id });
 
-        // SELF-HEALING: If no client by userId, try finding by phone (orphaned record)
         if (!client && user.phone) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
@@ -31,7 +31,6 @@ export async function GET(req: Request) {
         }
 
         if (!client) {
-            // Return skeleton profile for new phone-auth users
             return NextResponse.json({
                 userId: user._id,
                 name: user.name || 'App User',
@@ -46,11 +45,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Your account has been deleted. Please contact your dietician to recover it.' }, { status: 403 });
         }
 
-        // SELF-HEALING: If profile seems complete but flag is false, fix it.
-        // This handles cases where partial updates might have reset the flag previously.
         if (client && !client.isProfileComplete) {
             const hasAllFields = !!(
-                (client.pincode || client.address) && // Allow address as fallback if pincode missing in legacy
+                (client.pincode || client.address) &&
                 client.dob &&
                 client.gender &&
                 client.height &&
@@ -64,7 +61,78 @@ export async function GET(req: Request) {
             }
         }
 
-        return NextResponse.json(client);
+        await import('@/models/Plan');
+        const Subscription = (await import('@/models/Subscription')).default;
+
+        // Find 'closest' subscription - could be Active, Paused, or Assigned
+        let activeSub = await Subscription.findOne({
+            clientId: client._id,
+            status: { $in: ['ASSIGNED', 'ACTIVE', 'PAUSED'] }
+        }).sort({ createdAt: -1 }).populate('planId');
+
+        // LAZY STATUS SYNC: Check if status needs to change based on dates
+        if (activeSub) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let statusChanged = false;
+            let newStatus = activeSub.status;
+
+            // Check if currently inside a pause window
+            const inPauseWindow = activeSub.pauseHistory?.some((p: any) => {
+                const start = new Date(p.startDate);
+                const end = new Date(p.endDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return today >= start && today < end;
+            });
+
+            if (inPauseWindow) {
+                if (activeSub.status !== 'PAUSED') {
+                    newStatus = 'PAUSED';
+                    statusChanged = true;
+                }
+            } else {
+                // Not in pause window. Should be ACTIVE or ASSIGNED.
+                if (activeSub.status === 'PAUSED') {
+                    // Un-pause
+                    newStatus = 'ACTIVE';
+                    statusChanged = true;
+                } else if (activeSub.status === 'ASSIGNED') {
+                    // Check if we should activate
+                    if (activeSub.startDate) {
+                        const start = new Date(activeSub.startDate);
+                        start.setHours(0, 0, 0, 0);
+                        if (today >= start) {
+                            newStatus = 'ACTIVE';
+                            statusChanged = true;
+                        }
+                    }
+                }
+            }
+
+            if (statusChanged) {
+                console.log(`Auto-Updating Subscription ${activeSub._id} status: ${activeSub.status} -> ${newStatus}`);
+                activeSub.status = newStatus;
+                await activeSub.save();
+
+                // Sync Client Status
+                if (newStatus === 'PAUSED') {
+                    await Client.findByIdAndUpdate(client._id, { status: 'PAUSED' });
+                    client.status = 'PAUSED';
+                } else if (newStatus === 'ACTIVE' && client.status !== 'ACTIVE') {
+                    await Client.findByIdAndUpdate(client._id, { status: 'ACTIVE' });
+                    client.status = 'ACTIVE';
+                }
+            }
+        }
+
+        const activeSubscription = activeSub ? activeSub.toObject() : null;
+
+        return NextResponse.json({
+            ...client.toObject(),
+            activeSubscription
+        });
     } catch (error: any) {
         console.error('Failed to fetch client profile:', error);
         return NextResponse.json({ error: `Failed to fetch profile: ${error.message}` }, { status: 500 });
@@ -81,26 +149,15 @@ export async function PATCH(req: Request) {
 
         const body = await req.json();
 
-
         let client = await Client.findOne({ userId: user._id });
 
-        // SELF-HEALING: If no client by userId, try finding by phone (orphaned record)
         if (!client && user.phone) {
             client = await Client.findOne({ phone: user.phone });
             if (client) {
-
                 client.userId = user._id;
-                // Important: Don't change status to LEAD yet if it's already ACTIVE/NEW, 
-                // but if it was DELETED/LEAD, ensure it's LEAD for conversion.
                 if (['DELETED', 'LEAD'].includes(client.status)) {
-                    // "Recover as new client": 
-                    // 1. Reset status to LEAD
                     client.status = 'LEAD';
-
-                    // 2. Clear suggested diet info (Fresh Start)
                     client.dietStartDate = undefined;
-
-                    // 3. Delete existing diet plans
                     await DietPlan.deleteMany({ clientId: client._id });
                 }
                 await client.save();
@@ -108,7 +165,6 @@ export async function PATCH(req: Request) {
         }
 
         if (!client) {
-            // New user scenario: Create the Client record
             const defaultDietician = await User.findOne({ role: 'DIETICIAN' });
             if (!defaultDietician) {
                 return NextResponse.json({ error: 'No dietician available for assignment' }, { status: 500 });
@@ -127,10 +183,8 @@ export async function PATCH(req: Request) {
             await client.save();
         }
 
-        // Extract only the fields that should be updated (exclude read-only fields)
         const { name, email, phone, userId, dieticianId, _id, ...updateFields } = body;
 
-        // Check if all required fields are filled to mark profile as complete
         const isProfileComplete = !!(
             (updateFields.pincode || client.pincode) &&
             (updateFields.dob || client.dob) &&
@@ -140,7 +194,6 @@ export async function PATCH(req: Request) {
             (updateFields.primaryGoal || (client.primaryGoal && client.primaryGoal.length > 0))
         );
 
-        // Auto-calculate Age if DOB is provided
         if (updateFields.dob) {
             const dobDate = new Date(updateFields.dob);
             const today = new Date();
@@ -152,15 +205,12 @@ export async function PATCH(req: Request) {
             updateFields.age = age;
         }
 
-        // Auto-calculate Ideal Weight (Target Weight) using BMI 22 if height is changed/present
         let idealWeight = updateFields.idealWeight;
         if (!idealWeight && updateFields.height) {
             const heightInM = updateFields.height / 100;
-            // BMI 22 is generally considered the middle of healthy range
             idealWeight = parseFloat((22 * heightInM * heightInM).toFixed(1));
         }
 
-        // Filter out undefined/null/empty string values from updateFields to prevent wiping data
         Object.keys(updateFields).forEach(key => {
             if (updateFields[key] === undefined || updateFields[key] === null || updateFields[key] === '') {
                 delete updateFields[key];
@@ -171,11 +221,11 @@ export async function PATCH(req: Request) {
             ...updateFields,
             isProfileComplete,
             idealWeight,
-            name: body.name || client.name, // Allow updating name
+            name: body.name || client.name,
         };
 
         const updatedClient = await Client.findOneAndUpdate(
-            { _id: client._id }, // Use actual ID since we just claimed/found it
+            { _id: client._id },
             { $set: updateData },
             {
                 new: true,
@@ -190,13 +240,12 @@ export async function PATCH(req: Request) {
 
         client = updatedClient;
 
-        // AUTO-LOG WEIGHT: If weight was updated in the profile, create a history log
         if (updateFields.weight) {
             try {
                 await WeightLog.create({
                     clientId: client._id,
                     weight: updateFields.weight,
-                    unit: 'kg', // Defaulting to kg as per schema
+                    unit: 'kg',
                     date: new Date()
                 });
             } catch (logError) {
@@ -204,21 +253,17 @@ export async function PATCH(req: Request) {
             }
         }
 
-        // Generate new token with updated isProfileComplete status
         const newToken = generateToken(user, isProfileComplete);
-
         const response = NextResponse.json(client);
 
-        // Update the token cookie
         response.cookies.set('token_client', newToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 24 * 7, // 7 days
+            maxAge: 60 * 60 * 24 * 7,
             path: '/',
         });
 
-        // Also send the new token in the response for client-side storage
         response.headers.set('X-New-Token', newToken);
 
         return response;
@@ -245,17 +290,11 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        // Soft delete: Mark as DELETED
         client.status = 'DELETED';
         await client.save();
 
-        // Important: We do NOT delete the User record here.
-        // This ensures the client can potentially be recovered by the Dietician
-        // and log in with the same credentials.
-
         const response = NextResponse.json({ message: 'Account deleted successfully' });
 
-        // Clear the auth cookie to force logout
         response.cookies.set('token_client', '', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

@@ -8,6 +8,7 @@ export interface IPlan extends Document {
     features: string[];
     isActive: boolean;
     isRecommended: boolean;
+    allowedPauseDays: number;
 }
 
 const PlanSchema = new Schema(

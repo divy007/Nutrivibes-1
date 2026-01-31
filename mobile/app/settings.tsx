@@ -20,43 +20,32 @@ export default function SettingsScreen() {
     const [isPauseModalVisible, setPauseModalVisible] = useState(false);
 
     // We need to fetch subscription details to pass to modal
-    // Ideally this should be in context, but for now we fetch or rely on user object if extended
-    // Let's assume we need to fetch 'me' to get subscription stats if not in user object
     const [subscriptionStats, setSubscriptionStats] = useState({ allowed: 0, used: 0 });
+    const [pendingRequest, setPendingRequest] = useState<any>(null);
 
     useEffect(() => {
         // Fetch client details to get subscription info
-        // Assuming /api/clients/me returns this info or we need to normalize it
         const fetchStats = async () => {
             try {
-                // This endpoints needs to return subscription details
-                // If not, we might need a dedicated endpoint or update 'me'
-                // For now, let's assume 'me' returns 'pauseDaysUsed' and 'allowedPauseDays' attached to client profile or we fetch from separate endpoint
-                // Since we just updated Schema, 'me' might not return it yet unless updated.
-                // Let's rely on a fresh fetch
                 const res = await api.get<any>('/api/clients/me');
-                // The API needs to populated this. If not, we might fail to show correct numbers.
-                // Todo: Update /api/clients/me to return subscription stats if valuable.
-                // Or assume defaults for MVP if schema update didn't propagate to API DTOs yet.
 
-                // Let's assume the response has it mixed in or we calculate
-                // Actually, let's fetch subscription specifically if possible? No, 'me' is best.
-                // We'll trust the API returns the client object which now has the subscription linked or embedded?
-                // Wait, Subscription is separate model. 'me' returns Client.
-                // We probably need to fetch subscription status.
-                // Let's make a quick call or assume passed props? No props in screen.
-
-                // Quick fix: Add endpoint to fetch usage? Or just fetch 'me' and assume we update 'me' endpoint to include it.
-                // Let's mock for now or try to fetch.
+                const activeSub = res.activeSubscription;
                 setSubscriptionStats({
-                    allowed: res.subscription?.allowedPauseDays || res.currentPlan?.allowedPauseDays || 0,
-                    used: res.subscription?.pauseDaysUsed || 0
+                    allowed: activeSub?.planId?.allowedPauseDays || 0,
+                    used: activeSub?.pauseDaysUsed || 0
                 });
+
+                if (activeSub?.pauseRequests) {
+                    const pending = activeSub.pauseRequests.find((r: any) => r.status === 'PENDING');
+                    setPendingRequest(pending);
+                } else {
+                    setPendingRequest(null);
+                }
 
             } catch (e) { console.error(e); }
         };
         fetchStats();
-    }, []);
+    }, [isPauseModalVisible]); // Refresh when modal closes/opens to check updates
 
     const handleDeleteAccount = () => {
         Alert.alert(
@@ -111,18 +100,6 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={theme.secondary} />
                 </TouchableOpacity>
 
-                {/* Future: Plan Renewal / Upgrade */}
-                {/* <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.cardBackground }]}>
-                    <View style={[styles.iconBox, { backgroundColor: '#ecfccb' }]}>
-                        <CreditCard size={22} color="#65a30d" />
-                    </View>
-                    <View style={styles.menuText}>
-                        <Text style={[styles.menuTitle, { color: theme.text }]}>Plan Details</Text>
-                        <Text style={[styles.menuSubtitle, { color: theme.secondary }]}>View validity and renewal</Text>
-                    </View>
-                    <ChevronRight size={20} color={theme.secondary} />
-                </TouchableOpacity> */}
-
                 <View style={{ height: 24 }} />
                 <Text style={[styles.sectionTitle, { color: theme.brandSage }]}>Account Actions</Text>
 
@@ -145,9 +122,9 @@ export default function SettingsScreen() {
             <PausePlanModal
                 visible={isPauseModalVisible}
                 onClose={() => setPauseModalVisible(false)}
-                // Fallback to defaults if stats loading fails, essential for UI to show something
                 allowedPauseDays={subscriptionStats.allowed || 0}
                 currentPauseUsed={subscriptionStats.used || 0}
+                pendingRequest={pendingRequest}
             />
         </View>
     );

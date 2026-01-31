@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import { RegionChart } from '@/components/dietician/analytics/RegionChart';
+import PendingPauseRequests from '@/components/dietician/dashboard/PendingPauseRequests';
 
 interface Stats {
   activeClients: number;
@@ -86,6 +87,9 @@ export default function DieticianDashboard() {
               <SummaryCard title="Leads (Incomplete)" count={stats?.leadsCount ?? 0} icon={<Zap className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
             </Link>
           </div>
+
+          {/* Pending Requests Section */}
+          <PendingPauseRequests />
 
           {/* Today's Task Section */}
           <div className="space-y-4">

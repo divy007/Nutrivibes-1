@@ -22,6 +22,13 @@ export interface ISubscription extends Document {
         method: 'CASH' | 'UPI' | 'BANK_TRANSFER';
         note?: string;
     }[];
+    pauseRequests: {
+        requestDate: Date;
+        startDate: Date;
+        durationDays: number;
+        reason?: string;
+        status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    }[];
     planHistory: {
         changedAt: Date;
         action: 'ASSIGN' | 'UPGRADE' | 'RENEW';
@@ -60,6 +67,13 @@ const SubscriptionSchema = new Schema(
             amount: { type: Number, required: true },
             method: { type: String, enum: ['CASH', 'UPI', 'BANK_TRANSFER'], default: 'CASH' },
             note: { type: String }
+        }],
+        pauseRequests: [{
+            requestDate: { type: Date, default: Date.now },
+            startDate: { type: Date, required: true },
+            durationDays: { type: Number, required: true },
+            reason: { type: String },
+            status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' }
         }],
         planHistory: [{
             changedAt: { type: Date, default: Date.now },

@@ -12,56 +12,90 @@ export async function POST(req: Request) {
     await dbConnect();
 
     try {
+        console.log('--- Pause Request Started ---');
         const authHeader = req.headers.get('Authorization');
+        // console.log('Auth Header:', authHeader); // Be careful with tokens in logs
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.log('Pause Error: Missing/Invalid Auth Header');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const token = authHeader.substring(7);
         const decoded = verifyToken(token);
         if (!decoded || decoded.role !== 'CLIENT') {
+            console.log('Pause Error: Invalid Token or Role:', decoded);
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         const body = await req.json();
-        const { days } = body;
+        console.log('Pause Request Body:', body);
+        const { days, startDate } = body;
 
         // 1. Min Days Validation
         if (!days || days < 7) {
+            console.log('Pause Error: Invalid days:', days);
             return NextResponse.json({ error: 'Minimum pause duration is 7 days.' }, { status: 400 });
         }
 
-        const client = await Client.findOne({ userId: decoded.userId });
-        if (!client) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        // Validate Start Date
+        const today = normalizeDateUTC(new Date());
+        let requestStartDate = today;
 
-        // 2. Status Validation
-        if (client.status === 'PAUSED') {
-            return NextResponse.json({ error: 'Plan is already paused.' }, { status: 400 });
+        if (startDate) {
+            requestStartDate = normalizeDateUTC(new Date(startDate));
+            console.log('Parsed Start Date:', requestStartDate, 'Today:', today);
+
+            // Allow today as start date
+            if (isBefore(requestStartDate, today)) {
+                console.log('Pause Error: Start date in past');
+                return NextResponse.json({ error: 'Start date cannot be in the past.' }, { status: 400 });
+            }
         }
-        // Ideally checking for 'ACTIVE' is good, but let's just ensure not INACTIVE/DELETED/LEAD
-        if (['INACTIVE', 'DELETED', 'LEAD'].includes(client.status)) {
-            return NextResponse.json({ error: 'Plan is not active.' }, { status: 400 });
+
+        // ... find client ...
+        // ... validate status ...
+        const client = await Client.findOne({ userId: decoded.userId });
+        if (!client) {
+            console.log('Pause Error: Client not found for user:', decoded.userId);
+            return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        }
+
+        if (client.status === 'PAUSED') {
+            console.log('Pause Error: Client already paused');
+            return NextResponse.json({ error: 'Plan is already paused.' }, { status: 400 });
         }
 
         // 3. Subscription & Plan Limits
-        const subscription = await Subscription.findOne({ clientId: client._id, status: 'ACTIVE' });
+        const subscription = await Subscription.findOne({
+            clientId: client._id,
+            status: { $in: ['ACTIVE', 'ASSIGNED'] }
+        });
+
         if (!subscription) {
+            console.log('Pause Error: No active or assigned subscription found for client:', client._id);
+            const anySub = await Subscription.findOne({ clientId: client._id });
+            console.log('DEBUG: Any subscription found?', !!anySub, 'Status:', anySub?.status);
             return NextResponse.json({ error: 'No active subscription found.' }, { status: 404 });
         }
 
-        const plan = await Plan.findById(subscription.planId);
-        // If custom plan or no plan found, assume 0 allowed? Or let's handle "No Pause Facility"
-        const allowedTotal = plan?.allowedPauseDays || 0;
-
-        if (allowedTotal === 0) {
-            return NextResponse.json({ error: 'This plan does not include pause facility.' }, { status: 400 });
+        // Check if there is already a pending request
+        const hasPending = subscription.pauseRequests?.some((r: any) => r.status === 'PENDING');
+        if (hasPending) {
+            console.log('Pause Error: Pending request exists');
+            return NextResponse.json({ error: 'You already have a pending pause request.' }, { status: 400 });
         }
+
+        const plan = await Plan.findById(subscription.planId);
+        const allowedTotal = plan?.allowedPauseDays || 0;
 
         const used = subscription.pauseDaysUsed || 0;
         const extraPaid = subscription.extraPaidPauseDays || 0;
         const remaining = (allowedTotal + extraPaid) - used;
 
+        console.log(`Limits - Allowed: ${allowedTotal}, Used: ${used}, Remaining: ${remaining}, Requested: ${days}`);
+
         if (days > remaining) {
+            console.log('Pause Error: Limit exceeded');
             return NextResponse.json({
                 error: 'PAUSE_LIMIT_EXCEEDED',
                 message: `You have ${remaining} allowed pause days remaining. Requested: ${days}.`,
@@ -75,33 +109,27 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
-        // 4. Apply Pause
-        const today = normalizeDateUTC(new Date());
-        const endDate = addDays(today, days);
+        // 4. Create Pause Request (Pending Approval)
+        if (!subscription.pauseRequests) subscription.pauseRequests = [];
 
-        // Update Subscription
-        subscription.status = 'PAUSED';
-        subscription.pauseDaysUsed = used + days;
-        subscription.pauseHistory.push({
-            startDate: today,
-            endDate: endDate,
-            reason: 'Client requested pause via App'
+        subscription.pauseRequests.push({
+            requestDate: new Date(),
+            startDate: requestStartDate,
+            durationDays: days,
+            reason: 'Client requested via App',
+            status: 'PENDING'
         });
 
-        // Extend Subscription End Date by 'days'
-        subscription.endDate = addDays(new Date(subscription.endDate), days);
         await subscription.save();
+        console.log('Pause Request Saved Successfully');
 
-        // Update Client
-        client.previousStatus = client.status;
-        client.status = 'PAUSED';
-        client.pausedUntil = endDate;
-        await client.save();
-
-        return NextResponse.json({ success: true, message: `Plan paused for ${days} days. Resuming on ${endDate.toDateString()}.` });
+        return NextResponse.json({
+            success: true,
+            message: `Pause request submitted for approval. Start Date: ${requestStartDate.toDateString()}`
+        });
 
     } catch (error) {
-        console.error('Pause request error:', error);
+        console.error('Pause request CRITICAL error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
