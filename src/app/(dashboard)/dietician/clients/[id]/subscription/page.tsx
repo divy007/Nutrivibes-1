@@ -4,13 +4,19 @@ import { useState, useEffect, use } from 'react';
 import { api } from '@/lib/api-client';
 import { Loader2, CreditCard, Play, Pause, Save, CheckCircle } from 'lucide-react';
 import { format, differenceInDays, addMonths, addDays } from 'date-fns';
+import { PlanActionModal } from '@/components/dietician/clients/PlanActionModal';
+import { ClientInfo } from '@/types';
 
 export default function ClientSubscriptionPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const [client, setClient] = useState<ClientInfo | null>(null); // New client state
     const [subscription, setSubscription] = useState<any>(null);
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // Plan Action Modal (Renew/Upgrade)
+    const [showPlanModal, setShowPlanModal] = useState(false);
 
     // Assign Modal
     const [isAssigning, setIsAssigning] = useState(false);
@@ -33,11 +39,39 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
 
     const fetchData = async () => {
         try {
-            const [subData, plansData] = await Promise.all([
+            // Fetch client to get basic info needed for modal + subscription + plans
+            const [clientData, subData, plansData] = await Promise.all([
+                api.get(`/api/clients/${id}`),
                 api.get(`/api/clients/${id}/subscription`),
                 api.get('/api/plans')
             ]);
-            setSubscription(subData);
+            setClient(clientData as ClientInfo); // Store client
+            setSubscription(subData); // This is likely an array? Wait, check previous API GET handler.
+            // My previous GET handler returns `Subscription.find(...)` which is an ARRAY.
+            // But the current code treats `subscription` as a single object (lines 122, 144, 154).
+            // Line 40: `setSubscription(subData)`.
+            // If `subData` is an array [ ... ], then accessing `subData.planName` would be undefined.
+            // User didn't report undefined planName, so maybe `subData` was returning an object before?
+            // The GET handler I added in Step 1190 returns `subscriptions` (Array).
+            // So `setSubscription(subData)` keeps it as an array?
+            // If it's an array, `subscription.planName` fails.
+            // Wait, the page logic seems to expect a SINGLE subscription object.
+            // Line 122: `subscription.endDate`
+            // Line 140: `<div ...>{subscription.planName}</div>`
+            // If `subData` is an array, this page is BROKEN unless I fix it.
+            // "API request failed: 405" was previous error (no GET handler).
+            // Now I added GET handler which returns array.
+            // So "subscription" state is now an Array.
+            // I MUST fix this to use `subData[0]` (latest) if it's an array.
+
+            if (Array.isArray(subData) && subData.length > 0) {
+                setSubscription(subData[0]); // Use latest
+            } else if (!Array.isArray(subData) && subData) {
+                setSubscription(subData);
+            } else {
+                setSubscription(null);
+            }
+
             setPlans(plansData as any[]);
         } catch (error) {
             console.error(error);
@@ -119,7 +153,7 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
 
     if (loading) return <div className="p-8"><Loader2 className="animate-spin" /></div>;
 
-    const daysRemaining = subscription ? differenceInDays(new Date(subscription.endDate), new Date()) : 0;
+    const daysRemaining = (subscription && subscription.endDate) ? differenceInDays(new Date(subscription.endDate), new Date()) : 0;
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
@@ -151,7 +185,7 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                                     </span>
                                     <span className="text-slate-400 text-sm">•</span>
                                     <span className="text-sm text-slate-600">
-                                        Ends {format(new Date(subscription.endDate), 'MMM d, yyyy')}
+                                        Ends {subscription.endDate ? format(new Date(subscription.endDate), 'MMM d, yyyy') : 'N/A'}
                                     </span>
                                 </div>
                             </div>
@@ -199,9 +233,12 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                             >
                                 Record Payment
                             </button>
-                            {/* <button className="flex-1 bg-white border border-slate-200 text-slate-700 py-2.5 rounded-lg font-medium hover:bg-slate-50">
-                                Edit Plan
-                            </button> */}
+                            <button
+                                onClick={() => setShowPlanModal(true)}
+                                className="flex-1 bg-white border-2 border-[#1b4332] text-[#1b4332] py-2.5 rounded-lg font-medium hover:bg-slate-50 transition-colors"
+                            >
+                                Manage Plan
+                            </button>
                         </div>
                     </div>
 
@@ -329,6 +366,18 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* PLAN ACTION MODAL (Renew/Upgrade) */}
+            {showPlanModal && client && (
+                <PlanActionModal
+                    client={client}
+                    onClose={() => setShowPlanModal(false)}
+                    onSuccess={() => {
+                        setShowPlanModal(false);
+                        fetchData(); // Refresh subscription data
+                    }}
+                />
             )}
         </div>
     );

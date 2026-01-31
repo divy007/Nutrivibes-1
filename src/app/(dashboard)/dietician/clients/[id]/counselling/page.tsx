@@ -161,16 +161,15 @@ export default function CounsellingPage() {
             if (formData.medicalReport && formData.medicalReport instanceof File) {
                 const fd = new FormData();
                 fd.append('file', formData.medicalReport);
-                // We'll set the medicalReport field in the payload to null initially, 
-                // the backend will update it with the file path
-                payload.counsellingProfile.medicalReport = null;
+                // We'll set the medicalReport field in the payload to null/undefined so it doesn't conflict
+                // The backend will update it with the file path from the uploaded file
+                delete payload.counsellingProfile.medicalReport;
                 fd.append('data', JSON.stringify(payload));
                 body = fd;
             } else {
-                // For JSON requests, just pass the name if it exists (though likely null/string if no new file)
-                // But if no new file is uploaded, we don't want to overwrite existing.
-                // If formData.medicalReport is null, it means no file selected.
-                payload.counsellingProfile.medicalReport = null;
+                // If it's not a file (e.g. string URL or null), we simply don't include it in the update 
+                // unless we specifically want to clear it. For now, let's remove it from payload to avoid overwriting with null.
+                delete payload.counsellingProfile.medicalReport;
             }
 
             const response = await api.patch(`/api/clients/${client._id}`, body);
@@ -179,9 +178,11 @@ export default function CounsellingPage() {
             setShowFlow(false);
             // Refresh global client data to update header and other views
             await refreshClient();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save counselling data:', error);
-            alert(`Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            // Try to extract the most useful error message
+            const msg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+            alert(`Failed to save: ${msg}`);
         }
     };
 

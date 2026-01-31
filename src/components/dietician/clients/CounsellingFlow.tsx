@@ -192,7 +192,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         }
     }, [step]);
 
-    const totalSteps = 30;
+    const totalSteps = 31;
 
     // Sections:
     // 1-12: DEMOGRAPHICS
@@ -223,7 +223,12 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         }
 
         if (step < totalSteps) {
-            setStep(step + 1);
+            // Skip Medical Report (Step 17)
+            if (step === 16) {
+                setStep(18);
+            } else {
+                setStep(step + 1);
+            }
         } else {
             if (!formData.planId) {
                 alert("Please select a plan to continue");
@@ -245,7 +250,12 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         }
 
         if (step > 1) {
-            setStep(step - 1);
+            // Skip Medical Report (Step 17)
+            if (step === 18) {
+                setStep(16);
+            } else {
+                setStep(step - 1);
+            }
         } else {
             onClose();
         }
@@ -934,6 +944,28 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                     </div>
                 );
 
+            case 31:
+                return (
+                    <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto py-8">
+                        <h2 className="text-xl font-bold text-slate-800 text-center">When should the diet plan start?</h2>
+                        <div className="w-full">
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Diet Start Date
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.dietStartDate}
+                                onChange={(e) => setFormData({ ...formData, dietStartDate: e.target.value })}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                            />
+                            <p className="text-xs text-slate-500 mt-2 italic">
+                                Select the date when the client should start following the diet plan
+                            </p>
+                        </div>
+                    </div>
+                );
+
             default:
                 return null;
         }
@@ -941,7 +973,8 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
 
     const getDotsCount = () => {
         if (step <= 12) return 12;
-        if (step <= 17) return 5;
+        if (step <= 12) return 12;
+        if (step <= 17) return 4; // Reduced from 5 (skipped step 17)
         if (step <= 21) return 4;
         if (step <= 22) return 1;
         if (step <= 29) return 7; // 23 to 29

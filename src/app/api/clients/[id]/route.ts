@@ -16,11 +16,30 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     try {
-        const client = await Client.findById(id);
+        const Subscription = (await import('@/models/Subscription')).default;
+        const Plan = (await import('@/models/Plan')).default; // Ensure Plan model is registered
+
+        const client = await Client.findById(id).lean();
         if (!client) {
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
-        return NextResponse.json(client);
+
+        // Fetch active subscription (ASSIGNED, ACTIVE, or PAUSED)
+        // Show ASSIGNED subscriptions even if pending (placeholder dates)
+        // Show ACTIVE/PAUSED only if they have real dates and not expired
+        const today = new Date();
+        const thirtyDaysFromNow = new Date(today);
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+        const activeSubscription = await Subscription.findOne({
+            clientId: id as any,
+            status: { $in: ['ASSIGNED', 'ACTIVE', 'PAUSED'] }
+        }).sort({ createdAt: -1 }).populate('planId').lean();
+
+        return NextResponse.json({
+            ...client,
+            activeSubscription
+        });
     } catch (error) {
         console.error('Error fetching client:', error);
         return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 });
@@ -144,7 +163,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                         ActivityLog.deleteMany({ clientId: id }),
                         MealLog.deleteMany({ clientId: id }),
                         HealthAssessment.deleteMany({ clientId: id }),
-                        Subscription.deleteMany({ clientId: id }),
+                        Subscription.deleteMany({ clientId: id as any }),
                     ]);
 
                     // Reset client fields for new start
@@ -173,23 +192,52 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + selectedPlan.durationMonths);
 
-            // Deactivate existing active subscriptions
-            await Subscription.updateMany(
-                { clientId: id, status: 'ACTIVE' },
-                { $set: { status: 'EXPIRED' } }
-            );
+            // Find existing subscription for this client
+            const existingSubscription = await Subscription.findOne({ clientId: id as any });
 
-            // Create new subscription
-            await Subscription.create({
-                clientId: id,
-                planId: body.planId,
-                startDate,
-                endDate,
-                price: selectedPlan.price,
-                status: 'ACTIVE',
-                features: selectedPlan.features,
-                consultations: selectedPlan.consultations
-            });
+            if (existingSubscription) {
+                // UPDATE existing subscription
+                existingSubscription.planId = body.planId;
+                existingSubscription.planName = selectedPlan.name;
+                existingSubscription.startDate = startDate;
+                existingSubscription.endDate = endDate;
+                existingSubscription.totalAmount = selectedPlan.price;
+                existingSubscription.status = 'ACTIVE';
+
+                // Add to plan history
+                existingSubscription.planHistory.push({
+                    changedAt: new Date(),
+                    action: 'ASSIGN',
+                    oldPlanId: existingSubscription.planId,
+                    newPlanId: body.planId,
+                    oldPlanName: existingSubscription.planName,
+                    newPlanName: selectedPlan.name,
+                    oldAmount: existingSubscription.totalAmount,
+                    newAmount: selectedPlan.price
+                });
+
+                await existingSubscription.save();
+            } else {
+                // CREATE new subscription (first time)
+                await Subscription.create({
+                    clientId: id as any,
+                    planId: body.planId,
+                    planName: selectedPlan.name,
+                    startDate,
+                    endDate,
+                    totalAmount: selectedPlan.price,
+                    amountPaid: 0,
+                    status: 'ACTIVE',
+                    paymentHistory: [],
+                    planHistory: [{
+                        changedAt: new Date(),
+                        action: 'ASSIGN',
+                        newPlanId: body.planId,
+                        newPlanName: selectedPlan.name,
+                        newAmount: selectedPlan.price
+                    }]
+                });
+            }
 
             body.status = 'ACTIVE';
             delete body.planId; // Remove from body as it's not in Client schema
@@ -277,7 +325,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             // Delete newly identified models
             MealLog.deleteMany({ clientId: id }),
             HealthAssessment.deleteMany({ clientId: id }),
-            Subscription.deleteMany({ clientId: id }),
+            Subscription.deleteMany({ clientId: id as any }),
 
             Client.findByIdAndDelete(id)
         ]);

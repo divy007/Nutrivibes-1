@@ -7,6 +7,7 @@ import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, C
 
 import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
+import { PlanActionModal } from '@/components/dietician/clients/PlanActionModal';
 import { calculateCycleStatus, CycleStatus } from '@/lib/cycle-utils';
 
 export default function ClientSummaryPage() {
@@ -53,6 +54,11 @@ export default function ClientSummaryPage() {
     const [reportFile, setReportFile] = useState<File | null>(null);
     const [showReportUpload, setShowReportUpload] = useState(false);
     const [reportUploading, setReportUploading] = useState(false);
+
+
+
+    // Plan Management State
+    const [showPlanModal, setShowPlanModal] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -369,6 +375,87 @@ export default function ClientSummaryPage() {
                 {/* Right Column: Persona & Cycle */}
                 <div className="space-y-6">
 
+                    {/* Subscription Plan Card */}
+                    <div className="bg-white rounded-lg border border-slate-200 p-6 relative overflow-hidden">
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Zap size={14} className="text-emerald-500" />
+                                Current Plan
+                            </h3>
+                            <button
+                                onClick={() => setShowPlanModal(true)}
+                                className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100"
+                            >
+                                <span className="text-lg leading-none mb-0.5">+</span> Manage
+                            </button>
+                        </div>
+
+                        {client.activeSubscription ? (
+                            <div className="relative z-10">
+                                <div className="mb-1">
+                                    <span className="text-xl font-bold text-slate-800">
+                                        {typeof client.activeSubscription.planId === 'object' ? client.activeSubscription.planId.name : 'Unknown Plan'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-3">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${client.activeSubscription.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
+                                        client.activeSubscription.status === 'PAUSED' ? 'bg-amber-100 text-amber-700' :
+                                            client.activeSubscription.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                        {client.activeSubscription.status}
+                                    </span>
+                                    <span>•</span>
+                                    {(() => {
+                                        const endDate = new Date(client.activeSubscription.endDate);
+                                        const isPending = endDate.getFullYear() === 2099; // Placeholder date
+                                        return isPending ? (
+                                            <span className="text-amber-600 font-medium italic">Pending Diet Start Date</span>
+                                        ) : (
+                                            <span>Ends {endDate.toLocaleDateString()}</span>
+                                        );
+                                    })()}
+                                </div>
+                                {(() => {
+                                    const endDate = new Date(client.activeSubscription.endDate);
+                                    const isPending = endDate.getFullYear() === 2099;
+
+                                    if (isPending) {
+                                        // Show message for pending assignments
+                                        return (
+                                            <div className="text-xs text-slate-500 italic">
+                                                Plan will activate when diet start date is set
+                                            </div>
+                                        );
+                                    }
+
+                                    // Show progress bar for active subscriptions
+                                    return (
+                                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                            {(() => {
+                                                const start = new Date(client.activeSubscription.startDate).getTime();
+                                                const end = new Date(client.activeSubscription.endDate).getTime();
+                                                const now = new Date().getTime();
+                                                const total = end - start;
+                                                const progress = total > 0 ? Math.min(100, Math.max(0, ((now - start) / total) * 100)) : 0;
+                                                return <div className="h-full bg-emerald-500" style={{ width: `${progress}%` }} />;
+                                            })()}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50 relative z-10">
+                                <p className="text-xs text-slate-400 italic mb-2">No active subscription</p>
+                                <button onClick={() => setShowPlanModal(true)} className="text-xs font-bold text-emerald-600 hover:underline">
+                                    Assign Plan
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Decorative Background */}
+                        <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-50 rounded-full blur-2xl z-0 pointer-events-none" />
+                    </div>
+
                     {/* Medical Report Card */}
                     <div className="bg-white rounded-lg border border-slate-200 p-6">
                         <div className="flex items-center justify-between mb-4">
@@ -556,6 +643,14 @@ export default function ClientSummaryPage() {
 
                 </div>
             </div>
+
+            {showPlanModal && client && (
+                <PlanActionModal
+                    client={client}
+                    onClose={() => setShowPlanModal(false)}
+                    onSuccess={() => { refreshClient(); setShowPlanModal(false); }}
+                />
+            )}
         </div>
     );
 }

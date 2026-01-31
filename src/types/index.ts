@@ -83,6 +83,18 @@ export interface ClientInfo {
         totalScore: number;
         riskLevel: string;
     };
+    activeSubscription?: {
+        _id: string;
+        planId: {
+            _id: string;
+            name: string;
+            durationMonths: number;
+            price: number;
+        } | string;
+        startDate: string | Date;
+        endDate: string | Date;
+        status: string;
+    };
 }
 
 export interface WeekPlan {

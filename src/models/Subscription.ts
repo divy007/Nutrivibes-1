@@ -8,7 +8,9 @@ export interface ISubscription extends Document {
     endDate: Date;
     amountPaid: number;
     totalAmount: number;
-    status: 'ACTIVE' | 'EXPIRED' | 'PENDING_PAYMENT' | 'COMPLETED' | 'PAUSED';
+    status: 'ASSIGNED' | 'ACTIVE' | 'EXPIRED' | 'PENDING_PAYMENT' | 'COMPLETED' | 'PAUSED';
+    pauseDaysUsed: number;
+    extraPaidPauseDays: number;
     pauseHistory: {
         startDate: Date;
         endDate?: Date;
@@ -19,6 +21,16 @@ export interface ISubscription extends Document {
         amount: number;
         method: 'CASH' | 'UPI' | 'BANK_TRANSFER';
         note?: string;
+    }[];
+    planHistory: {
+        changedAt: Date;
+        action: 'ASSIGN' | 'UPGRADE' | 'RENEW';
+        oldPlanId?: mongoose.Schema.Types.ObjectId;
+        newPlanId: mongoose.Schema.Types.ObjectId;
+        oldPlanName?: string;
+        newPlanName: string;
+        oldAmount?: number;
+        newAmount: number;
     }[];
 }
 
@@ -33,8 +45,8 @@ const SubscriptionSchema = new Schema(
         totalAmount: { type: Number, required: true },
         status: {
             type: String,
-            enum: ['ACTIVE', 'EXPIRED', 'PENDING_PAYMENT', 'COMPLETED', 'PAUSED'],
-            default: 'PENDING_PAYMENT'
+            enum: ['ASSIGNED', 'ACTIVE', 'EXPIRED', 'PENDING_PAYMENT', 'COMPLETED', 'PAUSED'],
+            default: 'ASSIGNED'
         },
         pauseDaysUsed: { type: Number, default: 0 },
         extraPaidPauseDays: { type: Number, default: 0 },
@@ -48,6 +60,16 @@ const SubscriptionSchema = new Schema(
             amount: { type: Number, required: true },
             method: { type: String, enum: ['CASH', 'UPI', 'BANK_TRANSFER'], default: 'CASH' },
             note: { type: String }
+        }],
+        planHistory: [{
+            changedAt: { type: Date, default: Date.now },
+            action: { type: String, enum: ['ASSIGN', 'UPGRADE', 'RENEW'], required: true },
+            oldPlanId: { type: Schema.Types.ObjectId, ref: 'Plan' },
+            newPlanId: { type: Schema.Types.ObjectId, ref: 'Plan', required: true },
+            oldPlanName: { type: String },
+            newPlanName: { type: String, required: true },
+            oldAmount: { type: Number },
+            newAmount: { type: Number, required: true }
         }]
     },
     { timestamps: true }
@@ -57,4 +79,9 @@ const SubscriptionSchema = new Schema(
 // Index for quick lookups
 SubscriptionSchema.index({ clientId: 1, status: 1 });
 
-export default mongoose.models.Subscription || mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
+// Force model reload - delete cached version if it exists
+if (mongoose.models.Subscription) {
+    delete mongoose.models.Subscription;
+}
+
+export default mongoose.model<ISubscription>('Subscription', SubscriptionSchema);

@@ -61,6 +61,7 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                 assessment: assessmentData,
                 counsellingProfile: data.counsellingProfile,
                 cycleLength: data.cycleLength,
+                activeSubscription: data.activeSubscription, // ADD THIS LINE
             });
         } catch (error) {
             console.error('Failed to fetch client:', error);
