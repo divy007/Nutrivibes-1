@@ -468,6 +468,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                                 className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
                             >
+                                <option value="">Select State</option>
                                 {STATES.map(s => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
