@@ -23,6 +23,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        if (user.role === 'CLIENT' && client.userId?.toString() !== user._id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const logs = await MeasurementLog.find({ clientId: id }).sort({ date: -1 }).lean();
         return NextResponse.json(logs);
     } catch (error) {

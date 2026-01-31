@@ -7,6 +7,22 @@ import { normalizeDateUTC } from '@/lib/date-utils';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
     const { id } = await params;
+
+    // A01: Broken Access Control Fix
+    const { getAuthUser } = await import('@/lib/auth');
+    const user = await getAuthUser(req);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const Client = (await import('@/models/Client')).default;
+    const client = await Client.findById(id);
+    if (!client) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+
+    if (user.role === 'CLIENT' && client.userId?.toString() !== user._id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    } else if (user.role !== 'DIETICIAN' && user.role !== 'CLIENT') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const url = new URL(req.url);
     const startDate = url.searchParams.get('startDate') || format(new Date(), 'yyyy-MM-dd');
 

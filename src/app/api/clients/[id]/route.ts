@@ -7,6 +7,8 @@ import { writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import fs from 'fs';
 
+import { getAuthUser } from '@/lib/auth';
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
     const { id } = await params;
@@ -16,17 +18,32 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     try {
+        // A01: Broken Access Control Fix
+        const user = await getAuthUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const Subscription = (await import('@/models/Subscription')).default;
-        const Plan = (await import('@/models/Plan')).default; // Ensure Plan model is registered
+        const Plan = (await import('@/models/Plan')).default;
 
         const client = await Client.findById(id).lean();
         if (!client) {
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
+        // Authorization Check
+        if (user.role === 'CLIENT') {
+            // Ensure client is accessing their own data
+            if (client.userId && client.userId.toString() !== user._id) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
+        } else if (user.role !== 'DIETICIAN') {
+            // Only Clients and Dieticians allowed
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // Fetch active subscription (ASSIGNED, ACTIVE, or PAUSED)
-        // Show ASSIGNED subscriptions even if pending (placeholder dates)
-        // Show ACTIVE/PAUSED only if they have real dates and not expired
         const today = new Date();
         const thirtyDaysFromNow = new Date(today);
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
@@ -40,8 +57,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             ...client,
             activeSubscription
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching client:', error);
+        // A05: Security Misconfiguration (Stack Trace Exposure)
+        // Ensure we don't leak stack traces in production
         return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 });
     }
 }
