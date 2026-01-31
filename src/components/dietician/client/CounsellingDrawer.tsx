@@ -201,7 +201,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                     onChange={readOnly ? undefined : (e) => setFormData({ ...formData, [field]: e.target.value })}
                     readOnly={readOnly}
                     placeholder={placeholder}
-                    className={`p-2 border rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none ${readOnly ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-white border-slate-200 text-slate-700'
+                    className={`p-2 border rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none ${readOnly ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-white border-slate-200 text-slate-700'
                         }`}
                 />
             </div>
@@ -243,7 +243,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                                     const newList = selected ? list.filter(i => i !== opt) : [...list, opt];
                                     setFormData({ ...formData, [field]: newList });
                                 }}
-                                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${selected ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${selected ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 {opt}
@@ -388,7 +388,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                                         {formData.medications.map((med, idx) => (
                                             <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                                                 <div>
-                                                    <span className="text-xs font-bold text-orange-500 mr-2">{med.type}</span>
+                                                    <span className="text-xs font-bold text-emerald-500 mr-2">{med.type}</span>
                                                     <span className="font-medium text-slate-700">{med.name}</span>
                                                     <span className="text-xs text-slate-400 ml-2">({med.dosage} {med.unit}, {med.frequency}x/{med.freqUnit})</span>
                                                 </div>
@@ -508,7 +508,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-lg hover:shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow-lg hover:shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {saving ? (
                                 <>

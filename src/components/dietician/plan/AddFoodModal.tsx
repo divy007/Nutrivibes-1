@@ -194,7 +194,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                                     placeholder="Search food items or recipes..."
                                     value={searchTerm}
                                     onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); setSelectedFood(null); }}
-                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base transition-all focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none shadow-sm"
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base transition-all focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none shadow-sm"
                                 />
                                 <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                             </div>
@@ -207,7 +207,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                                     onChange={(e) => setQuantity(e.target.value)}
                                     // Enter key on qty also triggers add
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddToList()}
-                                    className="w-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all shadow-sm"
+                                    className="w-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm"
                                 />
                                 <button
                                     onClick={handleAddToList}
@@ -247,21 +247,21 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                                                     setQuantity(food.quantity || '1 serving');
                                                     setShowSuggestions(false);
                                                 }}
-                                                className="w-full px-4 py-3 text-left hover:bg-orange-50/50 transition-colors flex items-center justify-between border-b border-slate-50 last:border-0 group"
+                                                className="w-full px-4 py-3 text-left hover:bg-emerald-50/50 transition-colors flex items-center justify-between border-b border-slate-50 last:border-0 group"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${isRecipeItem ? 'bg-orange-100 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${isRecipeItem ? 'bg-emerald-100 text-emerald-700' : 'bg-teal-50 text-teal-600'}`}>
                                                         {isRecipeItem ? 'R' : 'F'}
                                                     </div>
                                                     <div>
-                                                        <div className="font-semibold text-slate-700 group-hover:text-orange-700 transition-colors">{item.name}</div>
+                                                        <div className="font-semibold text-slate-700 group-hover:text-emerald-700 transition-colors">{item.name}</div>
                                                         <div className="text-[10px] text-slate-400 capitalize">
                                                             {isRecipeItem ? 'Recipe' : (item.category || 'Food')}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 {isRecipeItem && (
-                                                    <span className="text-[9px] font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded-full uppercase tracking-wider">
+                                                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-wider">
                                                         Recipe
                                                     </span>
                                                 )}
@@ -285,9 +285,9 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                             <div className="flex-1 overflow-y-auto p-4 content-start space-y-2">
                                 {addedList.length > 0 ? (
                                     addedList.map((item, idx) => (
-                                        <div key={idx} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group transition-all hover:shadow-md hover:border-orange-100">
+                                        <div key={idx} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group transition-all hover:shadow-md hover:border-emerald-100">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${item.food.isRecipe ? 'bg-orange-100 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${item.food.isRecipe ? 'bg-emerald-100 text-emerald-700' : 'bg-teal-50 text-teal-600'}`}>
                                                     {item.food.isRecipe ? 'R' : 'F'}
                                                 </div>
                                                 <div>
@@ -315,7 +315,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                     {/* Right Column: Repeat Logic */}
                     <div className="w-[320px] bg-slate-50/30 rounded-2xl border border-slate-100 p-6 flex flex-col gap-6">
                         <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
                                 <Calendar size={18} />
                             </div>
                             <div>
@@ -330,11 +330,11 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                                 { id: 'weekly', label: "Every Day", sub: "Apply to all 7 days of this plan" },
                                 { id: 'custom', label: 'Select Specific Days', sub: 'Choose which days to apply' }
                             ].map((opt) => (
-                                <label key={opt.id} className={`flex items-start gap-3 cursor-pointer group p-4 rounded-xl border transition-all ${repeatStrategy === opt.id ? 'bg-orange-50 border-orange-200 shadow-sm' : 'bg-white border-slate-100 hover:border-orange-200/50 hover:bg-orange-50/30'}`}>
+                                <label key={opt.id} className={`flex items-start gap-3 cursor-pointer group p-4 rounded-xl border transition-all ${repeatStrategy === opt.id ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-100 hover:border-emerald-200/50 hover:bg-emerald-50/30'}`}>
                                     <div className="mt-0.5 relative">
                                         <input type="radio" checked={repeatStrategy === opt.id} onChange={() => { setRepeatStrategy(opt.id as any); if (opt.id === 'custom' && selectedDays.length === 0) setSelectedDays([]); }} className="peer sr-only" />
-                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${repeatStrategy === opt.id ? 'border-orange-500' : 'border-slate-300'}`}>
-                                            {repeatStrategy === opt.id && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${repeatStrategy === opt.id ? 'border-emerald-500' : 'border-slate-300'}`}>
+                                            {repeatStrategy === opt.id && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
                                         </div>
                                     </div>
                                     <div>

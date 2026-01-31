@@ -37,19 +37,19 @@ export const MealCard: React.FC<MealCardProps> = ({
     const hasFood = foodItems.length > 0;
 
     return (
-        <div className={`bg-white rounded-xl border transition-all duration-200 flex flex-col w-full relative group min-h-[160px] ${isActiveCopy || isActiveSwap ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg scale-[1.02]' : 'border-slate-200'
+        <div className={`bg-white rounded-xl border transition-all duration-200 flex flex-col w-full relative group min-h-[160px] ${isActiveCopy || isActiveSwap ? 'ring-2 ring-emerald-500 border-emerald-200 shadow-lg scale-[1.02]' : 'border-slate-200'
             } ${disabled ? 'opacity-70 bg-slate-50/50' : 'hover:shadow-md'}`}>
 
             {/* Paste Overlay */}
             {isPasteMode && !isActiveCopy && !disabled && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onPaste?.(); }}
-                    className="absolute inset-0 z-20 bg-orange-500/10 backdrop-blur-[1px] hover:bg-orange-500/20 flex flex-col items-center justify-center gap-2 transition-all rounded-xl border-2 border-dashed border-orange-400 m-1"
+                    className="absolute inset-0 z-20 bg-emerald-500/10 backdrop-blur-[1px] hover:bg-emerald-500/20 flex flex-col items-center justify-center gap-2 transition-all rounded-xl border-2 border-dashed border-emerald-400 m-1"
                 >
-                    <div className="bg-white p-2.5 rounded-full shadow-lg text-orange-500 animate-bounce">
+                    <div className="bg-white p-2.5 rounded-full shadow-lg text-emerald-500 animate-bounce">
                         <ClipboardPaste size={24} />
                     </div>
-                    <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Paste Here</span>
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Paste Here</span>
                 </button>
             )}
 
@@ -68,14 +68,14 @@ export const MealCard: React.FC<MealCardProps> = ({
                         <button
                             onClick={(e) => { e.stopPropagation(); onCopy?.(); }}
                             title="Copy slot"
-                            className={`p-1.5 rounded-md transition-colors ${isActiveCopy ? 'bg-orange-100 text-orange-600' : 'text-slate-300 hover:bg-white hover:text-orange-500 hover:shadow-sm'}`}
+                            className={`p-1.5 rounded-md transition-colors ${isActiveCopy ? 'bg-emerald-100 text-emerald-600' : 'text-slate-300 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
                         >
                             <Copy size={13} />
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onSwap?.(); }}
                             title="Swap slot"
-                            className={`p-1.5 rounded-md transition-colors ${isActiveSwap ? 'bg-orange-100 text-orange-600' : 'text-slate-300 hover:bg-white hover:text-orange-500 hover:shadow-sm'}`}
+                            className={`p-1.5 rounded-md transition-colors ${isActiveSwap ? 'bg-emerald-100 text-emerald-600' : 'text-slate-300 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
                         >
                             <Repeat size={13} />
                         </button>

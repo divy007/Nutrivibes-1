@@ -39,7 +39,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold text-slate-700">{value || 'N/A'}</span>
                 {editable && (
-                    <button className="text-orange-500 hover:text-orange-600">
+                    <button className="text-emerald-500 hover:text-emerald-600">
                         <Pencil size={12} strokeWidth={3} />
                     </button>
                 )}
@@ -56,7 +56,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 <div className="p-4 flex items-center gap-6">
                     {/* Profile Summary */}
                     <div className="flex items-center gap-3 pr-6 border-r border-slate-200">
-                        <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg border-2 border-white shadow-sm ring-1 ring-orange-200 shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg border-2 border-white shadow-sm ring-1 ring-emerald-200 shrink-0">
                             {getInitials(clientInfo.name)}
                         </div>
                         <div className="flex flex-col">
@@ -75,7 +75,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">BMI</span>
                             <div className="flex items-center gap-1.5">
-                                <span className={`text-sm font-bold ${clientInfo.height && clientInfo.weight ? 'text-orange-600' : 'text-slate-400'}`}>
+                                <span className={`text-sm font-bold ${clientInfo.height && clientInfo.weight ? 'text-emerald-600' : 'text-slate-400'}`}>
                                     {(() => {
                                         if (clientInfo.height && clientInfo.weight) {
                                             const h = clientInfo.height / 100;
@@ -104,7 +104,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                             <span className="text-xs font-semibold text-slate-400">Diet Persona:</span>
                             <button
                                 onClick={() => setIsPreferenceModalOpen(true)}
-                                className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200 transition-colors flex items-center gap-1.5"
+                                className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 transition-colors flex items-center gap-1.5"
                             >
                                 {clientInfo.preferences || 'Not Set'}
                                 <ChevronDown size={12} strokeWidth={3} />

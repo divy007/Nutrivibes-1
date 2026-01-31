@@ -79,11 +79,11 @@ export const UpdateMealTimingsModal: React.FC<UpdateMealTimingsModalProps> = ({
                                         type="time"
                                         value={meal.time}
                                         onChange={(e) => handleTimeChange(index, e.target.value)}
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all appearance-none"
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none"
                                     />
-                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 pointer-events-none" />
+                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
                                 </div>
-                                <button className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors">
+                                <button className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors">
                                     <RotateCcw size={16} />
                                 </button>
                             </div>
@@ -105,13 +105,13 @@ export const UpdateMealTimingsModal: React.FC<UpdateMealTimingsModalProps> = ({
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                     <button
                         onClick={handleReset}
-                        className="px-6 py-2 text-sm font-bold text-orange-500 bg-white border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                        className="px-6 py-2 text-sm font-bold text-emerald-600 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors"
                     >
                         Reset
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-8 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg shadow-sm hover:bg-orange-600 transition-all"
+                        className="px-8 py-2 text-sm font-bold text-white bg-emerald-500 rounded-lg shadow-sm hover:bg-emerald-600 transition-all"
                     >
                         Save Meal Timings
                     </button>

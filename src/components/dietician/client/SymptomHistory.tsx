@@ -12,11 +12,11 @@ interface SymptomLog {
 
 const SYMPTOM_ICONS: Record<string, React.ReactNode> = {
     acidity: <Zap size={14} className="text-amber-500" />,
-    bloating: <Ghost size={14} className="text-indigo-400" />,
+    bloating: <Ghost size={14} className="text-teal-400" />,
     low_energy: <Frown size={14} className="text-red-400" />,
     stomach_pain: <AlertCircle size={14} className="text-rose-500" />,
     feeling_great: <Smile size={14} className="text-emerald-500" />,
-    headache: <Zap size={14} className="text-orange-400" />,
+    headache: <Zap size={14} className="text-amber-500" />,
     cravings: <Smile size={14} className="text-pink-400" />,
 };
 

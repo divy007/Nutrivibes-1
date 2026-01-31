@@ -25,7 +25,8 @@ export async function GET(req: Request) {
             expiredCount,
             leadsCount,
             rawFollowUps,
-            activeClients
+            activeClients,
+            activePausedClients
         ] = await Promise.all([
             // 1. Active
             Client.countDocuments({ dieticianId, status: 'ACTIVE' }),
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
                 dieticianId,
                 status: 'NEW'
             }),
-            // 4. Expired
+            // 4. Expired (Deleted)
             Client.countDocuments({ dieticianId, status: 'DELETED' }),
             // 5. Leads
             Client.countDocuments({ dieticianId, status: 'LEAD' }),
@@ -50,11 +51,30 @@ export async function GET(req: Request) {
                 }).populate('clientId', 'name dietStatus status');
             })(),
             // 7. Active Clients (for Diet Pending Calc)
-            Client.find({ dieticianId, status: 'ACTIVE' }).select('_id name').lean()
+            Client.find({ dieticianId, status: 'ACTIVE' }).select('_id name').lean(),
+            // 8. Fetch Active & Paused Client IDs for Subscription Check
+            Client.find({ dieticianId, status: { $in: ['ACTIVE', 'PAUSED'] } }).select('_id').lean()
         ]);
 
         // Filter Follow-ups manually after parallel fetch
         const activeFollowUps = rawFollowUps.filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
+
+        // Calculate Expired Subscriptions
+        let expiredSubscriptionCount = 0;
+        if (activePausedClients.length > 0) {
+            const Subscription = (await import('@/models/Subscription')).default;
+            const clientIds = activePausedClients.map((c: any) => c._id);
+            const today = new Date();
+
+            // Count subscriptions that have ENDED before today for these clients
+            expiredSubscriptionCount = await Subscription.countDocuments({
+                clientId: { $in: clientIds },
+                status: { $in: ['ACTIVE', 'PAUSED'] }, // Only check active/paused subs (ignored completed/expired statuses if they are already marked as such, but safe to check date)
+                endDate: { $lt: today }
+            });
+        }
+
+        const totalExpired = expiredCount + expiredSubscriptionCount;
 
         // 8. Optimized Diet Pending Calculation (Batch Query)
         const todayUser = normalizeDateUTC();
@@ -143,7 +163,7 @@ export async function GET(req: Request) {
             activeClients: activeCount,
             newClients: newCount,
             pausedClients: pausedCount,
-            expiredClients: expiredCount,
+            expiredClients: totalExpired,
             leadsCount: leadsCount,
             todayFollowUps: activeFollowUps.map((fu: any) => ({
                 name: fu.clientId?.name || 'Unknown Client',

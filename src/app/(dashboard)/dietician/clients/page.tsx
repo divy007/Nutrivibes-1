@@ -24,7 +24,7 @@ const PauseModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: 
                         value={date}
                         min={new Date().toISOString().split('T')[0]}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                 </div>
 
@@ -109,6 +109,10 @@ export default function ClientsPage() {
             return client.status === 'DELETED';
         }
 
+        if (statusFilter === 'EXPIRED') {
+            return client.status === 'DELETED' || !!client.isSubscriptionExpired;
+        }
+
         // For all other statuses, MUST NOT be DELETED
         if (client.status === 'DELETED') return false;
 
@@ -170,9 +174,9 @@ export default function ClientsPage() {
             case 'DELETED':
                 return { label: 'Deleted', color: 'text-rose-900', dot: 'bg-rose-800' };
             case 'LEAD':
-                return { label: 'Lead', color: 'text-orange-600', dot: 'bg-orange-500' };
+                return { label: 'Lead', color: 'text-emerald-600', dot: 'bg-emerald-500' };
             default:
-                if (!status && initialStatus === 'LEADS') return { label: 'Lead', color: 'text-orange-600', dot: 'bg-orange-500' };
+                if (!status && initialStatus === 'LEADS') return { label: 'Lead', color: 'text-emerald-600', dot: 'bg-emerald-500' };
                 return { label: status || 'Unknown', color: 'text-slate-400', dot: 'bg-slate-300' };
         }
     };
@@ -351,7 +355,7 @@ export default function ClientsPage() {
                                     setSearchTerm('');
                                     setStatusFilter('ALL');
                                 }}
-                                className="ml-auto px-4 py-1.5 text-sm text-slate-500 hover:text-orange-600 underline"
+                                className="ml-auto px-4 py-1.5 text-sm text-slate-500 hover:text-emerald-600 underline"
                             >
                                 Clear Filters
                             </button>
@@ -362,7 +366,7 @@ export default function ClientsPage() {
                 {/* Table Section */}
                 {loading ? (
                     <div className="p-20 flex justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
                     </div>
                 ) : (
                     <div className="overflow-visible">
@@ -433,7 +437,7 @@ export default function ClientsPage() {
                                             {client.status === 'LEAD' ? (
                                                 <button
                                                     onClick={(e) => handleConvertLead(e, client._id)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-orange-600 transition-all shadow-sm hover:shadow-md"
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-600 transition-all shadow-sm hover:shadow-md"
                                                 >
                                                     <UserPlus size={12} />
                                                     Add Client
@@ -508,8 +512,8 @@ export default function ClientsPage() {
                     <div className="flex items-center gap-4">
                         <button className="opacity-30 cursor-not-allowed">{'| <'}</button>
                         <button className="opacity-30 cursor-not-allowed">{'<'}</button>
-                        <button className="hover:text-orange-500">{'>'}</button>
-                        <button className="hover:text-orange-500">{'> |'}</button>
+                        <button className="hover:text-emerald-500">{'>'}</button>
+                        <button className="hover:text-emerald-500">{'> |'}</button>
                     </div>
                 </div>
             </div>

@@ -59,7 +59,7 @@ export function FollowUpNotesSection({ onSave, onShowHistory, isSaving }: Follow
                     <button
                         onClick={handleSave}
                         disabled={isSaving || !notes.trim() || notes === '<br>'}
-                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
                     >
                         {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         Save Notes

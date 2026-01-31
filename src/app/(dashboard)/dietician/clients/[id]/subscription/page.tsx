@@ -144,8 +144,8 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                                 <h2 className="text-xl font-bold text-[#1b4332]">{subscription.planName}</h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${subscription.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                            subscription.status === 'PAUSED' ? 'bg-orange-100 text-orange-700' :
-                                                'bg-slate-100 text-slate-600'
+                                        subscription.status === 'PAUSED' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-slate-100 text-slate-600'
                                         }`}>
                                         {subscription.status}
                                     </span>
@@ -159,7 +159,7 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                                 {subscription.status === 'ACTIVE' && (
                                     <button
                                         onClick={() => setIsPausing(true)}
-                                        className="text-orange-600 bg-orange-50 hover:bg-orange-100 p-2 rounded-lg flex items-center gap-2 text-sm font-medium"
+                                        className="text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-lg flex items-center gap-2 text-sm font-medium"
                                     >
                                         <Pause size={16} /> Pause
                                     </button>
@@ -325,7 +325,7 @@ export default function ClientSubscriptionPage({ params }: { params: Promise<{ i
                         />
                         <div className="flex gap-3">
                             <button onClick={() => setIsPausing(false)} className="flex-1 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
-                            <button onClick={() => handlePauseResume('PAUSE')} disabled={actionLoading} className="flex-1 py-2 bg-orange-500 text-white rounded-lg">Pause Plan</button>
+                            <button onClick={() => handlePauseResume('PAUSE')} disabled={actionLoading} className="flex-1 py-2 bg-amber-500 text-white rounded-lg">Pause Plan</button>
                         </div>
                     </div>
                 </div>

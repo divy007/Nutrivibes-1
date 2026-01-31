@@ -22,7 +22,7 @@ export default function DieticianLayout({ children }: { children: React.ReactNod
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#fdfbf7]">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }

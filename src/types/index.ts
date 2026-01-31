@@ -64,6 +64,7 @@ export interface ClientInfo {
     primaryGoal?: string[];
     registrationSource?: 'DIETICIAN' | 'MOBILE_APP';
     isProfileComplete?: boolean;
+    isSubscriptionExpired?: boolean;
     hasFollowUpToday?: boolean;
     counsellingProfile?: any;
     followUpHistory?: {

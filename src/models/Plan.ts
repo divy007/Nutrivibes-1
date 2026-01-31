@@ -19,6 +19,7 @@ const PlanSchema = new Schema(
         features: [{ type: String }],
         isActive: { type: Boolean, default: true },
         isRecommended: { type: Boolean, default: false },
+        allowedPauseDays: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

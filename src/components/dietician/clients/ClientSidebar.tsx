@@ -50,7 +50,7 @@ export const ClientSidebar = ({ clientId }: { clientId: string }) => {
                             key={item.label}
                             href={item.href}
                             className={`flex items-center gap-3 px-4 py-2 text-xs font-semibold transition-all duration-200 border-l-4 ${isActive
-                                ? 'bg-orange-50 text-orange-600 border-orange-500'
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-500'
                                 : 'text-slate-500 hover:bg-slate-50 border-transparent'
                                 }`}
                         >

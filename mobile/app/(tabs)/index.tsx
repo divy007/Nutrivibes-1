@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2 } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -342,6 +342,17 @@ export default function DashboardScreen() {
                     <Text style={styles.menuItemText}>Contact</Text>
                   </TouchableOpacity>
 
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      router.push('/settings');
+                    }}
+                  >
+                    <Settings size={18} color="#64748b" />
+                    <Text style={styles.menuItemText}>Settings</Text>
+                  </TouchableOpacity>
+
                   <View style={styles.menuDivider} />
 
                   <TouchableOpacity
@@ -350,37 +361,6 @@ export default function DashboardScreen() {
                   >
                     <LogOut size={18} color="#64748b" />
                     <Text style={styles.menuItemText}>Sign Out</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.menuDivider} />
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert(
-                        "Delete Account",
-                        "Are you sure you want to delete your account? This action cannot be undone.",
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Delete",
-                            style: "destructive",
-                            onPress: async () => {
-                              try {
-                                const response = await api.del('/api/clients/me');
-                                logout();
-                                router.replace('/login');
-                              } catch (error) {
-                                Alert.alert("Error", "Failed to delete account. Please try again.");
-                              }
-                            }
-                          }
-                        ]
-                      );
-                    }}
-                  >
-                    <Trash2 size={18} color="#ef4444" />
-                    <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Delete Account</Text>
                   </TouchableOpacity>
                 </View>
               </>

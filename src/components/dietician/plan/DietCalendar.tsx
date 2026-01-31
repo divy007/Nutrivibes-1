@@ -65,7 +65,7 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
                         return (
                             <div key={date.toISOString()} className="flex flex-col gap-3">
                                 {/* Date Header */}
-                                <div className={`text-center p-2 rounded-lg ${isToday ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600'} border`}>
+                                <div className={`text-center p-2 rounded-lg ${isToday ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-600'} border`}>
                                     <div className="text-sm font-semibold uppercase">{format(date, 'EEE')}</div>
                                     <div className="text-2xl font-bold">{format(date, 'd')}</div>
                                 </div>
@@ -96,7 +96,7 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
                                                     ) : (
                                                         <button
                                                             onClick={() => onMealAdd(date, slot.time)}
-                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-indigo-100 text-indigo-600 rounded transition-all"
+                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-emerald-100 text-emerald-600 rounded transition-all"
                                                             title="Add Food"
                                                         >
                                                             <Plus className="w-3.5 h-3.5" />
@@ -119,7 +119,7 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
                                                         <div className="h-full flex items-center justify-center">
                                                             <button
                                                                 onClick={() => onMealAdd(date, slot.time)}
-                                                                className="text-xs text-slate-400 hover:text-indigo-500 flex items-center gap-1 transition-colors"
+                                                                className="text-xs text-slate-400 hover:text-emerald-500 flex items-center gap-1 transition-colors"
                                                             >
                                                                 <Plus className="w-3 h-3" /> Add
                                                             </button>

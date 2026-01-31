@@ -91,9 +91,13 @@ export const apiRequest = async <T>(
 ): Promise<APIResponse<T>> => {
     const token = getAuthToken();
     const headers: HeadersInit = {
-        'Content-Type': 'application/json',
         ...options.headers,
     };
+
+    // Only set JSON content type if NOT FormData
+    if (!(options.body instanceof FormData)) {
+        (headers as Record<string, string>)['Content-Type'] = 'application/json';
+    }
 
     if (token) {
         (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
@@ -104,8 +108,12 @@ export const apiRequest = async <T>(
         headers,
     };
 
-    if (options.body && typeof options.body !== 'string') {
-        config.body = JSON.stringify(options.body);
+    if (options.body) {
+        if (options.body instanceof FormData) {
+            config.body = options.body;
+        } else if (typeof options.body !== 'string') {
+            config.body = JSON.stringify(options.body);
+        }
     }
 
     try {

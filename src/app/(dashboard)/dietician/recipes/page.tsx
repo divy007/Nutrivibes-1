@@ -92,14 +92,14 @@ export default function RecipesPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                        <ChefHat className="text-orange-500" />
+                        <ChefHat className="text-emerald-500" />
                         Recipes Set
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">Manage your recipe collection ({pagination.total} Total)</p>
                 </div>
                 <Link
                     href="/dietician/recipes/add"
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-orange-100"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-100"
                 >
                     <Plus size={18} strokeWidth={3} />
                     Add Recipes
@@ -115,7 +115,7 @@ export default function RecipesPage() {
                         placeholder="Search by Recipe..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:text-slate-400"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:text-slate-400"
                     />
                 </div>
             </div>
@@ -137,7 +137,7 @@ export default function RecipesPage() {
                                 <tr>
                                     <td colSpan={4} className="px-6 py-12 text-center">
                                         <div className="flex justify-center items-center gap-2 text-slate-400">
-                                            <Loader2 className="animate-spin text-orange-500" />
+                                            <Loader2 className="animate-spin text-emerald-500" />
                                             <span className="text-sm font-bold">Loading recipes...</span>
                                         </div>
                                     </td>
@@ -153,7 +153,7 @@ export default function RecipesPage() {
                                     <tr
                                         key={recipe._id}
                                         onClick={() => setSelectedRecipe(recipe)}
-                                        className="hover:bg-orange-50/30 transition-colors group cursor-pointer"
+                                        className="hover:bg-emerald-50/30 transition-colors group cursor-pointer"
                                     >
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-slate-700">{recipe.name}</div>
@@ -168,7 +168,7 @@ export default function RecipesPage() {
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
                                                     onClick={(e) => handleUpdate(e, recipe._id)}
-                                                    className="p-2 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-all"
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
                                                     title="Update Recipe"
                                                 >
                                                     <Edit size={18} />

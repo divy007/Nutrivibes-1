@@ -49,7 +49,14 @@ export interface IClient extends Document {
     isProfileComplete: boolean;
     counsellingProfile?: {
         medicalConditions?: string[];
-        medications?: string;
+        medications?: {
+            type: string;
+            name: string;
+            dosage: string;
+            unit: string;
+            frequency: string;
+            freqUnit: string;
+        }[];
         bloodReport?: string;
         familyHistory?: string;
         dietaryPreferences?: string;
@@ -115,7 +122,7 @@ const ClientSchema = new Schema(
             medicalConditions: [String],
             otherMedicalCondition: String,
             medications: [{
-                type: String,
+                type: { type: String },
                 name: String,
                 dosage: String,
                 unit: String,
@@ -143,7 +150,7 @@ const ClientSchema = new Schema(
             surgeries: [String],
             otherSurgery: String,
             stressLevel: String,
-            medicalGoal: String,
+            medicalGoal: [String],
             loseWeightReasons: [String],
             emotionalEating: String,
             // Dietary

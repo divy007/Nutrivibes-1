@@ -4,7 +4,7 @@ import Client from '@/models/Client';
 import { getAuthUser } from '@/lib/auth';
 import User from '@/models/User';
 import { normalizeDateUTC } from '@/lib/date-utils';
-import { addDays, format } from 'date-fns';
+import { addDays, format, isBefore } from 'date-fns';
 
 export async function GET(req: Request) {
     await dbConnect();
@@ -22,6 +22,19 @@ export async function GET(req: Request) {
 
         const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
         const targetDates = [formatDate(today), formatDate(tomorrow), formatDate(dayAfterTomorrow)];
+
+        // Validation Optimization: Fetch all subscriptions in one go
+        const Subscription = (await import('@/models/Subscription')).default;
+        const clientIds = clients.map(c => c._id);
+        const subscriptions = await Subscription.find({
+            clientId: { $in: clientIds },
+            status: { $in: ['ACTIVE', 'PAUSED'] }
+        }).select('clientId endDate status').lean();
+
+        const subscriptionMap = new Map();
+        subscriptions.forEach((sub: any) => {
+            subscriptionMap.set(sub.clientId.toString(), sub);
+        });
 
         const enhancedClients = await Promise.all(clients.map(async (client: any) => {
             // Find diet plans that might contain our target dates
@@ -60,7 +73,15 @@ export async function GET(req: Request) {
 
 
             let dietStatus = 'black';
-            if (!publishedToday) {
+            if (client.status === 'PAUSED' && client.pausedUntil) {
+                const resumeDate = formatDate(normalizeDateUTC(client.pausedUntil));
+                // If resuming tomorrow, show green (or maybe a special 'resume' status, but user asked for list. Green is 'good' status usually)
+                // Actually, let's keep it simple. If Published Today -> Red/Yellow/Green logic applies.
+                // If Paused, usually we ignore. But constraint says "list of client whose plan will be resume in tomorrow".
+                if (resumeDate === targetDates[1]) { // tomorrow
+                    dietStatus = 'green'; // Use Green to indicate "Action/Attention" or "Good to go"
+                }
+            } else if (!publishedToday) {
                 dietStatus = 'black';
             } else if (publishedToday && publishedTomorrow && publishedLater) {
                 dietStatus = 'green';
@@ -86,8 +107,12 @@ export async function GET(req: Request) {
                 status: 'Pending'
             }).select('_id').lean();
 
+            const clientSubscription = subscriptionMap.get(client._id.toString());
+            const isSubscriptionExpired = clientSubscription ? isBefore(new Date(clientSubscription.endDate), today) : false;
+
             return {
                 ...client,
+                isSubscriptionExpired,
                 dietStatus,
                 hasFollowUpToday: !!followUpToday
             };

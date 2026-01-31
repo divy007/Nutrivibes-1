@@ -3,6 +3,7 @@ import { getAuthUser } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import HealthAssessment from '@/models/HealthAssessment';
 import Client from '@/models/Client';
+import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,10 @@ export async function GET(
 
         const { id } = await params;
         await connectDB();
+
+        if (!mongoose.isValidObjectId(id)) {
+            return NextResponse.json({ error: 'Invalid client ID' }, { status: 400 });
+        }
 
         // Verify client exists (optional but good for 404)
         const client = await Client.findById(id);

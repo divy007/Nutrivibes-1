@@ -859,7 +859,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     if (loading || !weekPlan) {
         return (
             <div className="flex h-full items-center justify-center p-20">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }
@@ -897,7 +897,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         <div className="relative" ref={exportRef}>
                             <button
                                 onClick={() => setIsExportOpen(!isExportOpen)}
-                                className="p-2.5 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors border border-slate-100 shadow-sm"
+                                className="p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors border border-slate-100 shadow-sm"
                                 title="Export Diet Plan"
                             >
                                 <Download size={20} />
@@ -968,7 +968,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                             <button
                                 onClick={() => setIsNotesOpen(!isNotesOpen)}
                                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-sm border ${isNotesOpen
-                                    ? 'bg-orange-50 text-orange-600 border-orange-200'
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
@@ -979,7 +979,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                             <div className="relative" ref={actionRef}>
                                 <button
                                     onClick={() => setIsActionOpen(!isActionOpen)}
-                                    className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all font-bold shadow-md hover:shadow-lg active:scale-95 text-sm"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all font-bold shadow-md hover:shadow-lg active:scale-95 text-sm"
                                 >
                                     Action
                                     <ChevronDown size={16} />
@@ -989,9 +989,9 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
                                         <button
                                             onClick={() => { setIsTimingsModalOpen(true); setIsActionOpen(false); }}
-                                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-orange-50 flex items-center gap-3 transition-colors"
+                                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-amber-50 flex items-center gap-3 transition-colors"
                                         >
-                                            <Clock size={16} className="text-orange-500" />
+                                            <Clock size={16} className="text-amber-500" />
                                             <span className="font-semibold">Add Meal Timing</span>
                                         </button>
                                         <div className="h-px bg-slate-100 my-1 mx-2"></div>
@@ -1072,7 +1072,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Day / Timing</span>
                             </div>
                             {weekPlan.days.map((day, dayIndex) => (
-                                <div key={dayIndex} className={`p-4 bg-white rounded-lg border shadow-sm text-center transition-all relative ${actionState.sourceType === 'col' && actionState.sourceIndex === dayIndex ? 'ring-2 ring-orange-500 border-orange-200' : 'border-slate-200'}`}>
+                                <div key={dayIndex} className={`p-4 bg-white rounded-lg border shadow-sm text-center transition-all relative ${actionState.sourceType === 'col' && actionState.sourceIndex === dayIndex ? 'ring-2 ring-emerald-500 border-emerald-200' : 'border-slate-200'}`}>
                                     {/* Status Badge */}
                                     <div className="mb-2">
                                         <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${day.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700 border-emerald-300 ring-1 ring-emerald-500' :
@@ -1087,14 +1087,14 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                         <button
                                             onClick={() => handleAction('copy', 'col', dayIndex)}
                                             disabled={day.status === 'PUBLISHED'}
-                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'copy' && actionState.sourceIndex === dayIndex ? 'text-orange-500' : 'text-slate-300'}`}
+                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'copy' && actionState.sourceIndex === dayIndex ? 'text-emerald-500' : 'text-slate-300'}`}
                                         >
                                             <Copy size={12} />
                                         </button>
                                         <button
                                             onClick={() => handleAction('swap', 'col', dayIndex)}
                                             disabled={day.status === 'PUBLISHED'}
-                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'swap' && actionState.sourceIndex === dayIndex ? 'text-orange-500' : 'text-slate-300'}`}
+                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'swap' && actionState.sourceIndex === dayIndex ? 'text-emerald-500' : 'text-slate-300'}`}
                                         >
                                             <Repeat size={12} />
                                         </button>
@@ -1141,7 +1141,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                     {actionState.type === 'copy' && actionState.sourceType === 'col' && actionState.sourceIndex !== dayIndex && day.status !== 'PUBLISHED' && (
                                         <div
                                             onClick={(e) => { e.stopPropagation(); handleAction('copy', 'col', dayIndex); }}
-                                            className="absolute inset-0 bg-orange-500/95 flex flex-col items-center justify-center cursor-pointer z-20 transition-all hover:bg-orange-600 animate-in fade-in zoom-in"
+                                            className="absolute inset-0 bg-emerald-500/95 flex flex-col items-center justify-center cursor-pointer z-20 transition-all hover:bg-emerald-600 animate-in fade-in zoom-in"
                                         >
                                             <ClipboardPaste className="w-6 h-6 text-white mb-1" />
                                             <span className="text-[10px] text-white font-bold uppercase tracking-wider">Paste Here</span>
@@ -1154,10 +1154,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         {/* Meal Rows */}
                         {mealTimings.map((timing, mealIndex) => (
                             <div key={mealIndex} className="grid grid-cols-[140px_repeat(7,1fr)] gap-4 items-stretch">
-                                <div className={`p-4 bg-white rounded-lg border shadow-sm flex flex-col items-center justify-center transition-all relative overflow-hidden ${actionState.sourceType === 'row' && actionState.sourceIndex === mealIndex ? 'ring-2 ring-orange-500 border-orange-200' : 'border-slate-200'}`}>
+                                <div className={`p-4 bg-white rounded-lg border shadow-sm flex flex-col items-center justify-center transition-all relative overflow-hidden ${actionState.sourceType === 'row' && actionState.sourceIndex === mealIndex ? 'ring-2 ring-emerald-500 border-emerald-200' : 'border-slate-200'}`}>
                                     <div className="flex items-center gap-1.5 mb-2">
-                                        <button onClick={() => handleAction('copy', 'row', mealIndex)} className={`p-1 rounded hover:bg-slate-50 ${actionState.type === 'copy' && actionState.sourceIndex === mealIndex ? 'text-orange-500' : 'text-slate-300'}`}><Copy size={12} /></button>
-                                        <button onClick={() => handleAction('swap', 'row', mealIndex)} className={`p-1 rounded hover:bg-slate-50 ${actionState.type === 'swap' && actionState.sourceIndex === mealIndex ? 'text-orange-500' : 'text-slate-300'}`}><Repeat size={12} /></button>
+                                        <button onClick={() => handleAction('copy', 'row', mealIndex)} className={`p-1 rounded hover:bg-slate-50 ${actionState.type === 'copy' && actionState.sourceIndex === mealIndex ? 'text-emerald-500' : 'text-slate-300'}`}><Copy size={12} /></button>
+                                        <button onClick={() => handleAction('swap', 'row', mealIndex)} className={`p-1 rounded hover:bg-slate-50 ${actionState.type === 'swap' && actionState.sourceIndex === mealIndex ? 'text-emerald-500' : 'text-slate-300'}`}><Repeat size={12} /></button>
                                         <button onClick={() => handleAction('delete', 'row', mealIndex)} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500"><Trash2 size={12} /></button>
                                     </div>
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Meal {timing.mealNumber}</div>
@@ -1167,7 +1167,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                     {actionState.type === 'copy' && actionState.sourceType === 'row' && actionState.sourceIndex !== mealIndex && (
                                         <div
                                             onClick={(e) => { e.stopPropagation(); handleAction('copy', 'row', mealIndex); }}
-                                            className="absolute inset-0 bg-orange-500/95 flex flex-col items-center justify-center cursor-pointer z-20 transition-all hover:bg-orange-600 animate-in fade-in zoom-in"
+                                            className="absolute inset-0 bg-emerald-500/95 flex flex-col items-center justify-center cursor-pointer z-20 transition-all hover:bg-emerald-600 animate-in fade-in zoom-in"
                                         >
                                             <ClipboardPaste className="w-5 h-5 text-white mb-1" />
                                             <span className="text-[9px] text-white font-bold uppercase tracking-wider">Paste Row</span>
@@ -1218,7 +1218,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     </button>
                     <button
                         onClick={handleSaveAndPublish}
-                        className="px-6 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-md active:scale-95 flex items-center gap-2"
+                        className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
                     >
                         Save & Publish
                     </button>

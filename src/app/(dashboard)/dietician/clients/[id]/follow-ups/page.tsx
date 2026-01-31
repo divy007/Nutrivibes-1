@@ -51,17 +51,17 @@ const NotesModal = ({ isOpen, onClose, onSave, initialNotes }: { isOpen: boolean
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <StickyNote className="text-orange-500" size={20} /> Add Follow-up Notes
+                    <StickyNote className="text-emerald-500" size={20} /> Add Follow-up Notes
                 </h3>
                 <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                    className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                     placeholder="Type follow-up notes here..."
                 />
                 <div className="flex gap-3 mt-6">
                     <button onClick={onClose} className="flex-1 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-lg transition-colors">Cancel</button>
-                    <button onClick={() => onSave(notes)} className="flex-1 px-4 py-2 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-md">Save Notes</button>
+                    <button onClick={() => onSave(notes)} className="flex-1 px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-md">Save Notes</button>
                 </div>
             </div>
         </div>
@@ -213,7 +213,7 @@ export default function FollowUpsPage() {
     if (loading) {
         return (
             <div className="flex h-64 items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }
@@ -224,7 +224,7 @@ export default function FollowUpsPage() {
                 <h1 className="text-xl font-bold text-slate-800">Follow Ups</h1>
                 <button
                     onClick={handleSchedule}
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                 >
                     <Plus size={16} />
                     Schedule Follow-up
@@ -240,7 +240,7 @@ export default function FollowUpsPage() {
                         placeholder="Search date..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                     />
                 </div>
                 <button className="flex items-center gap-2 px-4 py-2 text-slate-600 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors ml-auto">
@@ -275,12 +275,12 @@ export default function FollowUpsPage() {
                                     {/* Timeline Dot */}
                                     <div className={`absolute -left-[36px] top-6 w-5 h-5 rounded-full border-4 border-white shadow-sm z-10 ${fu.status === 'Completed' ? 'bg-emerald-500' :
                                         isPast ? 'bg-rose-500' :
-                                            isToday ? 'bg-orange-500' : 'bg-slate-300'
+                                            isToday ? 'bg-amber-500' : 'bg-slate-300'
                                         }`} />
 
                                     {/* Card */}
                                     <div className={`bg-white rounded-2xl border transition-all duration-300 ${isPast ? 'border-rose-100 shadow-rose-50/50' :
-                                        isToday ? 'border-orange-100 shadow-orange-50/50 scale-[1.02]' :
+                                        isToday ? 'border-amber-100 shadow-amber-50/50 scale-[1.02]' :
                                             'border-slate-100 shadow-sm'
                                         } p-6 shadow-xl`}>
                                         <div className="flex flex-col lg:flex-row gap-6">

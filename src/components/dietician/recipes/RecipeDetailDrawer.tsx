@@ -63,7 +63,7 @@ export function RecipeDetailDrawer({ recipe: initialRecipe, isOpen, onClose }: R
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-2" />
+                            <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
                             <p className="text-sm font-medium">Loading recipe details...</p>
                         </div>
                     ) : recipe ? (
@@ -107,7 +107,7 @@ export function RecipeDetailDrawer({ recipe: initialRecipe, isOpen, onClose }: R
                                         }
                                         return (
                                             <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-600 pl-1">
-                                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
+                                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
                                                 {ing}
                                             </li>
                                         );
@@ -160,11 +160,11 @@ export function RecipeDetailDrawer({ recipe: initialRecipe, isOpen, onClose }: R
                                     )}
 
                                     {recipe.note && (
-                                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                                            <h3 className="text-sm font-black text-orange-800 mb-2 flex items-center gap-2">
+                                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                            <h3 className="text-sm font-black text-emerald-800 mb-2 flex items-center gap-2">
                                                 Note:
                                             </h3>
-                                            <p className="text-sm text-orange-700 italic leading-relaxed">
+                                            <p className="text-sm text-emerald-700 italic leading-relaxed">
                                                 {recipe.note}
                                             </p>
                                         </div>

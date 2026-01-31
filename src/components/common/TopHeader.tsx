@@ -160,7 +160,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                                         href={subItem.href}
                                         onClick={() => setDropdownOpen(null)}
                                         className={`block px-4 py-2.5 text-sm transition-colors ${pathname === subItem.href
-                                            ? 'bg-orange-50 text-orange-600 font-bold'
+                                            ? 'bg-emerald-50 text-emerald-700 font-bold'
                                             : 'text-slate-600 hover:bg-slate-50'
                                             }`}
                                     >
@@ -221,7 +221,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user }) => {
                             <Link
                                 href={user?.role === 'DIETICIAN' ? '/dietician/profile' : '/client/profile'}
                                 onClick={() => setProfileOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-orange-600 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
                             >
                                 <UserIcon size={18} />
                                 <span className="font-semibold">Edit Profile</span>

@@ -68,23 +68,23 @@ export const DietPreferenceModal: React.FC<DietPreferenceModalProps> = ({
                             key={type.id}
                             onClick={() => setSelectedType(type.id)}
                             className={`w-full p-4 rounded-xl border-2 text-left transition-all relative ${selectedType === type.id
-                                    ? 'border-orange-500 bg-orange-50'
-                                    : 'border-slate-100 hover:border-orange-200 hover:bg-slate-50'
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : 'border-slate-100 hover:border-emerald-200 hover:bg-slate-50'
                                 }`}
                         >
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <span className={`block text-sm font-bold ${selectedType === type.id ? 'text-orange-700' : 'text-slate-700'
+                                    <span className={`block text-sm font-bold ${selectedType === type.id ? 'text-emerald-700' : 'text-slate-700'
                                         }`}>
                                         {type.label}
                                     </span>
-                                    <span className={`text-xs ${selectedType === type.id ? 'text-orange-600' : 'text-slate-400'
+                                    <span className={`text-xs ${selectedType === type.id ? 'text-emerald-600' : 'text-slate-400'
                                         }`}>
                                         {type.description}
                                     </span>
                                 </div>
                                 {selectedType === type.id && (
-                                    <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white">
+                                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white">
                                         <Check size={12} strokeWidth={3} />
                                     </div>
                                 )}

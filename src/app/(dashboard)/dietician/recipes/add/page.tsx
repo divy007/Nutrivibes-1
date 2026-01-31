@@ -89,7 +89,7 @@ export default function AddRecipePage() {
                             placeholder="Enter recipe name"
                             value={formData.name}
                             onChange={(e) => handleInputChange('name', e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:font-medium placeholder:text-slate-400"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
                         />
                     </div>
 
@@ -102,7 +102,7 @@ export default function AddRecipePage() {
                                 placeholder="e.g. 15 mins"
                                 value={formData.cookingTime}
                                 onChange={(e) => handleInputChange('cookingTime', e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:font-medium placeholder:text-slate-400"
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
                             />
                         </div>
                         {/* Total Time */}
@@ -113,7 +113,7 @@ export default function AddRecipePage() {
                                 placeholder="e.g. 45 mins"
                                 value={formData.totalTime}
                                 onChange={(e) => handleInputChange('totalTime', e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:font-medium placeholder:text-slate-400"
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
                             />
                         </div>
                     </div>
@@ -124,7 +124,7 @@ export default function AddRecipePage() {
                         <select
                             value={formData.language}
                             onChange={(e) => handleInputChange('language', e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all appearance-none"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all appearance-none"
                         >
                             <option value="English">English</option>
                             <option value="Hindi">Hindi</option>
@@ -159,7 +159,7 @@ export default function AddRecipePage() {
                                         placeholder={`Step ${index + 1}`}
                                         value={instruction}
                                         onChange={(e) => updatedArray('instructions', index, e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all resize-none"
+                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all resize-none"
                                     />
                                     {formData.instructions.length > 1 && (
                                         <button
@@ -174,7 +174,7 @@ export default function AddRecipePage() {
                         </div>
                         <button
                             onClick={() => addItem('instructions')}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-orange-300 hover:text-orange-500 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
                         >
                             <Plus size={16} /> Add Step
                         </button>
@@ -187,14 +187,14 @@ export default function AddRecipePage() {
                             {formData.ingredients.map((ingredient, index) => (
                                 <div key={index} className="flex gap-2">
                                     <div className="flex-shrink-0 w-2 h-10 flex items-center justify-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-200"></div>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-200"></div>
                                     </div>
                                     <input
                                         type="text"
                                         placeholder="e.g. 2 cups Rice"
                                         value={ingredient}
                                         onChange={(e) => updatedArray('ingredients', index, e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all"
+                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all"
                                     />
                                     {formData.ingredients.length > 1 && (
                                         <button
@@ -209,7 +209,7 @@ export default function AddRecipePage() {
                         </div>
                         <button
                             onClick={() => addItem('ingredients')}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-orange-300 hover:text-orange-500 hover:bg-orange-50 transition-all flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
                         >
                             <Plus size={16} /> Add Ingredient
                         </button>
@@ -223,7 +223,7 @@ export default function AddRecipePage() {
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-12 rounded-xl text-lg flex items-center gap-3 transition-all shadow-lg shadow-orange-100 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-12 rounded-xl text-lg flex items-center gap-3 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />}
                     Save Recipe

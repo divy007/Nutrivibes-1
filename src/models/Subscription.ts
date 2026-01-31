@@ -36,6 +36,8 @@ const SubscriptionSchema = new Schema(
             enum: ['ACTIVE', 'EXPIRED', 'PENDING_PAYMENT', 'COMPLETED', 'PAUSED'],
             default: 'PENDING_PAYMENT'
         },
+        pauseDaysUsed: { type: Number, default: 0 },
+        extraPaidPauseDays: { type: Number, default: 0 },
         pauseHistory: [{
             startDate: { type: Date, required: true },
             endDate: { type: Date },

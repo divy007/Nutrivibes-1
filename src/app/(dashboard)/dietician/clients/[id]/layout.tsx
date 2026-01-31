@@ -15,7 +15,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if (loading) {
         return (
             <div className="flex h-full items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }

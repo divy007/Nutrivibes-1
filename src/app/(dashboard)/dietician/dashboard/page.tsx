@@ -79,11 +79,11 @@ export default function DieticianDashboard() {
             <Link href="/dietician/clients?status=PAUSED">
               <SummaryCard title="Paused Clients" count={stats?.pausedClients ?? 0} icon={<PauseCircle className="text-rose-400" />} color="border-rose-400" loading={loading} />
             </Link>
-            <Link href="/dietician/clients?status=DELETED">
-              <SummaryCard title="Expired Clients (Deleted)" count={stats?.expiredClients ?? 0} icon={<Clock className="text-brand-earth" />} color="border-brand-earth" loading={loading} />
+            <Link href="/dietician/clients?status=EXPIRED">
+              <SummaryCard title="Expired Plans / Clients" count={stats?.expiredClients ?? 0} icon={<Clock className="text-brand-earth" />} color="border-brand-earth" loading={loading} />
             </Link>
             <Link href="/dietician/clients?status=LEADS">
-              <SummaryCard title="Leads (Incomplete)" count={stats?.leadsCount ?? 0} icon={<Zap className="text-orange-500" />} color="border-orange-500" loading={loading} />
+              <SummaryCard title="Leads (Incomplete)" count={stats?.leadsCount ?? 0} icon={<Zap className="text-emerald-500" />} color="border-emerald-500" loading={loading} />
             </Link>
           </div>
 
@@ -125,7 +125,7 @@ export default function DieticianDashboard() {
                     )}
                   </tbody>
                 </table>
-                <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
+                <Link href="/dietician/clients?status=FOLLOWUP_TODAY" className="mt-4 text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1 hover:text-emerald-600">
                   View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
                 </Link>
               </div>
@@ -167,7 +167,7 @@ export default function DieticianDashboard() {
                     )}
                   </tbody>
                 </table>
-                <Link href="/dietician/clients?status=ACTIVE" className="mt-4 text-[10px] font-bold text-orange-500 uppercase flex items-center gap-1 hover:text-orange-600">
+                <Link href="/dietician/clients?status=ACTIVE" className="mt-4 text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1 hover:text-emerald-600">
                   View Details <ChevronRight size={12} className="rotate-90 translate-y-0.5" />
                 </Link>
               </div>

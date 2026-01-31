@@ -27,7 +27,7 @@ export function RegionChart() {
     if (loading) {
         return (
             <div className="h-64 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }

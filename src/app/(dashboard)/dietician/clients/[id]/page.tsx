@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap, UserPlus } from 'lucide-react';
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap, UserPlus, FileText, Upload, Eye, Download, X } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
@@ -12,6 +12,30 @@ import { calculateCycleStatus, CycleStatus } from '@/lib/cycle-utils';
 export default function ClientSummaryPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
     const router = useRouter();
+
+    const handleReportUpload = async () => {
+        if (!client || !reportFile) return;
+
+        setReportUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', reportFile);
+            // Empty data object to indicate partial update (no other fields)
+            fd.append('data', JSON.stringify({}));
+
+            await api.patch(`/api/clients/${client._id}`, fd);
+
+            await refreshClient();
+            setShowReportUpload(false);
+            setReportFile(null);
+            alert('Report uploaded successfully');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to upload report');
+        } finally {
+            setReportUploading(false);
+        }
+    };
 
     // Existing security states
     const [showReset, setShowReset] = useState(false);
@@ -24,6 +48,11 @@ export default function ClientSummaryPage() {
     const [symptomLogs, setSymptomLogs] = useState<any[]>([]);
     const [periodLogs, setPeriodLogs] = useState<any[]>([]);
     const [symptomsLoading, setSymptomsLoading] = useState(true);
+
+    // Report Upload State
+    const [reportFile, setReportFile] = useState<File | null>(null);
+    const [showReportUpload, setShowReportUpload] = useState(false);
+    const [reportUploading, setReportUploading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -79,7 +108,7 @@ export default function ClientSummaryPage() {
         }
     };
 
-    if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
+    if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
     if (!client) return <div className="p-8">Client not found</div>;
 
     const initials = client.name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -93,7 +122,7 @@ export default function ClientSummaryPage() {
 
                     {/* Basic Summary Card */}
                     <div className="bg-white rounded-lg border border-slate-200 p-6 flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-2xl border-2 border-white shadow-sm ring-1 ring-orange-200 font-serif">
+                        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-2xl border-2 border-white shadow-sm ring-1 ring-emerald-200 font-serif">
                             {initials}
                         </div>
                         <div className="flex-1">
@@ -103,7 +132,7 @@ export default function ClientSummaryPage() {
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{client.preferences || 'No Preferences Set'}</span>
                                 {client.primaryGoal && (
                                     <div className="flex flex-wrap gap-1 mt-1">
-                                        <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest leading-none mr-1">Goal:</span>
+                                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none mr-1">Goal:</span>
                                         {Array.isArray(client.primaryGoal) ? (
                                             client.primaryGoal.map((goal, idx) => (
                                                 <span key={idx} className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-none">
@@ -233,7 +262,7 @@ export default function ClientSummaryPage() {
                                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivations</h4>
                                         <div className="flex flex-wrap gap-2">
                                             {client.counsellingProfile.loseWeightReasons.map((reason: string, idx: number) => (
-                                                <span key={idx} className="px-3 py-1 rounded-full text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-100">
+                                                <span key={idx} className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
                                                     {reason}
                                                 </span>
                                             ))}
@@ -254,14 +283,14 @@ export default function ClientSummaryPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg border border-slate-200 p-6">
                             <div className="flex items-center gap-2 mb-4 text-[#1b4332]">
-                                <Key className="w-5 h-5 text-orange-500" />
+                                <Key className="w-5 h-5 text-emerald-500" />
                                 <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Security</h3>
                             </div>
                             {!showReset ? (
                                 <button onClick={() => setShowReset(true)} className="w-full py-2 border border-slate-200 text-xs font-bold text-slate-600 rounded hover:bg-slate-50">Reset Password</button>
                             ) : (
                                 <form onSubmit={handlePasswordReset} className="flex gap-2">
-                                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded outline-none focus:ring-1 focus:ring-orange-500" placeholder="New Password" />
+                                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded outline-none focus:ring-1 focus:ring-emerald-500" placeholder="New Password" />
                                     <button type="submit" disabled={resetLoading} className="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold rounded uppercase tracking-widest">{resetLoading ? '...' : 'Save'}</button>
                                 </form>
                             )}
@@ -339,6 +368,97 @@ export default function ClientSummaryPage() {
 
                 {/* Right Column: Persona & Cycle */}
                 <div className="space-y-6">
+
+                    {/* Medical Report Card */}
+                    <div className="bg-white rounded-lg border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <FileText size={14} className="text-emerald-500" />
+                                Medical Report
+                            </h3>
+                            {!showReportUpload && (
+                                <button
+                                    onClick={() => setShowReportUpload(true)}
+                                    className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider hover:text-emerald-700 flex items-center gap-1"
+                                >
+                                    <Upload size={12} />
+                                    {client.counsellingProfile?.medicalReport ? 'Update' : 'Upload'}
+                                </button>
+                            )}
+                        </div>
+
+                        {showReportUpload ? (
+                            <div className="space-y-3">
+                                <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => setReportFile(e.target.files?.[0] || null)}
+                                    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => { setShowReportUpload(false); setReportFile(null); }}
+                                        className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleReportUpload}
+                                        disabled={!reportFile || reportUploading}
+                                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        {reportUploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                {client.counsellingProfile?.medicalReport ? (
+                                    (client.counsellingProfile.medicalReport.startsWith('/') || client.counsellingProfile.medicalReport.startsWith('http')) ? (
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 flex items-center justify-between group">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                                    <FileText size={16} />
+                                                </div>
+                                                <span className="text-xs font-medium text-slate-600 truncate">
+                                                    {client.counsellingProfile.medicalReport.split('/').pop()}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <a
+                                                    href={client.counsellingProfile.medicalReport}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors"
+                                                    title="Preview"
+                                                >
+                                                    <Eye size={16} />
+                                                </a>
+                                                <a
+                                                    href={client.counsellingProfile.medicalReport}
+                                                    download
+                                                    className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors"
+                                                    title="Download"
+                                                >
+                                                    <Download size={16} />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-6 border-2 border-dashed border-red-200 rounded-lg bg-red-50/50">
+                                            <p className="text-xs text-red-500 font-bold mb-1">Legacy File: {client.counsellingProfile.medicalReport}</p>
+                                            <p className="text-[10px] text-slate-400">File path missing. Please upload a new report.</p>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-center py-6 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                                        <p className="text-xs text-slate-400 italic mb-2">No report available</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Cycle Widget (Females Only) */}
                     {client.gender === 'female' && (

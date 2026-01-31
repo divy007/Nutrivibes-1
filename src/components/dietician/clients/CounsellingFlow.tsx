@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ChevronLeft,
     ChevronRight,
     ArrowRight,
     Search,
     Check,
-    Square
+    Square,
+    CreditCard
 } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 interface CounsellingFlowProps {
     onClose: () => void;
@@ -27,9 +29,20 @@ const STATES = [
     'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Orissa', 'Pondicherry', 'Punjab', 'Gujarat', 'Rajasthan', 'Delhi', 'Karnataka'
 ];
 
-const CITIES = [
-    'Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Kalyan-Dombivali', 'Vasai-Virar', 'Solapur', 'Ahmedabad', 'Surat', 'Rajkot', 'Bangalore'
-];
+const CITIES_BY_STATE: Record<string, string[]> = {
+    'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Kalyan-Dombivali', 'Vasai-Virar', 'Solapur', 'Aurangabad', 'Amravati'],
+    'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar', 'Jamnagar', 'Gandhinagar', 'Junagadh'],
+    'Rajasthan': ['Jaipur', 'Jodhpur', 'Kota', 'Bikaner', 'Ajmer', 'Udaipur', 'Bhilwara', 'Alwar'],
+    'Karnataka': ['Bangalore', 'Mysore', 'Hubli-Dharwad', 'Mangalore', 'Belgaum', 'Gulbarga', 'Davangere', 'Bellary'],
+    'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala', 'Bathinda', 'Mohali', 'Hoshiarpur', 'Pathankot'],
+    'Delhi': ['New Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'Central Delhi'],
+    'Manipur': ['Imphal', 'Thoubal', 'Bishnupur', 'Churachandpur'],
+    'Meghalaya': ['Shillong', 'Tura', 'Jowai', 'Nongpoh'],
+    'Mizoram': ['Aizawl', 'Lunglei', 'Saiha', 'Champhai'],
+    'Nagaland': ['Dimapur', 'Kohima', 'Mokokchung', 'Tuensang'],
+    'Orissa': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Berhampur', 'Sambalpur', 'Puri', 'Balasore'],
+    'Pondicherry': ['Pondicherry', 'Karaikal', 'Mahe', 'Yanam']
+};
 
 const WORK_TYPES = [
     'Sitting Job', 'Standing Job', 'Homemaker', 'Traveling', 'Student Life'
@@ -117,13 +130,16 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         freqUnit: 'Day'
     });
 
+    const [plans, setPlans] = useState<any[]>([]);
+    const [loadingPlans, setLoadingPlans] = useState(false);
+
     const [formData, setFormData] = useState({
         gender: initialData?.gender || 'Male',
         maritalStatus: initialData?.maritalStatus || 'Single',
         age: initialData?.age || '',
         country: initialData?.country || 'India',
-        state: initialData?.state || 'Maharashtra',
-        city: initialData?.city || 'Mumbai',
+        state: initialData?.state || '',
+        city: initialData?.city || '',
         height: initialData?.height || '',
         weight: initialData?.weight || '',
         heightUnit: initialData?.heightUnit || 'Cm',
@@ -146,30 +162,52 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         medications: initialData?.medications || [] as any[],
         medicalReport: null as File | null,
         stressLevel: initialData?.stressLevel || 'Low',
-        medicalGoal: initialData?.medicalGoal || 'Weight Loss',
+        medicalGoal: initialData?.medicalGoal || [] as string[],
         loseWeightReasons: initialData?.loseWeightReasons || [] as string[],
         emotionalEating: initialData?.emotionalEating || 'No',
         previousDiets: initialData?.previousDiets || [] as string[],
         noMeatDays: initialData?.noMeatDays || [] as string[],
         fastDays: initialData?.fastDays || [] as string[],
         cheatMeals: initialData?.cheatMeals || 'No',
-        dietStartDate: initialData?.dietStartDate || new Date().toISOString().split('T')[0]
+        dietStartDate: initialData?.dietStartDate || new Date().toISOString().split('T')[0],
+        planId: initialData?.planId || ''
     });
 
-    const totalSteps = 31;
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                setLoadingPlans(true);
+                // Fetch active plans
+                const data = await api.get('/api/plans');
+                setPlans(data as any[]);
+            } catch (error) {
+                console.error('Failed to fetch plans', error);
+            } finally {
+                setLoadingPlans(false);
+            }
+        };
+        // Fetch only if plans empty and active step
+        if (step === 30 && plans.length === 0) {
+            fetchPlans();
+        }
+    }, [step]);
+
+    const totalSteps = 30;
 
     // Sections:
     // 1-12: DEMOGRAPHICS
     // 13-17: MEDICAL HISTORY
     // 18-21: HEALTH GOALS
     // 22: DIETARY HISTORY
-    // 23-30: LIFESTYLE & PREFERENCES
+    // 23-29: LIFESTYLE & PREFERENCES
+    // 30: SUBSCRIPTION PLAN
     const getSectionTitle = () => {
         if (step <= 12) return "Demographics & Basic Info";
         if (step <= 17) return "Medical History";
         if (step <= 21) return "Health Goals";
         if (step <= 22) return "Dietary History";
-        return "Lifestyle & Preferences";
+        if (step <= 29) return "Lifestyle & Preferences";
+        return "Subscription Plan";
     };
 
     const handleNext = () => {
@@ -187,6 +225,10 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         if (step < totalSteps) {
             setStep(step + 1);
         } else {
+            if (!formData.planId) {
+                alert("Please select a plan to continue");
+                return;
+            }
             onFinish(formData);
         }
     };
@@ -213,12 +255,12 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         <button
             onClick={() => setFormData({ ...formData, [field]: value })}
             className={`w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between font-bold ${(formData as any)[field] === value
-                ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
                 : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200 hover:bg-slate-100'
                 }`}
         >
             <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${(formData as any)[field] === value ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${(formData as any)[field] === value ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'
                     }`}>
                     {(formData as any)[field] === value && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
@@ -242,11 +284,11 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
             <button
                 onClick={toggle}
                 className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 font-bold ${isSelected
-                    ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
                     : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200 hover:bg-slate-100'
                     }`}
             >
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-slate-300 bg-white'
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 bg-white'
                     }`}>
                     {isSelected && <Check size={14} strokeWidth={4} className="text-white" />}
                 </div>
@@ -288,7 +330,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 type="number"
                                 value={formData.age}
                                 onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-orange-500 outline-none bg-transparent transition-colors"
+                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-emerald-500 outline-none bg-transparent transition-colors"
                                 placeholder="0"
                             />
                         </div>
@@ -302,7 +344,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             <select
                                 value={formData.country}
                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-orange-500 outline-none bg-white appearance-none cursor-pointer"
+                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
                             >
                                 {COUNTRIES.map(c => (
                                     <option key={c} value={c}>{c}</option>
@@ -327,7 +369,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                     key={unit}
                                     onClick={() => setFormData({ ...formData, heightUnit: unit })}
                                     className={`px-6 py-2 rounded-md font-bold text-sm transition-all ${formData.heightUnit === unit
-                                        ? 'bg-orange-500 text-white shadow-sm'
+                                        ? 'bg-emerald-600 text-white shadow-sm'
                                         : 'text-slate-500 hover:bg-slate-200'
                                         }`}
                                 >
@@ -340,7 +382,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 type="number"
                                 value={formData.height}
                                 onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-orange-500 outline-none bg-transparent transition-colors"
+                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-emerald-500 outline-none bg-transparent transition-colors"
                                 placeholder="000.00"
                             />
                         </div>
@@ -370,7 +412,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
 
                     if (val < 18.5) { category = "Underweight"; color = "text-blue-500"; }
                     else if (val < 25) { category = "Normal"; color = "text-emerald-500"; }
-                    else if (val < 30) { category = "Overweight"; color = "text-orange-500"; }
+                    else if (val < 30) { category = "Overweight"; color = "text-amber-500"; }
                     else { category = "Obese"; color = "text-rose-500"; }
 
                     return { value: val.toFixed(1), category, color };
@@ -385,7 +427,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                     key={unit}
                                     onClick={() => setFormData({ ...formData, weightUnit: unit })}
                                     className={`px-6 py-2 rounded-md font-bold text-sm transition-all ${formData.weightUnit === unit
-                                        ? 'bg-orange-500 text-white shadow-sm'
+                                        ? 'bg-emerald-600 text-white shadow-sm'
                                         : 'text-slate-500 hover:bg-slate-200'
                                         }`}
                                 >
@@ -398,7 +440,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 type="number"
                                 value={formData.weight}
                                 onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-orange-500 outline-none bg-transparent transition-colors"
+                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-emerald-500 outline-none bg-transparent transition-colors"
                                 placeholder="000"
                             />
                         </div>
@@ -407,7 +449,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             <div className="flex flex-col items-center gap-1 animate-in zoom-in-95 duration-300">
                                 <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Calculated BMI</div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-black text-orange-600">{bmi.value}</span>
+                                    <span className="text-4xl font-black text-emerald-600">{bmi.value}</span>
                                     <span className={`text-sm font-bold px-2 py-0.5 rounded-full bg-slate-100 ${bmi.color}`}>
                                         {bmi.category}
                                     </span>
@@ -424,7 +466,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             <select
                                 value={formData.state}
                                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-orange-500 outline-none bg-white appearance-none cursor-pointer"
+                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
                             >
                                 {STATES.map(s => (
                                     <option key={s} value={s}>{s}</option>
@@ -444,9 +486,10 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             <select
                                 value={formData.city}
                                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-orange-500 outline-none bg-white appearance-none cursor-pointer"
+                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
                             >
-                                {CITIES.map(c => (
+                                <option value="">Select City</option>
+                                {(CITIES_BY_STATE[formData.state as keyof typeof CITIES_BY_STATE] || []).map(c => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
                             </select>
@@ -515,7 +558,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                     value={formData.otherMedicalCondition}
                                     onChange={(e) => setFormData({ ...formData, otherMedicalCondition: e.target.value })}
                                     placeholder="Specify other conditions..."
-                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-orange-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
+                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
                                 />
                             </div>
                         )}
@@ -536,7 +579,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                     value={formData.otherDeficiency}
                                     onChange={(e) => setFormData({ ...formData, otherDeficiency: e.target.value })}
                                     placeholder="Specify other deficiencies..."
-                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-orange-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
+                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
                                 />
                             </div>
                         )}
@@ -557,7 +600,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                     value={formData.otherSurgery}
                                     onChange={(e) => setFormData({ ...formData, otherSurgery: e.target.value })}
                                     placeholder="Specify other surgeries..."
-                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-orange-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
+                                    className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white outline-none transition-all min-h-[100px] text-slate-700 font-medium"
                                 />
                             </div>
                         )}
@@ -571,7 +614,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             {formData.medications.map((med: any, idx: number) => (
                                 <div key={idx} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center group">
                                     <div>
-                                        <div className="text-xs font-bold text-orange-500 uppercase">{med.type}</div>
+                                        <div className="text-xs font-bold text-emerald-500 uppercase">{med.type}</div>
                                         <div className="font-bold text-slate-700">{med.name}</div>
                                         <div className="text-sm text-slate-500">{med.dosage} {med.unit}, {med.frequency} times a {med.freqUnit}</div>
                                     </div>
@@ -585,7 +628,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                             ))}
                             <button
                                 onClick={() => setMedicationModal(true)}
-                                className="w-full p-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-400 hover:border-orange-500 hover:text-orange-500 font-bold transition-all flex items-center justify-center gap-2"
+                                className="w-full p-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-400 hover:border-emerald-500 hover:text-emerald-600 font-bold transition-all flex items-center justify-center gap-2"
                             >
                                 <span className="text-xl">+</span> Add Medicine or Supplement
                             </button>
@@ -604,7 +647,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                             <select
                                                 value={newMed.type}
                                                 onChange={(e) => setNewMed({ ...newMed, type: e.target.value })}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                             >
                                                 <option>Medicine</option>
                                                 <option>Supplement</option>
@@ -616,7 +659,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                 type="text"
                                                 value={newMed.name}
                                                 onChange={(e) => setNewMed({ ...newMed, name: e.target.value })}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                                 placeholder="Enter name"
                                             />
                                         </div>
@@ -627,7 +670,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                     type="text"
                                                     value={newMed.dosage}
                                                     onChange={(e) => setNewMed({ ...newMed, dosage: e.target.value })}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                                 />
                                             </div>
                                             <div>
@@ -635,7 +678,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                 <select
                                                     value={newMed.unit}
                                                     onChange={(e) => setNewMed({ ...newMed, unit: e.target.value })}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                                 >
                                                     <option>Mg</option>
                                                     <option>Mcg</option>
@@ -651,7 +694,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                     type="text"
                                                     value={newMed.frequency}
                                                     onChange={(e) => setNewMed({ ...newMed, frequency: e.target.value })}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                                 />
                                             </div>
                                             <div>
@@ -659,7 +702,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                 <select
                                                     value={newMed.freqUnit}
                                                     onChange={(e) => setNewMed({ ...newMed, freqUnit: e.target.value })}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500"
+                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
                                                 >
                                                     <option>Day</option>
                                                     <option>Week</option>
@@ -675,7 +718,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                                     setMedicationModal(false);
                                                 }
                                             }}
-                                            className="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition-colors shadow-lg active:scale-[0.98]"
+                                            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition-colors shadow-lg active:scale-[0.98]"
                                         >
                                             Submit
                                         </button>
@@ -689,13 +732,13 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                 return (
                     <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto py-12">
                         <h2 className="text-xl font-bold text-slate-800">Medical report</h2>
-                        <div className="w-full p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center justify-center text-center group hover:border-orange-500 hover:bg-orange-50/10 transition-all cursor-pointer relative">
+                        <div className="w-full p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center justify-center text-center group hover:border-emerald-500 hover:bg-emerald-50/10 transition-all cursor-pointer relative">
                             <input
                                 type="file"
                                 onChange={(e) => setFormData({ ...formData, medicalReport: e.target.files?.[0] || null })}
                                 className="absolute inset-0 opacity-0 cursor-pointer"
                             />
-                            <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-orange-500 mb-4 group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-emerald-500 mb-4 group-hover:scale-110 transition-transform">
                                 <Search size={24} />
                             </div>
                             <div className="font-bold text-slate-700">
@@ -718,11 +761,11 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                 );
             case 19:
                 return (
-                    <div className="flex flex-col items-center gap-6 w-full max-w-sm mx-auto py-8 text-center">
-                        <h2 className="text-xl font-bold text-slate-800">Primary Health Goal</h2>
-                        <div className="w-full flex flex-col gap-3">
-                            {MEDICAL_GOALS.map(option => (
-                                <OptionButton key={option} label={option} value={option} field="medicalGoal" />
+                    <div className="flex flex-col items-center gap-6 w-full max-w-xl mx-auto py-8">
+                        <h2 className="text-xl font-bold text-slate-800 text-center">Primary Health Goals</h2>
+                        <div className="w-full grid grid-cols-2 gap-3 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                            {MEDICAL_GOALS.map(item => (
+                                <MultiSelectToggle key={item} item={item} field="medicalGoal" />
                             ))}
                         </div>
                     </div>
@@ -780,7 +823,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 type="number"
                                 value={formData.cigarettesPerDay}
                                 onChange={(e) => setFormData({ ...formData, cigarettesPerDay: e.target.value })}
-                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-orange-500 outline-none bg-transparent transition-colors"
+                                className="w-full p-4 text-center text-2xl font-bold border-b-2 border-slate-200 focus:border-emerald-500 outline-none bg-transparent transition-colors"
                                 placeholder="0"
                             />
                         </div>
@@ -841,21 +884,55 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                         </div>
                     </div>
                 );
-            case 31:
+            case 30:
                 return (
-                    <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto py-12 text-center">
-                        <h2 className="text-xl font-bold text-slate-800">When would you like to start your diet?</h2>
-                        <div className="w-full">
-                            <input
-                                type="date"
-                                value={formData.dietStartDate}
-                                onChange={(e) => setFormData({ ...formData, dietStartDate: e.target.value })}
-                                className="w-full p-4 text-center text-xl font-bold border-b-2 border-slate-200 focus:border-orange-500 outline-none bg-transparent transition-colors cursor-pointer"
-                            />
-                        </div>
-                        <p className="text-sm text-slate-400 font-medium mt-4">This date will be used to plan your weekly diet schedule.</p>
+                    <div className="flex flex-col items-center gap-8 w-full max-w-3xl mx-auto py-8">
+                        <h2 className="text-xl font-bold text-slate-800">Select a Subscription Plan</h2>
+                        {loadingPlans ? (
+                            <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto p-1 custom-scrollbar">
+                                {plans.map((plan: any) => (
+                                    <button
+                                        key={plan._id}
+                                        onClick={() => setFormData({ ...formData, planId: plan._id })}
+                                        className={`p-6 rounded-xl border-2 text-left transition-all relative ${formData.planId === plan._id
+                                            ? 'border-emerald-500 bg-emerald-50 shadow-md ring-1 ring-emerald-500'
+                                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="font-bold text-emerald-900">{plan.name}</h3>
+                                            {formData.planId === plan._id && (
+                                                <div className="bg-emerald-500 text-white p-1 rounded-full">
+                                                    <Check size={14} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-2xl font-black text-slate-800 mb-1">
+                                            ₹{plan.price}
+                                        </div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                                            {plan.durationMonths} Months Duration
+                                        </div>
+                                        <div className="space-y-2">
+                                            {plan.features?.slice(0, 3).map((feature: string, idx: number) => (
+                                                <div key={idx} className="flex items-center gap-2 text-sm text-slate-600">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                                    {feature}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {plans.length === 0 && !loadingPlans && (
+                            <div className="text-slate-500 italic">No active plans found.</div>
+                        )}
                     </div>
                 );
+
             default:
                 return null;
         }
@@ -866,7 +943,8 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         if (step <= 17) return 5;
         if (step <= 21) return 4;
         if (step <= 22) return 1;
-        return 9; // 23 to 31
+        if (step <= 29) return 7; // 23 to 29
+        return 1; // 30
     };
 
     const getCurrentDotStep = () => {
@@ -874,7 +952,8 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
         if (step <= 17) return step - 12;
         if (step <= 21) return step - 17;
         if (step <= 22) return step - 21;
-        return step - 22;
+        if (step <= 29) return step - 22;
+        return 1;
     };
 
     return (
@@ -899,10 +978,10 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                 <div className="flex items-center justify-between max-w-md mx-auto">
                     {Array.from({ length: getDotsCount() }, (_, i) => i + 1).map((s) => (
                         <div key={s} className="flex items-center flex-1 last:flex-none">
-                            <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${s <= getCurrentDotStep() ? 'bg-orange-500' : 'bg-slate-200'
+                            <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${s <= getCurrentDotStep() ? 'bg-emerald-600' : 'bg-slate-200'
                                 }`} />
                             {s < getDotsCount() && (
-                                <div className={`h-1 flex-1 mx-1.5 rounded-full transition-all duration-300 ${s < getCurrentDotStep() ? 'bg-orange-500' : 'bg-slate-100'
+                                <div className={`h-1 flex-1 mx-1.5 rounded-full transition-all duration-300 ${s < getCurrentDotStep() ? 'bg-emerald-600' : 'bg-slate-100'
                                     }`} />
                             )}
                         </div>
@@ -919,7 +998,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                 <div className="flex flex-col items-center gap-4 mt-8">
                     <button
                         onClick={handleNext}
-                        className="w-full max-w-md bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        className="w-full max-w-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-emerald-600/20"
                     >
                         {step === totalSteps ? 'Finish' : 'Next'}
                         <ArrowRight size={18} />

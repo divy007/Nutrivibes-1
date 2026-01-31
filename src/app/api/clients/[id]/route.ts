@@ -2,17 +2,27 @@ import { NextResponse } from 'next/server';
 import { connectDB as dbConnect } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import User from '@/models/User'; // Direct import
+import mongoose from 'mongoose';
+import { writeFile, mkdir, unlink } from 'fs/promises';
+import path from 'path';
+import fs from 'fs';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
     const { id } = await params;
+
+    if (!mongoose.isValidObjectId(id)) {
+        return NextResponse.json({ error: 'Invalid client ID' }, { status: 400 });
+    }
+
     try {
         const client = await Client.findById(id);
         if (!client) {
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
         return NextResponse.json(client);
-    } catch {
+    } catch (error) {
+        console.error('Error fetching client:', error);
         return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 });
     }
 }
@@ -20,8 +30,79 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
     const { id } = await params;
+
+    if (!mongoose.isValidObjectId(id)) {
+        return NextResponse.json({ error: 'Invalid client ID' }, { status: 400 });
+    }
+
     try {
-        const body = await req.json();
+        let body: any = {};
+        const contentType = req.headers.get('content-type') || '';
+
+        if (contentType.includes('multipart/form-data')) {
+            const formData = await req.formData();
+            const file = formData.get('file') as File | null;
+            const dataStr = formData.get('data') as string;
+
+            if (dataStr) {
+                try {
+                    body = JSON.parse(dataStr);
+                } catch (e) {
+                    return NextResponse.json({ error: 'Invalid JSON data' }, { status: 400 });
+                }
+            }
+
+            if (file) {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                // Sanitize filename
+                const filename = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+
+                // Define upload path
+                const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'reports', id);
+
+                // Ensure directory exists
+                try {
+                    await mkdir(uploadDir, { recursive: true });
+                } catch (e) {
+                    console.error('Error creating directory', e);
+                }
+
+                // Handle "Latest Only": Delete existing file if present in DB
+                const currentClient = await Client.findById(id);
+                if (currentClient?.counsellingProfile?.medicalReport) {
+                    const oldPathRelative = currentClient.counsellingProfile.medicalReport;
+                    if (oldPathRelative.startsWith('/uploads/reports/')) {
+                        const oldPathAbsolute = path.join(process.cwd(), 'public', oldPathRelative);
+                        try {
+                            // Check if file exists before deleting
+                            if (fs.existsSync(oldPathAbsolute)) {
+                                await unlink(oldPathAbsolute);
+                            }
+                        } catch (e) {
+                            console.warn('Failed to delete old report:', e);
+                        }
+                    }
+                }
+
+                // Write new file
+                const filePath = path.join(uploadDir, filename);
+                await writeFile(filePath, buffer);
+
+
+                // Update body with new public path
+                const publicPath = `/uploads/reports/${id}/${filename}`;
+
+                if (body.counsellingProfile) {
+                    // Full update scenario (from CounsellingFlow)
+                    body.counsellingProfile.medicalReport = publicPath;
+                } else {
+                    // Partial update scenario (from Dashboard Upload)
+                    body['counsellingProfile.medicalReport'] = publicPath;
+                }
+            }
+        } else {
+            body = await req.json();
+        }
 
         // Auto-calculate Ideal Weight if height is updated and idealWeight is missing
         if (body.height && !body.idealWeight) {
@@ -75,6 +156,43 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 // Clear separate recoverAction field before update to avoid schema error
                 delete body.recoverAction;
             }
+        }
+
+        // Subscription Creation Logic
+        if (body.planId) {
+            const Plan = (await import('@/models/Plan')).default;
+            const Subscription = (await import('@/models/Subscription')).default;
+
+            const selectedPlan = await Plan.findById(body.planId);
+            if (!selectedPlan) {
+                return NextResponse.json({ error: 'Selected plan not found' }, { status: 400 });
+            }
+
+            // Calculate dates
+            const startDate = body.dietStartDate ? new Date(body.dietStartDate) : new Date();
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + selectedPlan.durationMonths);
+
+            // Deactivate existing active subscriptions
+            await Subscription.updateMany(
+                { clientId: id, status: 'ACTIVE' },
+                { $set: { status: 'EXPIRED' } }
+            );
+
+            // Create new subscription
+            await Subscription.create({
+                clientId: id,
+                planId: body.planId,
+                startDate,
+                endDate,
+                price: selectedPlan.price,
+                status: 'ACTIVE',
+                features: selectedPlan.features,
+                consultations: selectedPlan.consultations
+            });
+
+            body.status = 'ACTIVE';
+            delete body.planId; // Remove from body as it's not in Client schema
         }
 
         const client = await Client.findByIdAndUpdate(id, body, {

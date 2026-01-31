@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="h-20 w-auto mx-auto animate-pulse"
                     />
                     <div className="flex items-center justify-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
-                        <div className="h-1 w-1 bg-orange-500 rounded-full animate-bounce" />
+                        <div className="h-1 w-1 bg-emerald-500 rounded-full animate-bounce" />
                         Loading...
                     </div>
                 </div>

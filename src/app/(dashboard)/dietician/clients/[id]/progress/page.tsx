@@ -203,7 +203,7 @@ export default function ProgressPage() {
     if (loading) {
         return (
             <div className="flex h-full items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             </div>
         );
     }
@@ -215,7 +215,7 @@ export default function ProgressPage() {
                 {/* Weight Card */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
                     <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
+                        <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-500">
                             <Scale size={24} />
                         </div>
                         <select
@@ -282,7 +282,7 @@ export default function ProgressPage() {
                             <div className="h-full bg-blue-400" style={{ width: '18%' }} />
                             <div className="h-full bg-green-400" style={{ width: '25%' }} />
                             <div className="h-full bg-yellow-400" style={{ width: '15%' }} />
-                            <div className="h-full bg-orange-400" style={{ width: '20%' }} />
+                            <div className="h-full bg-amber-500" style={{ width: '20%' }} />
                             <div className="h-full bg-red-400" style={{ width: '22%' }} />
                         </div>
                         <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
@@ -300,7 +300,7 @@ export default function ProgressPage() {
                         <div className="p-3 bg-cyan-50 rounded-2xl text-cyan-500">
                             <Droplet size={24} />
                         </div>
-                        <div className="text-[10px] font-bold text-orange-500 uppercase bg-orange-50 px-3 py-1 rounded-full">
+                        <div className="text-[10px] font-bold text-cyan-600 uppercase bg-cyan-50 px-3 py-1 rounded-full">
                             Today
                         </div>
                     </div>
@@ -357,7 +357,7 @@ export default function ProgressPage() {
                         <div className="space-y-1">
                             <h4 className="text-lg font-black text-slate-800">Weight Progress</h4>
                         </div>
-                        <button className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600">
+                        <button className="text-[10px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-600">
                             View More
                         </button>
                     </div>
@@ -367,8 +367,8 @@ export default function ProgressPage() {
                                 <AreaChart data={filteredWeightData}>
                                     <defs>
                                         <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -409,7 +409,7 @@ export default function ProgressPage() {
                                     <Area
                                         type="monotone"
                                         dataKey="weight"
-                                        stroke="#f97316"
+                                        stroke="#10b981"
                                         strokeWidth={3}
                                         fillOpacity={1}
                                         fill="url(#colorWeight)"
