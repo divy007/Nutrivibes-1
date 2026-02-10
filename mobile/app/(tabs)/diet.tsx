@@ -11,6 +11,7 @@ import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, Clock } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import { useIsFocused } from '@react-navigation/native';
+import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 
 const MEAL_SLOTS = [
     { time: '07:00 AM', name: 'Early Morning' },
@@ -29,6 +30,7 @@ export default function DietPlanScreen() {
     const [weekPlan, setWeekPlan] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
     const isFocused = useIsFocused();
 
     useEffect(() => {
@@ -264,11 +266,40 @@ export default function DietPlanScreen() {
                         );
                     })
                 ) : (
-                    <View style={[styles.slotCard, { borderColor: theme.brandSage + '10', alignItems: 'center', padding: 32 }]}>
-                        <Text style={[styles.emptyText, { fontSize: 14 }]}>No meals scheduled for this day.</Text>
+                    <View style={[styles.slotCard, { borderColor: theme.brandSage + '10', alignItems: 'center', padding: 32, gap: 16 }]}>
+                        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.brandSage + '15', alignItems: 'center', justifyContent: 'center' }}>
+                            <CalendarIcon size={32} color={theme.brandForest} />
+                        </View>
+                        <View style={{ alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 16, fontWeight: '700', color: theme.brandForest }}>No Plan Assigned</Text>
+                            <Text style={{ fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 20 }}>
+                                Connect with your dietician to get your personalized nutrition plan.
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={{
+                                marginTop: 8,
+                                backgroundColor: theme.brandForest,
+                                paddingHorizontal: 24,
+                                paddingVertical: 12,
+                                borderRadius: 12,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 8
+                            }}
+                            onPress={() => setIsBookAppointmentOpen(true)}
+                        >
+                            <Text style={{ color: '#FFF', fontWeight: '700' }}>Book Appointment</Text>
+                            <ChevronRight size={16} color="#FFF" />
+                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
+
+            <BookAppointmentModal
+                isOpen={isBookAppointmentOpen}
+                onClose={() => setIsBookAppointmentOpen(false)}
+            />
         </View>
     );
 }

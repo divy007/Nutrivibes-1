@@ -12,6 +12,7 @@ type User = {
     email: string;
     role: string;
     isProfileComplete: boolean;
+    status: string;
     // add other fields as needed
 } | null;
 

@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -25,6 +25,7 @@ import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
 import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
 import CycleSettingsModal from '@/components/dashboard/CycleSettingsModal';
 import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
+import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 import { getLocalDateString } from '@/lib/date-utils';
 
 export default function DashboardScreen() {
@@ -52,6 +53,7 @@ export default function DashboardScreen() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSavingSymptoms, setIsSavingSymptoms] = useState(false);
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+  const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = (Colors as any)[colorScheme ?? 'light'];
@@ -369,6 +371,25 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.content}>
+          {user?.status !== 'ACTIVE' && (
+            <TouchableOpacity
+              style={[styles.bookAppointmentCard, { backgroundColor: theme.brandForest }]}
+              onPress={() => setIsBookAppointmentOpen(true)}
+              activeOpacity={0.9}
+            >
+              <View style={[styles.bookIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Calendar size={28} color="#FFF" />
+              </View>
+              <View style={[styles.bookTextContainer, { backgroundColor: 'transparent' }]}>
+                <Text style={styles.bookTitle}>Book Appointment</Text>
+                <Text style={styles.bookSubtitle}>Schedule a session with your dietician</Text>
+              </View>
+              <View style={[styles.bookArrow, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Text style={{ color: '#FFF', fontSize: 20 }}>→</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
           {profile?.primaryGoal && (
             <View style={[styles.goalBanner, { backgroundColor: theme.background, borderColor: theme.brandSage + '10' }]}>
               <View style={[styles.goalIconContainer, { backgroundColor: theme.brandSage + '10' }]}>
@@ -506,6 +527,11 @@ export default function DashboardScreen() {
         initialItems={editMealData?.items}
         existingLogs={mealLogs}
       />
+
+      <BookAppointmentModal
+        isOpen={isBookAppointmentOpen}
+        onClose={() => setIsBookAppointmentOpen(false)}
+      />
     </View >
   );
 }
@@ -515,8 +541,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   goalBanner: {
-    padding: 24,
-    borderRadius: 32,
+    padding: 20,
+    borderRadius: 24,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -529,9 +555,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   goalIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
@@ -773,5 +799,47 @@ const styles = StyleSheet.create({
   },
   skeleton: {
     backgroundColor: '#f1f5f9',
-  }
+  },
+  bookAppointmentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 24,
+    gap: 16,
+    shadowColor: '#1B4332',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 8,
+  },
+  bookIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  bookTitle: {
+    fontSize: 22, // Increased from 18 to 22 for better visibility
+    fontWeight: '900',
+    color: '#FFF',
+    letterSpacing: 0.5,
+  },
+  bookSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+  },
+  bookArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

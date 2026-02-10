@@ -6,8 +6,9 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { Check, RotateCcw } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import { useRouter } from 'expo-router';
+import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 
-const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, width: number }) => {
+const PlanCard = ({ plan, highlight, width, onBook }: { plan: any, highlight: boolean, width: number, onBook: (planName: string) => void }) => {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
     const router = useRouter();
@@ -55,9 +56,9 @@ const PlanCard = ({ plan, highlight, width }: { plan: any, highlight: boolean, w
             <View style={[styles.stickyButtonContainer, { backgroundColor: theme.background }]}>
                 <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.brandEarth }]}
-                    onPress={() => router.push('/contact')}
+                    onPress={() => onBook(plan.name)}
                 >
-                    <Text style={styles.buttonText}>Contact to Join</Text>
+                    <Text style={styles.buttonText}>Book Appointment</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -70,6 +71,8 @@ export default function PlansScreen() {
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         fetchPlans();
@@ -140,7 +143,15 @@ export default function PlansScreen() {
             >
                 {plans.length > 0 ? plans.map((plan, index) => (
                     <View key={plan._id || index} style={[styles.cardWrapper, { width: CARD_WIDTH, marginRight: index === plans.length - 1 ? 0 : SPACING }]}>
-                        <PlanCard plan={plan} highlight={plan.isRecommended} width={CARD_WIDTH} />
+                        <PlanCard
+                            plan={plan}
+                            highlight={plan.isRecommended}
+                            width={CARD_WIDTH}
+                            onBook={(planName) => {
+                                setSelectedPlan(planName);
+                                setIsBookAppointmentOpen(true);
+                            }}
+                        />
                     </View>
                 )) : (
                     <View style={{ width: width - 40, alignItems: 'center', justifyContent: 'center' }}>
@@ -148,6 +159,15 @@ export default function PlansScreen() {
                     </View>
                 )}
             </ScrollView>
+
+            <BookAppointmentModal
+                isOpen={isBookAppointmentOpen}
+                onClose={() => {
+                    setIsBookAppointmentOpen(false);
+                    setSelectedPlan(undefined);
+                }}
+                selectedPlan={selectedPlan}
+            />
         </SafeAreaView>
     );
 }

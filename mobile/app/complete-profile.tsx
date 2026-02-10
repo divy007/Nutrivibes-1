@@ -344,6 +344,7 @@ export default function CompleteProfileScreen() {
                                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                                             onChange={onDateChange}
                                             maximumDate={new Date()}
+                                            minimumDate={new Date(1900, 0, 1)}
                                         />
                                         {Platform.OS === 'ios' && (
                                             <TouchableOpacity
