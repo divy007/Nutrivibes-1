@@ -3,7 +3,7 @@ import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityInd
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle, Calendar } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle, Calendar, Lock } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -38,6 +38,9 @@ export default function ProfileScreen() {
     const [heightFt, setHeightFt] = useState('');
     const [heightIn, setHeightIn] = useState('');
 
+    const [isHeightLocked, setIsHeightLocked] = useState(false);
+    const [isWeightLocked, setIsWeightLocked] = useState(false);
+
     useEffect(() => {
         fetchProfile();
     }, []);
@@ -67,6 +70,11 @@ export default function ProfileScreen() {
                 const inches = Math.round(totalInches % 12);
                 setHeightFt(feet.toString());
                 setHeightIn(inches.toString());
+                setIsHeightLocked(true);
+            }
+
+            if (data.weight) {
+                setIsWeightLocked(true);
             }
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -332,14 +340,16 @@ export default function ProfileScreen() {
                                     </View>
                                     <View style={styles.unitToggle}>
                                         <TouchableOpacity
-                                            style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive]}
-                                            onPress={() => setHeightUnit('cm')}
+                                            style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive, isHeightLocked && { opacity: 0.5 }]}
+                                            onPress={() => !isHeightLocked && setHeightUnit('cm')}
+                                            disabled={isHeightLocked}
                                         >
                                             <Text style={[styles.unitText, heightUnit === 'cm' && styles.unitTextActive]}>CM</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            style={[styles.unitButton, heightUnit === 'ft' && styles.unitButtonActive]}
-                                            onPress={() => setHeightUnit('ft')}
+                                            style={[styles.unitButton, heightUnit === 'ft' && styles.unitButtonActive, isHeightLocked && { opacity: 0.5 }]}
+                                            onPress={() => !isHeightLocked && setHeightUnit('ft')}
+                                            disabled={isHeightLocked}
                                         >
                                             <Text style={[styles.unitText, heightUnit === 'ft' && styles.unitTextActive]}>FT/IN</Text>
                                         </TouchableOpacity>
@@ -347,38 +357,47 @@ export default function ProfileScreen() {
                                 </View>
 
                                 {heightUnit === 'cm' ? (
-                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <View style={[styles.inputContainer, { backgroundColor: isHeightLocked ? '#f1f5f9' : '#f8fafc', borderColor: '#f1f5f9' }]}>
                                         <Ruler size={20} color="#94a3b8" />
                                         <TextInput
-                                            style={[styles.input, { color: theme.text }]}
+                                            style={[styles.input, { color: isHeightLocked ? '#94a3b8' : theme.text }]}
                                             value={formData.height}
                                             onChangeText={(t) => setFormData({ ...formData, height: t })}
                                             placeholder="Height in cm"
                                             keyboardType="numeric"
+                                            editable={!isHeightLocked}
                                         />
+                                        {isHeightLocked && <Lock size={16} color="#94a3b8" />}
                                     </View>
                                 ) : (
                                     <View style={{ flexDirection: 'row', gap: 12 }}>
-                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: isHeightLocked ? '#f1f5f9' : '#f8fafc', borderColor: '#f1f5f9' }]}>
                                             <TextInput
-                                                style={[styles.input, { color: theme.text }]}
+                                                style={[styles.input, { color: isHeightLocked ? '#94a3b8' : theme.text }]}
                                                 value={heightFt}
                                                 onChangeText={setHeightFt}
                                                 placeholder="Ft"
                                                 keyboardType="numeric"
+                                                editable={!isHeightLocked}
                                             />
                                             <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#94a3b8' }}>ft</Text>
                                         </View>
-                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <View style={[styles.inputContainer, { flex: 1, backgroundColor: isHeightLocked ? '#f1f5f9' : '#f8fafc', borderColor: '#f1f5f9' }]}>
                                             <TextInput
-                                                style={[styles.input, { color: theme.text }]}
+                                                style={[styles.input, { color: isHeightLocked ? '#94a3b8' : theme.text }]}
                                                 value={heightIn}
                                                 onChangeText={setHeightIn}
                                                 placeholder="In"
                                                 keyboardType="numeric"
+                                                editable={!isHeightLocked}
                                             />
                                             <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#94a3b8' }}>in</Text>
                                         </View>
+                                        {isHeightLocked && (
+                                            <View style={{ justifyContent: 'center' }}>
+                                                <Lock size={16} color="#94a3b8" />
+                                            </View>
+                                        )}
                                     </View>
                                 )}
                             </View>
@@ -388,15 +407,17 @@ export default function ProfileScreen() {
                                     <Text style={styles.label}>Weight (kg)</Text>
                                     <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
                                 </View>
-                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                <View style={[styles.inputContainer, { backgroundColor: isWeightLocked ? '#f1f5f9' : '#f8fafc', borderColor: '#f1f5f9' }]}>
                                     <Weight size={20} color="#94a3b8" />
                                     <TextInput
-                                        style={[styles.input, { color: theme.text }]}
+                                        style={[styles.input, { color: isWeightLocked ? '#94a3b8' : theme.text }]}
                                         value={formData.weight}
                                         onChangeText={(t) => setFormData({ ...formData, weight: t })}
                                         placeholder="0"
                                         keyboardType="numeric"
+                                        editable={!isWeightLocked}
                                     />
+                                    {isWeightLocked && <Lock size={16} color="#94a3b8" />}
                                 </View>
                             </View>
 

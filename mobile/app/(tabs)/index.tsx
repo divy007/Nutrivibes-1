@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner-native';
 
 import WeightTracker from '@/components/dashboard/WeightTracker';
@@ -22,7 +23,7 @@ import MeasurementTracker from '@/components/dashboard/MeasurementTracker';
 import LogMeasurementModal from '@/components/dashboard/LogMeasurementModal';
 import LogMealModal from '@/components/dashboard/LogMealModal';
 import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
-import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
+import { CycleTrackerCard } from '@/compone nts/dashboard/CycleTrackerCard';
 import CycleSettingsModal from '@/components/dashboard/CycleSettingsModal';
 import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
@@ -42,6 +43,22 @@ export default function DashboardScreen() {
   const measurementLogs = data?.measurementLogs || [];
   const cycleStatus = data?.cycleStatus;
   const lastPeriodLog = data?.lastPeriodLog;
+
+  // Fetch Health Assessment
+  const { data: assessment } = useQuery({
+    queryKey: ['health-assessment'],
+    queryFn: () => api.get<any>('/api/clients/me/health-assessment'),
+    retry: false
+  });
+
+  const SCORE_RANGES = [
+    { min: 0, max: 30, color: '#FF4D4D' },
+    { min: 31, max: 40, color: '#FFA500' },
+    { min: 41, max: 60, color: '#FFD700' },
+    { min: 61, max: 75, color: '#ADFF2F' },
+    { min: 76, max: 89, color: '#32CD32' },
+    { min: 90, max: 100, color: '#008000' }
+  ];
 
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -168,10 +185,13 @@ export default function DashboardScreen() {
       });
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
-      const previousData = queryClient.getQueryData(['dashboard']);
+      const today = getLocalDateString();
+      const queryKey = ['dashboard', today];
 
-      queryClient.setQueryData(['dashboard'], (old: any) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old: any) => {
         if (!old || !old.waterData) return old;
         return {
           ...old,
@@ -182,14 +202,17 @@ export default function DashboardScreen() {
         };
       });
 
-      return { previousData };
+      return { previousData, queryKey };
     },
     onError: (err, newTodo, context) => {
-      queryClient.setQueryData(['dashboard'], context?.previousData);
+      if (context?.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
       toast.error('Failed to add water');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      const today = getLocalDateString();
+      queryClient.invalidateQueries({ queryKey: ['dashboard', today] });
     },
   });
 
@@ -315,6 +338,31 @@ export default function DashboardScreen() {
                   onPress={() => setIsProfileMenuOpen(false)}
                 />
                 <View style={[styles.menuDropdown, { backgroundColor: theme.background }]}>
+                  {assessment && (
+                    <>
+                      <TouchableOpacity
+                        style={styles.scoreCard}
+                        onPress={() => {
+                          setIsProfileMenuOpen(false);
+                          router.push('/audit');
+                        }}
+                      >
+                        <View style={{ flex: 1, gap: 4 }}>
+                          <Text style={styles.scoreTitle}>Wow you made it!</Text>
+                          <Text style={styles.scoreDesc}>
+                            Based on the analysis, your health score is <Text style={{ fontWeight: '900', color: theme.brandForest }}>{assessment.totalScore}</Text>. Click here to know more.
+                          </Text>
+                        </View>
+                        <View style={[styles.menuScoreCircle, { borderColor: SCORE_RANGES.find(r => assessment.totalScore >= r.min && assessment.totalScore <= r.max)?.color || theme.brandSage }]}>
+                          <Text style={[styles.menuScoreValue, { color: SCORE_RANGES.find(r => assessment.totalScore >= r.min && assessment.totalScore <= r.max)?.color || theme.brandSage }]}>
+                            {assessment.totalScore}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                      <View style={styles.menuDivider} />
+                    </>
+                  )}
+
                   <View style={styles.menuHeader}>
                     <Text style={styles.menuLabel}>Logged in as</Text>
                     <Text style={[styles.menuEmail, { color: theme.brandForest }]} numberOfLines={1}>
@@ -688,7 +736,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     right: 0,
-    width: 220, // Slightly wider for better text handling
+    width: 320, // Wider for score card
     borderRadius: 20,
     padding: 8,
     shadowColor: '#000',
@@ -841,5 +889,47 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scoreCard: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scoreInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  scoreTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  scoreDesc: {
+    fontSize: 12,
+    color: '#64748b',
+    lineHeight: 16,
+  },
+  menuScoreCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f1f5f9',
+  },
+  menuScoreValue: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#334155',
   },
 });

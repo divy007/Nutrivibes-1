@@ -48,6 +48,7 @@ export default function TabLayout() {
         name="audit"
         options={{
           title: 'Wellness Audit',
+          headerShown: false,
           tabBarIcon: ({ color }) => <Activity size={24} color={color} />,
         }}
       />

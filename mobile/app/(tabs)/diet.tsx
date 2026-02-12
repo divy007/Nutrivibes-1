@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, Clock } from 'lucide-react-native';
+import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Clock } from 'lucide-react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import { useIsFocused } from '@react-navigation/native';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
@@ -157,13 +157,25 @@ export default function DietPlanScreen() {
                             onPress={() => setSelectedDate(prev => addDays(prev, -7))}
                             style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
                         >
+                            <ChevronsLeft size={20} color={theme.brandForest} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setSelectedDate(prev => addDays(prev, -1))}
+                            style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
+                        >
                             <ChevronLeft size={20} color={theme.brandForest} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setSelectedDate(prev => addDays(prev, 1))}
+                            style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
+                        >
+                            <ChevronRight size={20} color={theme.brandForest} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => setSelectedDate(prev => addDays(prev, 7))}
                             style={[styles.navButton, { backgroundColor: theme.brandSage + '15' }]}
                         >
-                            <ChevronRight size={20} color={theme.brandForest} />
+                            <ChevronsRight size={20} color={theme.brandForest} />
                         </TouchableOpacity>
                     </View>
                 </View>

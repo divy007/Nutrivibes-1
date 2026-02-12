@@ -5,11 +5,21 @@ import { Text, View } from '@/components/Themed';
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Activity, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
+
+const SCORE_RANGES = [
+  { min: 0, max: 30, color: '#FF4D4D', label: 'Start taking steps to get better today before things get out of hand.', risk: 'Excessive Risk' },
+  { min: 31, max: 40, color: '#FFA500', label: 'Review your weak areas and start working on them today.', risk: 'Weak Areas' },
+  { min: 41, max: 60, color: '#FFD700', label: 'Before things become serious, Start your fitness journey today.', risk: 'Moderate Risk' },
+  { min: 61, max: 75, color: '#ADFF2F', label: 'There is scope of improvement. Your improvement areas are highlighted.', risk: 'Improvement' },
+  { min: 76, max: 89, color: '#32CD32', label: 'There are areas where you can do even better. Review them and take action.', risk: 'Better' },
+  { min: 90, max: 100, color: '#008000', label: 'You are awesome! Keep going. We have identified areas which can help you further.', risk: 'Awesome' }
+];
 
 // Logic mirrored from web app
 const ASSESSMENT_QUESTIONS = [
@@ -34,6 +44,14 @@ const ASSESSMENT_QUESTIONS = [
     options: [{ label: 'Never', score: 25 }, { label: '1xWeek', score: 15 }, { label: '2-3xWeek', score: 5 }, { label: 'Daily', score: 0 }]
   },
   {
+    id: 24, category: 'eat', question: 'How often do you order food online?',
+    options: [{ label: 'Never', score: 25 }, { label: '1xWeek', score: 15 }, { label: '2-3xWeek', score: 5 }, { label: 'Daily', score: 0 }]
+  },
+  {
+    id: 25, category: 'eat', question: 'When you are thirsty, what do you usually choose?',
+    options: [{ label: 'Water', score: 25 }, { label: 'Tea/Coffee', score: 5 }, { label: 'Soft Drink', score: 0 }, { label: 'Juice Box', score: 5 }]
+  },
+  {
     id: 6, category: 'eat', question: 'How often do you consume Tea/Coffee (20ml)?',
     options: [{ label: 'Never', score: 25 }, { label: '1xWeek', score: 20 }, { label: '2-3xWeek', score: 10 }, { label: '> 3X Day', score: 0 }]
   },
@@ -46,7 +64,7 @@ const ASSESSMENT_QUESTIONS = [
     options: [{ label: '1-4 Glasses', score: 5 }, { label: '5-8 Glasses', score: 15 }, { label: '8-12 Glasses', score: 25 }, { label: '> 12 Glasses', score: 20 }]
   },
   {
-    id: 9, category: 'lifestyle', question: 'Do you read the ingredients on everything you consume?',
+    id: 9, category: 'eat', question: 'Do you read the ingredients on everything you consume?',
     options: [{ label: 'Yes', score: 25 }, { label: 'Sometimes', score: 15 }, { label: 'No', score: 5 }, { label: "Don't Care", score: 0 }]
   },
   {
@@ -62,7 +80,7 @@ const ASSESSMENT_QUESTIONS = [
     options: [{ label: 'Yes', score: 0 }, { label: 'No', score: 25 }, { label: 'Socially', score: 15 }]
   },
   {
-    id: 13, category: 'lifestyle', question: 'When you start feeling unwell like a cold, you?',
+    id: 13, category: 'lifestyle', question: 'When you start feeling unwell like a cold, you will?',
     options: [{ label: 'Take home remedy', score: 25 }, { label: 'Take a Medicine', score: 10 }, { label: 'Call the doctor', score: 5 }, { label: 'Ignore it', score: 0 }]
   },
   {
@@ -107,24 +125,28 @@ const ASSESSMENT_QUESTIONS = [
   }
 ];
 
-export default function WellnessAuditScreen() {
+export default function AuditScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+
+  // State
   const [assessment, setAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [userAnswers, setUserAnswers] = useState<{ questionId: number, score: number, answerIndex: number }[]>([]);
 
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const getScoreDetails = (score: number) => {
+    return SCORE_RANGES.find(r => score >= r.min && score <= r.max) || SCORE_RANGES[0];
+  };
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -165,12 +187,8 @@ export default function WellnessAuditScreen() {
     });
 
     const totalScore = Math.round((totalRawScore / (ASSESSMENT_QUESTIONS.length * 25)) * 100);
-    let riskLevel = 'Awesome';
-    if (totalScore <= 30) riskLevel = 'Excessive Risk';
-    else if (totalScore <= 40) riskLevel = 'Weak Areas';
-    else if (totalScore <= 60) riskLevel = 'Serious';
-    else if (totalScore <= 75) riskLevel = 'Improvement';
-    else if (totalScore <= 89) riskLevel = 'Better';
+    const scoreDetails = getScoreDetails(totalScore);
+    const riskLevel = scoreDetails.risk;
 
     try {
       if (__DEV__) {
@@ -183,6 +201,10 @@ export default function WellnessAuditScreen() {
         riskLevel
       });
       setAssessment(result);
+
+      // Invalidate the query to update the profile menu score
+      queryClient.invalidateQueries({ queryKey: ['health-assessment'] });
+
       setIsQuizActive(false);
       // Reset state for potential retakes
       setCurrentStep(0);
@@ -209,7 +231,13 @@ export default function WellnessAuditScreen() {
     return (
       <View style={[styles.quizContainer, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
         <View style={styles.quizHeader}>
-          <TouchableOpacity onPress={() => setIsQuizActive(false)}>
+          <TouchableOpacity onPress={() => {
+            if (currentStep > 0) {
+              setCurrentStep(currentStep - 1);
+            } else {
+              setIsQuizActive(false);
+            }
+          }}>
             <ChevronLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={[styles.quizTitle, { color: theme.brandForest }]}>Audit Progress</Text>
@@ -241,6 +269,8 @@ export default function WellnessAuditScreen() {
     );
   }
 
+  const scoreDetails = assessment ? getScoreDetails(assessment.totalScore) : null;
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
       <View style={styles.landingHeader}>
@@ -249,30 +279,46 @@ export default function WellnessAuditScreen() {
       </View>
 
       {assessment ? (
-        <View style={styles.resultCard}>
-          <View style={[styles.scoreCircle, { borderColor: theme.brandSage }]}>
-            <Text style={[styles.scoreValue, { color: theme.brandForest }]}>{assessment.totalScore}</Text>
-            <Text style={styles.scoreUnit}>Score</Text>
+        <View style={{ gap: 20 }}>
+          <View style={styles.resultCard}>
+            <View style={[styles.scoreCircle, { borderColor: scoreDetails?.color || theme.brandSage }]}>
+              <Text style={[styles.scoreValue, { color: scoreDetails?.color || theme.brandForest }]}>{assessment.totalScore}</Text>
+              <Text style={styles.scoreUnit}>Score</Text>
+            </View>
+            <Text style={[styles.riskLevel, { color: theme.text }]}>
+              Based on your health test you are at <Text style={{ fontWeight: '900', color: scoreDetails?.color }}>{assessment.riskLevel}</Text>
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.mainButton, { backgroundColor: theme.brandForest, marginBottom: 12 }]}
+              onPress={() => router.replace('/(tabs)')}
+            >
+              <Text style={styles.buttonText}>Go to Dashboard</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.secondaryButton, { borderColor: theme.brandSage }]}
+              onPress={() => {
+                setIsQuizActive(true);
+                setCurrentStep(0);
+                setUserAnswers([]);
+              }}
+            >
+              <Text style={[styles.secondaryButtonText, { color: theme.brandSage }]}>Retake Audit</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={[styles.riskLevel, { color: theme.brandEarth }]}>{assessment.riskLevel}</Text>
 
-          <TouchableOpacity
-            style={[styles.mainButton, { backgroundColor: theme.brandForest, marginBottom: 12 }]}
-            onPress={() => router.replace('/(tabs)')}
-          >
-            <Text style={styles.buttonText}>Go to Dashboard</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.secondaryButton, { borderColor: theme.brandSage }]}
-            onPress={() => {
-              setIsQuizActive(true);
-              setCurrentStep(0);
-              setUserAnswers([]);
-            }}
-          >
-            <Text style={[styles.secondaryButtonText, { color: theme.brandSage }]}>Retake Audit</Text>
-          </TouchableOpacity>
+          <View style={styles.legendCard}>
+            {SCORE_RANGES.map((range, index) => (
+              <View key={index} style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: range.color }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.legendText, { color: theme.text }]}>{range.label}</Text>
+                </View>
+                <Text style={[styles.legendRange, { color: theme.text }]}>{range.min}-{range.max}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       ) : (
         <View style={styles.ctaCard}>
@@ -309,7 +355,7 @@ const styles = StyleSheet.create({
   scoreCircle: { width: 150, height: 150, borderRadius: 75, borderWidth: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   scoreValue: { fontSize: 48, fontWeight: '900' },
   scoreUnit: { fontSize: 12, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' },
-  riskLevel: { fontSize: 24, fontWeight: '900', marginBottom: 24 },
+  riskLevel: { fontSize: 18, textAlign: 'center', marginBottom: 24, lineHeight: 26 },
   quizContainer: { flex: 1, padding: 24 },
   quizHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   quizTitle: { fontSize: 18, fontWeight: '900' },
@@ -322,5 +368,10 @@ const styles = StyleSheet.create({
   optionButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 1 },
   optionText: { fontSize: 16, fontWeight: '700' },
   secondaryButton: { paddingVertical: 16, width: '100%', alignItems: 'center', borderRadius: 16, borderWidth: 2, backgroundColor: 'transparent' },
-  secondaryButtonText: { fontWeight: '900', fontSize: 15, textTransform: 'uppercase', letterSpacing: 1 }
+  secondaryButtonText: { fontWeight: '900', fontSize: 15, textTransform: 'uppercase', letterSpacing: 1 },
+  legendCard: { padding: 20, backgroundColor: '#FFF', borderRadius: 24, gap: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  legendColor: { width: 16, height: 16, borderRadius: 8, marginTop: 4 },
+  legendText: { fontSize: 13, lineHeight: 20, fontWeight: '500' },
+  legendRange: { fontSize: 13, fontWeight: '700', marginLeft: 'auto' }
 });
