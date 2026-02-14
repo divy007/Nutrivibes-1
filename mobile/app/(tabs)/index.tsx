@@ -23,7 +23,7 @@ import MeasurementTracker from '@/components/dashboard/MeasurementTracker';
 import LogMeasurementModal from '@/components/dashboard/LogMeasurementModal';
 import LogMealModal from '@/components/dashboard/LogMealModal';
 import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
-import { CycleTrackerCard } from '@/compone nts/dashboard/CycleTrackerCard';
+import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
 import CycleSettingsModal from '@/components/dashboard/CycleSettingsModal';
 import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
