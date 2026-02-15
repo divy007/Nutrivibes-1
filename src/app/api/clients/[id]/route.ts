@@ -260,6 +260,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
             body.status = 'ACTIVE';
             delete body.planId; // Remove from body as it's not in Client schema
+
+            // Referral Reward Trigger
+            const { processReferralReward } = await import('@/lib/referral');
+            await processReferralReward(id, selectedPlan.durationMonths);
         }
 
         const client = await Client.findByIdAndUpdate(id, body, {

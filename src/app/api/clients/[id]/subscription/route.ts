@@ -259,6 +259,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             updated: !!existingSubscription
         });
 
+        if (status === 'ACTIVE' && newPlan) {
+            const { processReferralReward } = await import('@/lib/referral');
+            await processReferralReward(id, newPlan.durationMonths);
+        }
+
         return NextResponse.json({
             success: true,
             message: `Plan ${action.toLowerCase()}ed successfully`,

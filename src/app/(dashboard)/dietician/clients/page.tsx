@@ -408,6 +408,13 @@ export default function ClientsPage() {
                                                     </a>
                                                 )}
                                             </div>
+                                            {client.referredBy && (
+                                                <div className="mt-1 flex items-center gap-1.5">
+                                                    <div className="px-1.5 py-0.5 bg-brand-sage/10 rounded text-[9px] font-bold text-brand-forest uppercase tracking-tight">
+                                                        Referred by {(client.referredBy as any).name}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-xs text-slate-600 font-medium">
                                             {client.country} {client.timeZone}

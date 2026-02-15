@@ -67,6 +67,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Calendar size={24} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="refer-earn"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }

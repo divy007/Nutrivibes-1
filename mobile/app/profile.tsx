@@ -3,7 +3,7 @@ import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityInd
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/Themed';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle, Calendar, Lock } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Ruler, Weight, UserCircle, Calendar, Lock, Gift, ChevronRight } from 'lucide-react-native';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -203,6 +203,22 @@ export default function ProfileScreen() {
                             </View>
                             <Text style={[styles.emailText, { color: '#94a3b8' }]}>{formData.email}</Text>
                         </View>
+
+                        <TouchableOpacity
+                            style={[styles.referCard, { backgroundColor: theme.brandForest }]}
+                            onPress={() => router.push('/(tabs)/refer-earn' as any)}
+                        >
+                            <View style={styles.referContent}>
+                                <View style={styles.referIcon}>
+                                    <Gift size={20} color={theme.brandForest} />
+                                </View>
+                                <View>
+                                    <Text style={styles.referTitle}>Refer & Earn</Text>
+                                    <Text style={styles.referSubtitle}>Get up to 60 days free extension!</Text>
+                                </View>
+                            </View>
+                            <ChevronRight size={20} color="rgba(255,255,255,0.8)" />
+                        </TouchableOpacity>
 
                         <View style={styles.form}>
                             <View style={styles.inputGroup}>
@@ -619,5 +635,41 @@ const styles = StyleSheet.create({
     },
     unitTextActive: {
         color: '#0f172a',
+    },
+    referCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 20,
+        marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    referContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    referIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: '#FFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    referTitle: {
+        fontSize: 16,
+        fontWeight: '900',
+        color: '#FFF',
+    },
+    referSubtitle: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: '600',
     },
 });

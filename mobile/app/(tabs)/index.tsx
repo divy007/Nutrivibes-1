@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar, Gift } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -23,7 +23,7 @@ import MeasurementTracker from '@/components/dashboard/MeasurementTracker';
 import LogMeasurementModal from '@/components/dashboard/LogMeasurementModal';
 import LogMealModal from '@/components/dashboard/LogMealModal';
 import { SymptomCheckIn } from '@/components/dashboard/SymptomCheckIn';
-import { CycleTrackerCard } from '@/compone nts/dashboard/CycleTrackerCard';
+import { CycleTrackerCard } from '@/components/dashboard/CycleTrackerCard';
 import CycleSettingsModal from '@/components/dashboard/CycleSettingsModal';
 import LogPeriodModal from '@/components/dashboard/LogPeriodModal';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
@@ -379,6 +379,17 @@ export default function DashboardScreen() {
                   >
                     <UserIcon size={18} color="#64748b" />
                     <Text style={styles.menuItemText}>Edit Profile</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      router.push('/(tabs)/refer-earn' as any);
+                    }}
+                  >
+                    <Gift size={18} color="#64748b" />
+                    <Text style={styles.menuItemText}>Refer & Earn</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity

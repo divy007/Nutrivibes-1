@@ -75,6 +75,16 @@ export interface IClient extends Document {
     primaryGoal?: PrimaryGoal[];
     dieticianId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
+    // Referral
+    referralCode?: string;
+    referredBy?: mongoose.Schema.Types.ObjectId;
+    referralStatus?: 'PENDING' | 'CONVERTED' | 'REWARDED';
+    referralRewards?: {
+        date: Date;
+        daysEarned: number;
+        fromClientId: mongoose.Schema.Types.ObjectId;
+        note: string;
+    }[];
 }
 
 const ClientSchema = new Schema(
@@ -178,6 +188,16 @@ const ClientSchema = new Schema(
         },
         dieticianId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        // Referral System
+        referralCode: { type: String, unique: true, sparse: true },
+        referredBy: { type: Schema.Types.ObjectId, ref: 'Client' },
+        referralStatus: { type: String, enum: ['PENDING', 'CONVERTED', 'REWARDED'], default: 'PENDING' },
+        referralRewards: [{
+            date: { type: Date, default: Date.now },
+            daysEarned: Number,
+            fromClientId: { type: Schema.Types.ObjectId, ref: 'Client' },
+            note: String
+        }]
     },
     { timestamps: true }
 );

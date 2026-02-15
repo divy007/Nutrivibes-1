@@ -14,7 +14,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const clients = await Client.find({ dieticianId: user._id }).lean();
+        const clients = await Client.find({ dieticianId: user._id })
+            .populate('referredBy', 'name')
+            .lean();
 
         const today = normalizeDateUTC();
         const tomorrow = addDays(today, 1);

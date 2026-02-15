@@ -95,6 +95,7 @@ export interface ClientInfo {
         endDate: string | Date;
         status: string;
     };
+    referredBy?: string | { _id: string; name: string; };
 }
 
 export interface WeekPlan {

@@ -127,11 +127,17 @@ export async function GET(req: Request) {
             }
         }
 
-        const activeSubscription = activeSub ? activeSub.toObject() : null;
+        // Fetch Referrals
+        const myReferrals = await Client.find({ referredBy: client._id })
+            .select('name phone status referralStatus createdAt')
+            .sort({ createdAt: -1 });
+
+        const finalActiveSubscription = activeSub ? activeSub.toObject() : null;
 
         return NextResponse.json({
             ...client.toObject(),
-            activeSubscription
+            activeSubscription: finalActiveSubscription,
+            myReferrals
         });
     } catch (error: any) {
         console.error('Failed to fetch client profile:', error);
@@ -285,7 +291,7 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const client = await Client.findOne({ userId: user._id });
+        const client = await Client.findOne({ userId: user._id }).select('+referralRewards');
         if (!client) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
