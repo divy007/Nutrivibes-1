@@ -46,8 +46,8 @@ export default function RootLayout() {
 }
 
 import { SessionProvider } from '@/context/AuthContext';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { queryClient, asyncStoragePersister } from '@/lib/react-query';
 import { Toaster } from 'sonner-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -59,7 +59,10 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={DefaultTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: asyncStoragePersister }}
+        >
           <SessionProvider>
             <Stack>
               <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -70,7 +73,7 @@ function RootLayoutNav() {
 
             </Stack>
           </SessionProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
         <Toaster />
       </GestureHandlerRootView>
     </ThemeProvider>
