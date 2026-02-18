@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Download, ArrowRight, CheckCircle, Smartphone, Activity, Heart, Shield } from 'lucide-react';
+import DietPlanSlider from '@/components/landing/DietPlanSlider';
 
 export default function LandingPage() {
     return (
@@ -174,6 +175,9 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Diet Plan Slider */}
+            <DietPlanSlider />
 
             {/* How It Works */}
             <section className="py-32 bg-gray-900 overflow-hidden relative text-white">
