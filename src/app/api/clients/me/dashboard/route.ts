@@ -59,14 +59,25 @@ export async function GET(req: Request) {
         }
 
         // Ensure water intake exists for today
+        // Ensure water intake exists for today
         let todayWater = waterIntake;
         if (!todayWater) {
-            todayWater = await WaterIntake.create({
-                clientId: client._id,
-                date: today,
-                currentGlasses: 0,
-                targetGlasses: 8
-            });
+            try {
+                todayWater = await WaterIntake.create({
+                    clientId: client._id,
+                    date: today,
+                    currentGlasses: 0,
+                    targetGlasses: 8
+                });
+            } catch (err: any) {
+                // If race condition caused duplicate key error, fetch the existing one
+                if (err.code === 11000) {
+                    todayWater = await WaterIntake.findOne({ clientId: client._id, date: today }).lean();
+                } else {
+                    console.error('Failed to create water intake record:', err);
+                    // todayWater remains null, dashboard proceeds without it
+                }
+            }
         }
 
         // Calculate cycle status if client is female

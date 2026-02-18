@@ -8,8 +8,9 @@ import { normalizeDateUTC } from '@/lib/date-utils';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-    await dbConnect();
     try {
+        await dbConnect();
+
         const user = await getAuthUser(req);
         if (!user || user.role !== 'DIETICIAN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,28 +20,21 @@ export async function GET(req: Request) {
 
         // Run all independent counts and fetches in parallel
         const [
-            activeCount,
-            pausedCount,
-            newCount,
-            expiredCount,
-            leadsCount,
+            statusCounts,
             rawFollowUps,
             activeClients,
             activePausedClients
         ] = await Promise.all([
-            // 1. Active
-            Client.countDocuments({ dieticianId, status: 'ACTIVE' }),
-            // 2. Paused
-            Client.countDocuments({ dieticianId, status: 'PAUSED' }),
-            // 3. New
-            Client.countDocuments({
-                dieticianId,
-                status: 'NEW'
-            }),
-            // 4. Expired (Deleted)
-            Client.countDocuments({ dieticianId, status: 'DELETED' }),
-            // 5. Leads
-            Client.countDocuments({ dieticianId, status: 'LEAD' }),
+            // 1-5. Aggregated Counts (Single DB Query)
+            Client.aggregate([
+                { $match: { dieticianId: user._id } },
+                {
+                    $group: {
+                        _id: '$status',
+                        count: { $sum: 1 }
+                    }
+                }
+            ]),
             // 6. Follow Ups
             (async () => {
                 const FollowUp = (await import('@/models/FollowUp')).default;
@@ -56,8 +50,20 @@ export async function GET(req: Request) {
             Client.find({ dieticianId, status: { $in: ['ACTIVE', 'PAUSED'] } }).select('_id').lean()
         ]);
 
+        // Process Aggregation Results
+        const statusMap = (statusCounts as any[]).reduce((acc: any, curr: any) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        const activeCount = statusMap['ACTIVE'] || 0;
+        const pausedCount = statusMap['PAUSED'] || 0;
+        const newCount = statusMap['NEW'] || 0;
+        const expiredCount = statusMap['DELETED'] || 0;
+        const leadsCount = statusMap['LEAD'] || 0;
+
         // Filter Follow-ups manually after parallel fetch
-        const activeFollowUps = rawFollowUps.filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
+        const activeFollowUps = (rawFollowUps as any).filter((fu: any) => fu.clientId && fu.clientId.status !== 'DELETED');
 
         // Calculate Expired Subscriptions
         let expiredSubscriptionCount = 0;
@@ -184,8 +190,11 @@ export async function GET(req: Request) {
                 dietPendingList: dietPendingList.slice(0, 10)
             }
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to fetch dietician stats:', error);
-        return NextResponse.json({ error: 'Failed to fetch statistics' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to fetch statistics',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }

@@ -29,13 +29,25 @@ export async function GET(req: Request) {
         });
 
         if (!intake) {
-            // Create a new record for today if it doesn't exist
-            intake = await WaterIntake.create({
-                clientId: client._id,
-                date: today,
-                currentGlasses: 0,
-                targetGlasses: 8
-            });
+            try {
+                // Create a new record for today if it doesn't exist
+                intake = await WaterIntake.create({
+                    clientId: client._id,
+                    date: today,
+                    currentGlasses: 0,
+                    targetGlasses: 8
+                });
+            } catch (err: any) {
+                // Handle race condition (Duplicate Key Error 11000)
+                if (err.code === 11000) {
+                    intake = await WaterIntake.findOne({
+                        clientId: client._id,
+                        date: today
+                    });
+                } else {
+                    throw err; // Re-throw other errors to be caught by the outer catch block
+                }
+            }
         }
 
         return NextResponse.json(intake);

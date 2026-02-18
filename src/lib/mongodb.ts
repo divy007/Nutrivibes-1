@@ -32,6 +32,7 @@ export async function connectDB() {
             bufferCommands: false,
             dbName: 'diet_planner',
             maxPoolSize: 10, // Optimize for Vercel serverless environment
+            serverSelectionTimeoutMS: 5000, // Fail fast after 5 seconds
         };
 
 
