@@ -2,6 +2,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Download, ArrowRight, CheckCircle, Smartphone, Activity, Heart, Shield } from 'lucide-react';
 import DietPlanSlider from '@/components/landing/DietPlanSlider';
+import BMICalculator from '@/components/landing/BMICalculator';
+import FAQ from '@/components/landing/FAQ';
+import WhatsAppButton from '@/components/landing/WhatsAppButton';
 
 export default function LandingPage() {
     return (
@@ -176,6 +179,9 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* BMI Calculator */}
+            <BMICalculator />
+
             {/* Diet Plan Slider */}
             <DietPlanSlider />
 
@@ -278,6 +284,9 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* FAQ Section */}
+            <FAQ />
+
             {/* Footer */}
             <footer className="bg-white pt-20 pb-10 border-t border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -328,6 +337,9 @@ export default function LandingPage() {
                     </div>
                 </div>
             </footer>
+
+            {/* Floating Elements */}
+            <WhatsAppButton />
         </div>
     );
 }
