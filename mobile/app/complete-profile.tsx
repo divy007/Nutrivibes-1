@@ -470,9 +470,9 @@ export default function CompleteProfileScreen() {
                                 <TextInput
                                     style={[styles.input, { color: '#64748b' }]}
                                     value={formData.phone}
-                                    editable={false}
-                                    selectTextOnFocus={false}
+                                    onChangeText={(t) => setFormData({ ...formData, phone: t })}
                                     placeholder="Enter phone number"
+                                    keyboardType="phone-pad"
                                 />
                             </View>
                         </View>

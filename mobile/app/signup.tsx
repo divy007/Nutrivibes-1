@@ -41,8 +41,8 @@ export default function SignupScreen() {
             return;
         }
 
-        if (phone.length !== 10) {
-            setError('Please enter a valid 10-digit phone number');
+        if (phone.length < 7 || phone.length > 15) {
+            setError('Please enter a valid phone number (7-15 digits)');
             return;
         }
 
@@ -140,7 +140,6 @@ export default function SignupScreen() {
                                     placeholder="Your mobile number"
                                     placeholderTextColor={theme.brandForest + '80'}
                                     keyboardType="phone-pad"
-                                    maxLength={10}
                                 />
                             </View>
                         </View>

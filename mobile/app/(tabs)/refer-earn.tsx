@@ -59,8 +59,8 @@ export default function ReferEarnScreen() {
             Alert.alert('Error', 'Please enter friend\'s name');
             return;
         }
-        if (phone.length < 10) {
-            Alert.alert('Error', 'Please enter a valid phone number');
+        if (phone.length < 7 || phone.length > 15) {
+            Alert.alert('Error', 'Please enter a valid phone number (7-15 digits)');
             return;
         }
 
@@ -203,7 +203,6 @@ export default function ReferEarnScreen() {
                                 placeholder="Friend's Mobile Number"
                                 placeholderTextColor="#94a3b8"
                                 keyboardType="phone-pad"
-                                maxLength={10}
                             />
                         </View>
 
