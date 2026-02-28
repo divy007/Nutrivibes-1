@@ -3,7 +3,7 @@
     "name": "DateWithDiet",
     "slug": "mobile",
     "version": "1.0.2",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
@@ -28,7 +28,8 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 12,
+      "versionCode": 14,
+      "edgeToEdge": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
