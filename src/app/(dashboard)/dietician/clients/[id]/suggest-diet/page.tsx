@@ -253,9 +253,23 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     const dateStr = typeof data.dietStartDate === 'string'
                         ? data.dietStartDate.split('T')[0]
                         : new Date(data.dietStartDate).toISOString().split('T')[0];
-                    const start = new Date(dateStr);
-                    setCurrentWeekStart(start);
-                    // Initial diet fetch will be triggered by the next useEffect
+                    const dietStart = new Date(dateStr);
+
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    if (dietStart <= today) {
+                        // Current or Past diet: Jump to the week containing today
+                        // We use the same day-of-week logic to keep weeks consistent
+                        const startDayIndex = dietStart.getDay();
+                        const currentDayIndex = today.getDay();
+                        const diff = (currentDayIndex - startDayIndex + 7) % 7;
+                        const startOfCurrentWeek = addDays(today, -diff);
+                        setCurrentWeekStart(startOfCurrentWeek);
+                    } else {
+                        // Future diet: Keep at start date
+                        setCurrentWeekStart(dietStart);
+                    }
                 } else {
                     // If no diet start date, use today's week start
                     const today = startOfWeek(new Date(), { weekStartsOn: 1 });
