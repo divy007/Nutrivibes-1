@@ -380,14 +380,36 @@ export default function ProfileScreen() {
                                     <View style={styles.unitToggle}>
                                         <TouchableOpacity
                                             style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive, isHeightLocked && { opacity: 0.5 }]}
-                                            onPress={() => !isHeightLocked && setHeightUnit('cm')}
+                                            onPress={() => {
+                                                if (!isHeightLocked && heightUnit === 'ft') {
+                                                    // Convert FT/IN to CM
+                                                    const ft = parseFloat(heightFt) || 0;
+                                                    const inches = parseFloat(heightIn) || 0;
+                                                    const cm = (ft * 30.48) + (inches * 2.54);
+                                                    setFormData(prev => ({ ...prev, height: cm > 0 ? Math.round(cm).toString() : '' }));
+                                                    setHeightUnit('cm');
+                                                }
+                                            }}
                                             disabled={isHeightLocked}
                                         >
                                             <Text style={[styles.unitText, heightUnit === 'cm' && styles.unitTextActive]}>CM</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={[styles.unitButton, heightUnit === 'ft' && styles.unitButtonActive, isHeightLocked && { opacity: 0.5 }]}
-                                            onPress={() => !isHeightLocked && setHeightUnit('ft')}
+                                            onPress={() => {
+                                                if (!isHeightLocked && heightUnit === 'cm') {
+                                                    // Convert CM to FT/IN
+                                                    const cm = parseFloat(formData.height) || 0;
+                                                    if (cm > 0) {
+                                                        const totalInches = cm / 2.54;
+                                                        const feet = Math.floor(totalInches / 12);
+                                                        const inches = Math.round(totalInches % 12);
+                                                        setHeightFt(feet.toString());
+                                                        setHeightIn(inches.toString());
+                                                    }
+                                                    setHeightUnit('ft');
+                                                }
+                                            }}
                                             disabled={isHeightLocked}
                                         >
                                             <Text style={[styles.unitText, heightUnit === 'ft' && styles.unitTextActive]}>FT/IN</Text>
