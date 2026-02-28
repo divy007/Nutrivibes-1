@@ -2,7 +2,7 @@
   "expo": {
     "name": "DateWithDiet",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.datewithdiet.mobile",
+      "bundleIdentifier": "com.nutrivibes.mobile",
       "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -27,8 +27,8 @@
       }
     },
     "android": {
-      "package": "com.datewithdiet.mobile",
-      "versionCode": 2,
+      "package": "com.nutrivibes.mobile",
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
