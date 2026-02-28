@@ -19,9 +19,6 @@ export const useDashboardData = (enabled: boolean = true) => {
                 const newDate = getLocalDateString();
                 if (newDate !== date) {
                     setDate(newDate);
-                } else {
-                    // Even if date is same, we might want to refetch stale data
-                    queryClient.invalidateQueries({ queryKey: ['dashboard', newDate] });
                 }
             }
 

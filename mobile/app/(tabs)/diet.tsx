@@ -71,33 +71,24 @@ export default function DietPlanScreen() {
 
     useEffect(() => {
         if (user) {
-            // Check if diet starts in the future
+            // 1. Handle jumping to future diet start date if applicable
             if ((user as any)?.dietStartDate) {
                 const dietStart = getLocalDateFromStr((user as any).dietStartDate);
                 const today = new Date();
-                // Reset time components for accurate date comparison
                 today.setHours(0, 0, 0, 0);
 
-                // If diet starts in the future (strictly greater), jump to it so user sees the plan
-                if (dietStart > today) {
+                if (dietStart > today && !isSameDay(dietStart, selectedDate)) {
                     setSelectedDate(dietStart);
+                    // Changing selectedDate will trigger weekStart update, 
+                    // which is handled by the effect below.
+                    return;
                 }
             }
 
-            // We fetch the plan for the current week starting today.
-            // The dietician-set start date is respected because the API 
-            // will return 'NO_DIET' for days before the diet actually begins.
+            // 2. Fetch the plan for the current week
             fetchDietPlan();
         }
-    }, [user]);
-
-    // Re-fetch only when the user intentionally changes the week (by changing selectedDate)
-    // We filter this to avoid double fetching on init, but for simplicity, useEffect dependency on weekStart is fine.
-    useEffect(() => {
-        if (user) {
-            fetchDietPlan();
-        }
-    }, [weekStart]);
+    }, [user, weekStart]);
 
     const fetchDietPlan = async () => {
         setLoading(true);

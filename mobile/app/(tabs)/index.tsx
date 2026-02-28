@@ -213,11 +213,13 @@ export default function DashboardScreen() {
   });
 
   const handleAddWater = useCallback(() => {
+    if (addWaterMutation.isPending) return;
     addWaterMutation.mutate({ increment: 1 });
     toast.success('Water logged!', { duration: 1000 });
   }, [addWaterMutation]);
 
   const handleRemoveWater = useCallback(() => {
+    if (addWaterMutation.isPending) return;
     if ((waterData?.currentGlasses || 0) > 0) {
       addWaterMutation.mutate({ increment: -1 });
       toast.success('Water intake reduced', { duration: 1000 });
