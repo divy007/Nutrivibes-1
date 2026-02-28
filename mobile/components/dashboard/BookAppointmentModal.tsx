@@ -1,10 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Modal, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Linking, Alert } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { X, Calendar, Clock, MessageCircle, Phone } from 'lucide-react-native';
-import { format } from 'date-fns';
+import { format, addHours, setHours, setMinutes, isAfter, isBefore, startOfHour } from 'date-fns';
+import { toZonedTime, format as formatTZ } from 'date-fns-tz';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -15,22 +17,100 @@ interface BookAppointmentModalProps {
 }
 
 export default function BookAppointmentModal({ isOpen, onClose, selectedPlan }: BookAppointmentModalProps) {
-    const [date, setDate] = useState(new Date());
+    const IST_TIMEZONE = 'Asia/Kolkata';
+    const WORKING_HOURS = { start: 9, end: 20 }; // 9 AM to 8 PM
+
+    const getInitialDate = () => {
+        const now = new Date();
+        const istNow = toZonedTime(now, IST_TIMEZONE);
+
+        // Target: 3 hours from now
+        let defaultDate = addHours(istNow, 3);
+        // Round to nearest 30 mins for convenience? Let's just keep it simple.
+        defaultDate = startOfHour(defaultDate);
+
+        const hour = defaultDate.getHours();
+
+        // If after 8 PM, set to next day 10 AM
+        if (hour >= WORKING_HOURS.end) {
+            defaultDate = addHours(defaultDate, 24);
+            defaultDate = setHours(defaultDate, 10);
+            defaultDate = setMinutes(defaultDate, 0);
+        } else if (hour < WORKING_HOURS.start) {
+            // If before 9 AM, set to 10 AM same day
+            defaultDate = setHours(defaultDate, 10);
+            defaultDate = setMinutes(defaultDate, 0);
+        }
+
+        return defaultDate;
+    };
+
+    const [date, setDate] = useState(getInitialDate());
     const [mode, setMode] = useState<'date' | 'time'>('date');
     const [showPicker, setShowPicker] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [isSlotBusy, setIsSlotBusy] = useState(false);
 
-    // Default to the next day, 10:00 AM if current time is late, or just current time?
-    // Let's just default to "now" and let them pick.
+    useEffect(() => {
+        if (isOpen) {
+            fetchBookedSlots(date);
+        }
+    }, [isOpen]);
+
+    const fetchBookedSlots = async (selectedDate: Date) => {
+        setLoadingSlots(true);
+        try {
+            const dateStr = format(selectedDate, 'yyyy-MM-dd');
+            const data = await api.get(`/api/appointments/booked-slots?date=${dateStr}`) as any;
+            setBookedSlots(data.bookedSlots || []);
+
+            // Check if current selection is busy
+            const selectedTime = format(selectedDate, 'hh:mm a');
+            setIsSlotBusy((data.bookedSlots || []).includes(selectedTime));
+        } catch (error) {
+            console.error('Failed to fetch slots:', error);
+        } finally {
+            setLoadingSlots(false);
+        }
+    };
 
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
     const onDateChange = (event: any, selectedDate?: Date) => {
-        const currentDate = selectedDate || date;
         if (Platform.OS === 'android') {
             setShowPicker(false);
         }
-        setDate(currentDate);
+
+        if (!selectedDate) return;
+
+        const istSelection = toZonedTime(selectedDate, IST_TIMEZONE);
+        const hour = istSelection.getHours();
+
+        if (mode === 'time') {
+            if (hour < WORKING_HOURS.start || hour >= WORKING_HOURS.end) {
+                Alert.alert(
+                    'Outside Working Hours',
+                    'Dietician working hours are 9:00 AM to 8:00 PM IST. Please select a time within this range.'
+                );
+                return;
+            }
+
+            const selectedTime = format(selectedDate, 'hh:mm a');
+            if (bookedSlots.includes(selectedTime)) {
+                setIsSlotBusy(true);
+                Alert.alert('Slot Unavailable', 'This time slot is already booked. Please select another time.');
+            } else {
+                setIsSlotBusy(false);
+            }
+        } else {
+            // If date changed, fetch new slots
+            fetchBookedSlots(selectedDate);
+        }
+
+        setDate(selectedDate);
     };
 
     const showDatepicker = () => {
@@ -43,42 +123,45 @@ export default function BookAppointmentModal({ isOpen, onClose, selectedPlan }: 
         setShowPicker(true);
     };
 
-    const handleBook = async () => {
+    const handleConfirm = async () => {
+        if (isSlotBusy) {
+            Alert.alert('Slot Unavailable', 'Please select an available time slot.');
+            return;
+        }
+
+        setLoading(true);
+        const formattedDate = format(date, 'dd/MM/yyyy');
+        const formattedTime = format(date, 'hh:mm a');
+
+        let message = `Hi, I'd like to book an appointment with Dt. Mansi on ${formattedDate} at ${formattedTime}.`;
+        if (selectedPlan) {
+            message += ` I am interested in the ${selectedPlan} plan.`;
+        }
+        const encodedMessage = encodeURIComponent(message);
+        const phoneNumber = '919824359944'; // Country code 91 + 9824359944
+        const url = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
+
+        // On Android, check if we can open. 
+        // We will attempt to open it directly in a try-catch block for better compatibility.
         try {
-            const formattedDate = format(date, 'dd/MM/yyyy');
-            const formattedTime = format(date, 'hh:mm a');
+            const supported = await Linking.canOpenURL(url);
 
-            let message = `Hi, I'd like to book an appointment with Dt. Mansi on ${formattedDate} at ${formattedTime}.`;
-            if (selectedPlan) {
-                message += ` I am interested in the ${selectedPlan} plan.`;
+            if (supported || Platform.OS === 'android') {
+                await Linking.openURL(url);
+                onClose();
+            } else {
+                promptToCall(phoneNumber);
             }
-            const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = '919824359944'; // Country code 91 + 9824359944
-            const url = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
-
-            // On Android, check if we can open. 
-            // We will attempt to open it directly in a try-catch block for better compatibility.
+        } catch (err) {
+            // Fallback if canOpenURL throws or openURL fails
             try {
-                const supported = await Linking.canOpenURL(url);
-
-                if (supported || Platform.OS === 'android') {
-                    await Linking.openURL(url);
-                    onClose();
-                } else {
-                    promptToCall(phoneNumber);
-                }
-            } catch (err) {
-                // Fallback if canOpenURL throws or openURL fails
-                try {
-                    await Linking.openURL(url);
-                    onClose();
-                } catch (idxErr) {
-                    promptToCall(phoneNumber);
-                }
+                await Linking.openURL(url);
+                onClose();
+            } catch (idxErr) {
+                promptToCall(phoneNumber);
             }
-        } catch (error) {
-            console.error('Failed to open WhatsApp:', error);
-            promptToCall('919824359944');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -155,10 +238,19 @@ export default function BookAppointmentModal({ isOpen, onClose, selectedPlan }: 
                                         style={[styles.pickerButton, { backgroundColor: '#FFF', borderColor: '#f1f5f9' }]}
                                         onPress={showTimepicker}
                                     >
-                                        <Text style={[styles.pickerValue, { color: theme.brandForest }]}>
-                                            {format(date, 'hh:mm a')}
-                                        </Text>
-                                        <Clock size={20} color={theme.brandSage} />
+                                        <View style={[styles.infoRow, isSlotBusy && { opacity: 0.5 }]}>
+                                            <Clock size={20} color={isSlotBusy ? '#ef4444' : theme.brandForest} />
+                                            <View>
+                                                <Text style={styles.infoLabel}>Time (IST)</Text>
+                                                <Text style={[styles.infoValue, isSlotBusy && { color: '#ef4444' }]}>
+                                                    {format(date, 'hh:mm a')}
+                                                    {isSlotBusy && ' (Already Booked)'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        {loadingSlots && (
+                                            <ActivityIndicator size="small" color={theme.brandForest} style={{ marginLeft: 8 }} />
+                                        )}
                                     </TouchableOpacity>
 
                                     {showPicker && (
@@ -185,11 +277,18 @@ export default function BookAppointmentModal({ isOpen, onClose, selectedPlan }: 
                                 </View>
 
                                 <TouchableOpacity
-                                    style={[styles.bookButton, { backgroundColor: '#25D366' }]} // WhatsApp Color
-                                    onPress={handleBook}
+                                    style={[styles.bookButton, { backgroundColor: '#25D366' }, (loading || isSlotBusy) && { opacity: 0.7 }]} // WhatsApp Color
+                                    onPress={handleConfirm}
+                                    disabled={loading || isSlotBusy}
                                 >
-                                    <MessageCircle size={24} color="#FFF" />
-                                    <Text style={styles.bookButtonText}>Book on WhatsApp</Text>
+                                    {loading ? (
+                                        <ActivityIndicator color="#FFF" />
+                                    ) : (
+                                        <>
+                                            <MessageCircle size={24} color="#FFF" />
+                                            <Text style={styles.bookButtonText}>Book on WhatsApp</Text>
+                                        </>
+                                    )}
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>
@@ -302,5 +401,20 @@ const styles = StyleSheet.create({
     },
     scrollBody: {
         paddingBottom: 20,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    infoLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: '#94a3b8',
+        textTransform: 'uppercase',
+    },
+    infoValue: {
+        fontSize: 15,
+        fontWeight: '700',
     },
 });

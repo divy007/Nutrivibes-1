@@ -5,6 +5,7 @@ import DietPlanSlider from '@/components/landing/DietPlanSlider';
 import BMICalculator from '@/components/landing/BMICalculator';
 import FAQ from '@/components/landing/FAQ';
 import WhatsAppButton from '@/components/landing/WhatsAppButton';
+import LeadBot from '@/components/landing/LeadBot';
 
 export default function LandingPage() {
     return (
@@ -139,6 +140,31 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Success Metrics Bar */}
+            <section className="bg-brand-forest py-12 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/5 opacity-10"></div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center text-center">
+                        <div className="space-y-1">
+                            <div className="text-3xl md:text-5xl font-black text-white">100+</div>
+                            <div className="text-brand-sage text-xs md:text-sm font-bold uppercase tracking-widest leading-tight">Lives<br className="hidden md:block" /> Transformed</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-3xl md:text-5xl font-black text-white">5+</div>
+                            <div className="text-brand-sage text-xs md:text-sm font-bold uppercase tracking-widest leading-tight">Years<br className="hidden md:block" /> Experience</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-3xl md:text-5xl font-black text-white">24/7</div>
+                            <div className="text-brand-sage text-xs md:text-sm font-bold uppercase tracking-widest leading-tight">Expert<br className="hidden md:block" /> Support</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-3xl md:text-5xl font-black text-white">100%</div>
+                            <div className="text-brand-sage text-xs md:text-sm font-bold uppercase tracking-widest leading-tight">Personalized<br className="hidden md:block" /> Plans</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Features Grid */}
             <section className="py-24 bg-white relative">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -179,6 +205,34 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* About Dt. Mansi */}
+            <section className="py-24 bg-gray-50/50 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="lg:col-span-10 lg:offset-1 text-center">
+                        <h2 className="text-sm font-bold text-brand-forest uppercase tracking-[0.2em] mb-4">Meet Your Expert</h2>
+                        <h3 className="text-4xl lg:text-7xl font-black text-gray-900 mb-8 tracking-tight italic">Dt. Mansi <br /><span className="text-brand-forest">Anajwala</span></h3>
+                        <p className="text-2xl text-gray-600 mb-12 leading-relaxed font-medium max-w-4xl mx-auto">
+                            As a dedicated nutrition and wellness expert, Mansi believes that nutrition education is <span className="text-brand-forest italic">"not just a place of learning, but a community of diverse individuals who share a common passion for growth and innovation."</span>
+                        </p>
+                        <div className="flex justify-center mb-16">
+                            <div className="flex flex-col items-center gap-4 p-8 rounded-3xl bg-white shadow-sm border border-gray-100 group hover:shadow-md transition-shadow max-w-sm">
+                                <div className="w-16 h-16 rounded-2xl bg-brand-sage/20 text-brand-forest flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <CheckCircle className="w-8 h-8" />
+                                </div>
+                                <span className="text-xl font-bold text-gray-800">100+ Success Stories</span>
+                            </div>
+                        </div>
+                        <a
+                            href="https://wa.me/919824359944"
+                            className="inline-flex items-center justify-center px-10 py-5 text-xl font-black text-white bg-brand-forest rounded-[2rem] shadow-xl shadow-brand-forest/30 hover:bg-brand-dark hover:shadow-brand-forest/40 transition-all hover:-translate-y-1"
+                        >
+                            Start Your Transformation
+                            <ArrowRight className="w-6 h-6 ml-3" />
+                        </a>
+                    </div>
+                </div>
+            </section>
+
             {/* BMI Calculator */}
             <BMICalculator />
 
@@ -187,6 +241,7 @@ export default function LandingPage() {
 
             {/* How It Works */}
             <section className="py-32 bg-gray-900 overflow-hidden relative text-white">
+
                 <div className="absolute inset-0 bg-brand-forest/10 opacity-20"></div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="lg:grid lg:grid-cols-2 gap-20 items-center">
@@ -310,7 +365,7 @@ export default function LandingPage() {
                             <h5 className="text-gray-900 font-bold mb-6">Contact</h5>
                             <ul className="space-y-4 text-sm text-gray-600">
                                 <li className="font-medium">Dt. Mansi Anajwala</li>
-                                <li>+91 98765 43210</li>
+                                <li>+91 98243 59944</li>
                                 <li>Email: datewithdiet.fit@gmail.com</li>
                             </ul>
                         </div>
@@ -340,6 +395,7 @@ export default function LandingPage() {
 
             {/* Floating Elements */}
             <WhatsAppButton />
+            <LeadBot />
         </div>
     );
 }

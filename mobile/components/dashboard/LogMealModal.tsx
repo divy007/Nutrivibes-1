@@ -8,7 +8,16 @@ import { useColorScheme } from '@/components/useColorScheme';
 interface LogMealModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (category: string, items: { name: string; quantity: string }[]) => Promise<void>;
+    onSave: (
+        category: string,
+        items: { name: string; quantity: string }[],
+        stats: {
+            hungerLevel: number;
+            satisfactionLevel: number;
+            emotionalState: string;
+            isTreat: boolean;
+        }
+    ) => Promise<void>;
     initialCategory?: string;
     initialItems?: { name: string; quantity: string }[];
     existingLogs?: any[];
@@ -23,6 +32,12 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
     const [addedItems, setAddedItems] = useState<{ name: string; quantity: string }[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+    // DateWithDiet State
+    const [hungerLevel, setHungerLevel] = useState(5);
+    const [satisfactionLevel, setSatisfactionLevel] = useState(5);
+    const [emotionalState, setEmotionalState] = useState('');
+    const [isTreat, setIsTreat] = useState(false);
 
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
@@ -42,6 +57,11 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
             setAddedItems(initialItems || getItemsForCategory(cat));
             setSearchTerm('');
             setQuantity('');
+            // Reset Mindful Metrics
+            setHungerLevel(5);
+            setSatisfactionLevel(5);
+            setEmotionalState('');
+            setIsTreat(false);
         }
     }, [isOpen, initialCategory, initialItems, existingLogs]);
 
@@ -63,7 +83,12 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
         if (addedItems.length === 0) return;
         setIsSaving(true);
         try {
-            await onSave(selectedCategory, addedItems);
+            await onSave(selectedCategory, addedItems, {
+                hungerLevel,
+                satisfactionLevel,
+                emotionalState,
+                isTreat
+            });
             onClose();
         } catch (error) {
             console.error('Failed to save meal:', error);
@@ -160,6 +185,97 @@ export default function LogMealModal({ isOpen, onClose, onSave, initialCategory,
                                     ))}
                                 </View>
                             )}
+
+                            {/* Mindful Eating Section */}
+                            {addedItems.length > 0 && (
+                                <View style={styles.mindfulSection}>
+                                    <View style={styles.mindfulHeader}>
+                                        <Text style={styles.sectionLabel}>MINDFUL CHECK-IN</Text>
+                                        <View style={styles.newBadge}>
+                                            <Text style={styles.newBadgeText}>NEW</Text>
+                                        </View>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={[styles.treatCard, isTreat && { backgroundColor: '#fce7f3', borderColor: '#fbcfe8' }]}
+                                        onPress={() => setIsTreat(!isTreat)}
+                                    >
+                                        <Text style={[styles.treatText, isTreat && { color: '#db2777' }]}>
+                                            {isTreat ? '🎉 It\'s a Treat Date!' : 'Is this a Treat Date?'}
+                                        </Text>
+                                        <View style={[styles.toggle, isTreat && { backgroundColor: '#db2777' }]}>
+                                            <View style={[styles.toggleKnob, isTreat && { transform: [{ translateX: 14 }] }]} />
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    <View style={styles.slidersContainer}>
+                                        <View style={styles.sliderRow}>
+                                            <View style={styles.sliderLabelContainer}>
+                                                <Text style={styles.sliderLabel}>Hunger</Text>
+                                                <Text style={styles.sliderValue}>{hungerLevel}/10</Text>
+                                            </View>
+                                            <View style={styles.customSlider}>
+                                                <TouchableOpacity onPress={() => setHungerLevel(Math.max(1, hungerLevel - 1))} style={styles.sliderBtn}>
+                                                    <Text style={styles.sliderBtnText}>-</Text>
+                                                </TouchableOpacity>
+                                                <View style={styles.sliderBarContainer}>
+                                                    <View style={[styles.sliderBarFill, { width: `${(hungerLevel / 10) * 100}%`, backgroundColor: '#94a3b8' }]} />
+                                                </View>
+                                                <TouchableOpacity onPress={() => setHungerLevel(Math.min(10, hungerLevel + 1))} style={styles.sliderBtn}>
+                                                    <Text style={styles.sliderBtnText}>+</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={styles.sliderLabels}>
+                                                <Text style={styles.sliderMinMax}>Starving</Text>
+                                                <Text style={styles.sliderMinMax}>Stuffed</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.sliderRow}>
+                                            <View style={styles.sliderLabelContainer}>
+                                                <Text style={styles.sliderLabel}>Satisfaction</Text>
+                                                <Text style={styles.sliderValue}>{satisfactionLevel}/10</Text>
+                                            </View>
+                                            <View style={styles.customSlider}>
+                                                <TouchableOpacity onPress={() => setSatisfactionLevel(Math.max(1, satisfactionLevel - 1))} style={styles.sliderBtn}>
+                                                    <Text style={styles.sliderBtnText}>-</Text>
+                                                </TouchableOpacity>
+                                                <View style={styles.sliderBarContainer}>
+                                                    <View style={[styles.sliderBarFill, { width: `${(satisfactionLevel / 10) * 100}%`, backgroundColor: theme.brandSage }]} />
+                                                </View>
+                                                <TouchableOpacity onPress={() => setSatisfactionLevel(Math.min(10, satisfactionLevel + 1))} style={styles.sliderBtn}>
+                                                    <Text style={styles.sliderBtnText}>+</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={styles.sliderLabels}>
+                                                <Text style={styles.sliderMinMax}>Meh</Text>
+                                                <Text style={styles.sliderMinMax}>Loved it</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.moodSection}>
+                                        <Text style={styles.sliderLabel}>How are you feeling?</Text>
+                                        <View style={styles.moodGrid}>
+                                            {['Happy 😊', 'Stressed 😫', 'Bored 😐', 'Energetic ⚡', 'Tired 😴'].map(mood => (
+                                                <TouchableOpacity
+                                                    key={mood}
+                                                    onPress={() => setEmotionalState(emotionalState === mood ? '' : mood)}
+                                                    style={[
+                                                        styles.moodChip,
+                                                        emotionalState === mood && { backgroundColor: theme.brandSage, borderColor: theme.brandSage }
+                                                    ]}
+                                                >
+                                                    <Text style={[
+                                                        styles.moodText,
+                                                        emotionalState === mood && { color: '#FFF' }
+                                                    ]}>{mood}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
                         </ScrollView>
 
                         <View style={styles.footer}>
@@ -208,4 +324,33 @@ const styles = StyleSheet.create({
     footer: { paddingHorizontal: 24, paddingTop: 16 },
     logButton: { height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.2, elevation: 5 },
     logButtonText: { color: '#FFF', fontSize: 14, fontWeight: '900', letterSpacing: 2 },
+
+    // Mindful Section Styles
+    mindfulSection: { marginTop: 24, padding: 20, backgroundColor: '#f8fafc', borderRadius: 24, borderWidth: 1, borderColor: '#f1f5f9' },
+    mindfulHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+    newBadge: { backgroundColor: '#52796F', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+    newBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
+
+    treatCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 20 },
+    treatText: { fontWeight: '700', color: '#64748b' },
+    toggle: { width: 44, height: 24, borderRadius: 12, backgroundColor: '#e2e8f0', padding: 2 },
+    toggleKnob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1, elevation: 2 },
+
+    slidersContainer: { gap: 20, marginBottom: 20 },
+    sliderRow: { gap: 8 },
+    sliderLabelContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    sliderLabel: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+    sliderValue: { fontSize: 12, fontWeight: '900', color: '#334155' },
+    customSlider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    sliderBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
+    sliderBtnText: { fontSize: 18, fontWeight: '600', color: '#64748b', lineHeight: 22 },
+    sliderBarContainer: { flex: 1, height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' },
+    sliderBarFill: { height: '100%', borderRadius: 3 },
+    sliderLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
+    sliderMinMax: { fontSize: 10, fontWeight: '700', color: '#cbd5e1', textTransform: 'uppercase' },
+
+    moodSection: { gap: 12 },
+    moodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    moodChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#e2e8f0' },
+    moodText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
 });

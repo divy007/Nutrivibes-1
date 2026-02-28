@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthPayload } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import HealthAssessment from '@/models/HealthAssessment';
 import Client from '@/models/Client';
 
 export async function GET(req: NextRequest) {
     try {
-        const user = await getAuthUser(req);
+        const user = getAuthPayload(req);
         if (!user || user.role !== 'CLIENT') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await connectDB();
-        const client = await Client.findOne({ userId: user._id });
+        const client = await Client.findOne({ userId: user.userId });
         if (!client) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await getAuthUser(req);
+        const user = getAuthPayload(req);
         if (!user || user.role !== 'CLIENT') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         await connectDB();
 
         // IMPORTANT: We need the Client ID, not the User ID
-        const client = await Client.findOne({ userId: user._id });
+        const client = await Client.findOne({ userId: user.userId });
         if (!client) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }

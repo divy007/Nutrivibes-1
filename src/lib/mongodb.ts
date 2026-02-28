@@ -28,18 +28,21 @@ export async function connectDB() {
     }
 
     if (!cached!.promise) {
+        console.log('[MONGODB] Starting new connection attempt...');
         const opts = {
             bufferCommands: false,
             dbName: 'diet_planner',
-            maxPoolSize: 10, // Optimize for Vercel serverless environment
-            serverSelectionTimeoutMS: 5000, // Fail fast after 5 seconds
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 10000,
+            family: 4, // Force IPv4 to avoid timeout issues on some networks
         };
 
-
-
         cached!.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-
+            console.log('[MONGODB] Connection established successfully');
             return mongoose;
+        }).catch(err => {
+            console.error('[MONGODB] Connection promise failed:', err);
+            throw err;
         });
     }
 

@@ -5,7 +5,17 @@ import { foodItems } from '@/data/foodItems';
 interface LogMealModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (category: string, items: { name: string; quantity: string }[]) => void;
+    onSave: (
+        category: string,
+        items: { name: string; quantity: string }[],
+        stats: {
+            hungerLevel: number;
+            satisfactionLevel: number;
+            emotionalState: string;
+            isTreat: boolean;
+            chewCount?: number;
+        }
+    ) => void;
 }
 
 const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Evening Snack', 'Early Morning'];
@@ -19,6 +29,13 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({ isOpen, onClose, onS
     const [addedItems, setAddedItems] = useState<{ name: string; quantity: string }[]>([]);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
+    // DateWithDiet State
+    const [hungerLevel, setHungerLevel] = useState(5);
+    const [satisfactionLevel, setSatisfactionLevel] = useState(5);
+    const [emotionalState, setEmotionalState] = useState('');
+    const [isTreat, setIsTreat] = useState(false);
+    const [chewCount, setChewCount] = useState('');
+
     const suggestionsRef = useRef<HTMLDivElement>(null);
 
     // Reset when opening
@@ -27,7 +44,14 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({ isOpen, onClose, onS
             setSearchTerm('');
             setQuantity('');
             setAddedItems([]);
+            setAddedItems([]);
             setSelectedFood(null);
+            // Reset Mindful Metrics
+            setHungerLevel(5);
+            setSatisfactionLevel(5);
+            setEmotionalState('');
+            setIsTreat(false);
+            setChewCount('');
         }
     }, [isOpen]);
 
@@ -48,7 +72,13 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({ isOpen, onClose, onS
 
     const handleSave = () => {
         if (addedItems.length === 0) return;
-        onSave(selectedCategory, addedItems);
+        onSave(selectedCategory, addedItems, {
+            hungerLevel,
+            satisfactionLevel,
+            emotionalState,
+            isTreat,
+            chewCount: chewCount ? parseInt(chewCount) : undefined
+        });
         onClose();
     };
 
@@ -193,6 +223,68 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({ isOpen, onClose, onS
                         </div>
                     )}
                 </div>
+
+                {/* Mindful Eating Section (DateWithDiet USP) */}
+                {addedItems.length > 0 && (
+                    <div className="mx-8 p-6 bg-brand-cream/30 rounded-[2rem] border border-brand-cream space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-black text-brand-forest uppercase tracking-widest flex items-center gap-2">
+                                <span className="bg-brand-sage text-white text-[10px] px-2 py-0.5 rounded-full">New</span>
+                                Mindful Check-in
+                            </h3>
+                            <button
+                                onClick={() => setIsTreat(!isTreat)}
+                                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${isTreat ? 'bg-pink-100 text-pink-600 border-pink-200 shadow-inner' : 'bg-white text-slate-400 border-slate-200 hover:border-pink-200 hover:text-pink-400'}`}
+                            >
+                                {isTreat ? '🎉 It\'s a Treat Date!' : 'Is this a Treat Date?'}
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500">Hunger Level (1-10)</label>
+                                <input
+                                    type="range" min="1" max="10" step="1"
+                                    value={hungerLevel}
+                                    onChange={(e) => setHungerLevel(parseInt(e.target.value))}
+                                    className="w-full accent-brand-sage h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+                                    <span>Starving</span>
+                                    <span>Stuffed</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500">Satisfaction (1-10)</label>
+                                <input
+                                    type="range" min="1" max="10" step="1"
+                                    value={satisfactionLevel}
+                                    onChange={(e) => setSatisfactionLevel(parseInt(e.target.value))}
+                                    className="w-full accent-brand-forest h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+                                    <span>Meh</span>
+                                    <span>Loved it</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-slate-500">How are you feeling?</label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Happy 😊', 'Stressed 😫', 'Bored 😐', 'Energetic ⚡', 'Tired 😴'].map(mood => (
+                                    <button
+                                        key={mood}
+                                        onClick={() => setEmotionalState(emotionalState === mood ? '' : mood)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${emotionalState === mood ? 'bg-brand-sage text-white border-brand-sage shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                    >
+                                        {mood}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="p-8 bg-slate-50/50">

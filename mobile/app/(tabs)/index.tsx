@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar, Gift } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar, Gift, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -44,12 +44,8 @@ export default function DashboardScreen() {
   const cycleStatus = data?.cycleStatus;
   const lastPeriodLog = data?.lastPeriodLog;
 
-  // Fetch Health Assessment
-  const { data: assessment } = useQuery({
-    queryKey: ['health-assessment'],
-    queryFn: () => api.get<any>('/api/clients/me/health-assessment'),
-    retry: false
-  });
+  // Assessment is now part of dashboard data
+  const assessment = data?.assessment;
 
   const SCORE_RANGES = [
     { min: 0, max: 30, color: '#FF4D4D' },
@@ -177,14 +173,14 @@ export default function DashboardScreen() {
   const idealWeight = profile?.idealWeight || (profile?.weight || 0);
 
   const addWaterMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars: { increment: number }) => {
       const today = getLocalDateString();
       return api.post('/api/clients/me/water-intake', {
-        increment: 1,
+        increment: vars.increment,
         date: today
       });
     },
-    onMutate: async () => {
+    onMutate: async (vars) => {
       const today = getLocalDateString();
       const queryKey = ['dashboard', today];
 
@@ -197,7 +193,7 @@ export default function DashboardScreen() {
           ...old,
           waterData: {
             ...old.waterData,
-            currentGlasses: old.waterData.currentGlasses + 1
+            currentGlasses: Math.max(0, old.waterData.currentGlasses + vars.increment)
           }
         };
       });
@@ -217,9 +213,16 @@ export default function DashboardScreen() {
   });
 
   const handleAddWater = useCallback(() => {
-    addWaterMutation.mutate();
+    addWaterMutation.mutate({ increment: 1 });
     toast.success('Water logged!', { duration: 1000 });
   }, [addWaterMutation]);
+
+  const handleRemoveWater = useCallback(() => {
+    if ((waterData?.currentGlasses || 0) > 0) {
+      addWaterMutation.mutate({ increment: -1 });
+      toast.success('Water intake reduced', { duration: 1000 });
+    }
+  }, [addWaterMutation, waterData]);
 
   const weightMutation = useMutation({
     mutationFn: async (vars: { weight: number, unit: string, date: Date }) => {
@@ -256,7 +259,15 @@ export default function DashboardScreen() {
   }, [measureMutation]);
 
   const mealMutation = useMutation({
-    mutationFn: async (vars: { category: string, items: { name: string; quantity: string }[], date?: Date }) => {
+    mutationFn: async (vars: {
+      category: string;
+      items: { name: string; quantity: string }[];
+      date?: Date;
+      hungerLevel?: number;
+      satisfactionLevel?: number;
+      emotionalState?: string;
+      isTreat?: boolean;
+    }) => {
       return api.post('/api/clients/me/meal-logs', vars);
     },
     onSuccess: () => {
@@ -268,8 +279,12 @@ export default function DashboardScreen() {
     }
   });
 
-  const handleSaveMeal = useCallback(async (category: string, items: { name: string; quantity: string }[]) => {
-    await mealMutation.mutateAsync({ category, items, date: new Date() });
+  const handleSaveMeal = useCallback(async (
+    category: string,
+    items: { name: string; quantity: string }[],
+    stats?: { hungerLevel: number; satisfactionLevel: number; emotionalState: string; isTreat: boolean; }
+  ) => {
+    await mealMutation.mutateAsync({ category, items, ...stats, date: new Date() });
   }, [mealMutation]);
 
   const handleEditMeal = useCallback((category: string, items: any[]) => {
@@ -329,103 +344,125 @@ export default function DashboardScreen() {
               <Text style={styles.avatarText}>{profile?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}</Text>
             </TouchableOpacity>
 
-            {isProfileMenuOpen && (
-              <>
-                {/* Transparent Overlay to close menu on outside click */}
-                <TouchableOpacity
-                  style={styles.menuOverlay}
-                  activeOpacity={1}
-                  onPress={() => setIsProfileMenuOpen(false)}
-                />
-                <View style={[styles.menuDropdown, { backgroundColor: theme.background }]}>
-                  {assessment && (
-                    <>
+            <Modal
+              visible={isProfileMenuOpen}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setIsProfileMenuOpen(false)}
+            >
+              <View style={styles.fullMenuOverlay}>
+                <View style={[styles.fullMenuContent, { backgroundColor: theme.background }]}>
+                  <View style={[styles.fullMenuHeader, { paddingTop: insets.top + 20 }]}>
+                    <TouchableOpacity
+                      onPress={() => setIsProfileMenuOpen(false)}
+                      style={styles.fullMenuCloseButton}
+                    >
+                      <X size={24} color={theme.text} />
+                    </TouchableOpacity>
+                    <Text style={[styles.fullMenuTitle, { color: theme.text }]}>Profile Menu</Text>
+                    <View style={{ width: 40 }} />
+                  </View>
+
+                  <ScrollView contentContainerStyle={styles.fullMenuScroll}>
+                    <View style={styles.fullMenuUserInfo}>
+                      <View style={[styles.fullMenuAvatar, { backgroundColor: theme.brandSage }]}>
+                        <Text style={styles.fullMenuAvatarText}>{profile?.name?.[0]?.toUpperCase() || 'U'}</Text>
+                      </View>
+                      <View style={{ backgroundColor: 'transparent' }}>
+                        <Text style={[styles.fullMenuUserName, { color: theme.text }]}>{profile?.name || 'User'}</Text>
+                        <Text style={styles.fullMenuUserEmail}>{user?.email}</Text>
+                      </View>
+                    </View>
+
+                    {assessment && (
                       <TouchableOpacity
-                        style={styles.scoreCard}
+                        style={[styles.fullMenuScoreCard, { backgroundColor: theme.brandForest }]}
                         onPress={() => {
                           setIsProfileMenuOpen(false);
                           router.push('/audit');
                         }}
                       >
-                        <View style={{ flex: 1, gap: 4 }}>
-                          <Text style={styles.scoreTitle}>Wow you made it!</Text>
-                          <Text style={styles.scoreDesc}>
-                            Based on the analysis, your health score is <Text style={{ fontWeight: '900', color: theme.brandForest }}>{assessment.totalScore}</Text>. Click here to know more.
-                          </Text>
+                        <View style={{ flex: 1, gap: 4, backgroundColor: 'transparent' }}>
+                          <Text style={styles.fullMenuScoreTitle}>Health Score</Text>
+                          <Text style={styles.fullMenuScoreDesc}>Based on your latest assessment</Text>
                         </View>
-                        <View style={[styles.menuScoreCircle, { borderColor: SCORE_RANGES.find(r => assessment.totalScore >= r.min && assessment.totalScore <= r.max)?.color || theme.brandSage }]}>
-                          <Text style={[styles.menuScoreValue, { color: SCORE_RANGES.find(r => assessment.totalScore >= r.min && assessment.totalScore <= r.max)?.color || theme.brandSage }]}>
-                            {assessment.totalScore}
-                          </Text>
+                        <View style={[styles.fullMenuScoreCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                          <Text style={styles.fullMenuScoreValue}>{assessment.totalScore}</Text>
                         </View>
                       </TouchableOpacity>
-                      <View style={styles.menuDivider} />
-                    </>
-                  )}
+                    )}
 
-                  <View style={styles.menuHeader}>
-                    <Text style={styles.menuLabel}>Logged in as</Text>
-                    <Text style={[styles.menuEmail, { color: theme.brandForest }]} numberOfLines={1}>
-                      {user?.email}
-                    </Text>
-                  </View>
+                    <View style={styles.fullMenuList}>
+                      <TouchableOpacity
+                        style={styles.fullMenuListItem}
+                        onPress={() => {
+                          setIsProfileMenuOpen(false);
+                          router.push('/profile');
+                        }}
+                      >
+                        <View style={[styles.fullMenuIconBox, { backgroundColor: '#f1f5f9' }]}>
+                          <UserIcon size={20} color="#64748b" />
+                        </View>
+                        <Text style={[styles.fullMenuListItemText, { color: theme.text }]}>Edit Profile</Text>
+                        <ChevronRight size={20} color="#cbd5e1" />
+                      </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setIsProfileMenuOpen(false);
-                      router.push('/profile');
-                    }}
-                  >
-                    <UserIcon size={18} color="#64748b" />
-                    <Text style={styles.menuItemText}>Edit Profile</Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.fullMenuListItem}
+                        onPress={() => {
+                          setIsProfileMenuOpen(false);
+                          router.push('/contact');
+                        }}
+                      >
+                        <View style={[styles.fullMenuIconBox, { backgroundColor: '#f1f5f9' }]}>
+                          <Phone size={20} color="#64748b" />
+                        </View>
+                        <Text style={[styles.fullMenuListItemText, { color: theme.text }]}>Contact & Support</Text>
+                        <ChevronRight size={20} color="#cbd5e1" />
+                      </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setIsProfileMenuOpen(false);
-                      router.push('/(tabs)/refer-earn' as any);
-                    }}
-                  >
-                    <Gift size={18} color="#64748b" />
-                    <Text style={styles.menuItemText}>Refer & Earn</Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.fullMenuListItem}
+                        onPress={() => {
+                          setIsProfileMenuOpen(false);
+                          router.push('/settings');
+                        }}
+                      >
+                        <View style={[styles.fullMenuIconBox, { backgroundColor: '#f1f5f9' }]}>
+                          <Settings size={20} color="#64748b" />
+                        </View>
+                        <Text style={[styles.fullMenuListItemText, { color: theme.text }]}>Settings</Text>
+                        <ChevronRight size={20} color="#cbd5e1" />
+                      </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setIsProfileMenuOpen(false);
-                      router.push('/contact');
-                    }}
-                  >
-                    <Phone size={18} color="#64748b" />
-                    <Text style={styles.menuItemText}>Contact</Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.fullMenuListItem}
+                        onPress={() => {
+                          setIsProfileMenuOpen(false);
+                          router.push('/refer-earn');
+                        }}
+                      >
+                        <View style={[styles.fullMenuIconBox, { backgroundColor: '#f1f5f9' }]}>
+                          <Gift size={20} color="#64748b" />
+                        </View>
+                        <Text style={[styles.fullMenuListItemText, { color: theme.text }]}>Refer & Earn</Text>
+                        <ChevronRight size={20} color="#cbd5e1" />
+                      </TouchableOpacity>
+                    </View>
 
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setIsProfileMenuOpen(false);
-                      router.push('/settings');
-                    }}
-                  >
-                    <Settings size={18} color="#64748b" />
-                    <Text style={styles.menuItemText}>Settings</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.fullMenuLogoutButton}
+                      onPress={logout}
+                    >
+                      <LogOut size={20} color="#ef4444" />
+                      <Text style={styles.fullMenuLogoutText}>Sign Out</Text>
+                    </TouchableOpacity>
 
-                  <View style={styles.menuDivider} />
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={logout}
-                  >
-                    <LogOut size={18} color="#64748b" />
-                    <Text style={styles.menuItemText}>Sign Out</Text>
-                  </TouchableOpacity>
+                    <Text style={styles.fullMenuVersion}>Version 1.0.0</Text>
+                  </ScrollView>
                 </View>
-              </>
-            )}
+              </View>
+            </Modal>
           </View>
         </View>
 
@@ -523,6 +560,7 @@ export default function DashboardScreen() {
                   currentGlasses={waterData.currentGlasses}
                   targetGlasses={waterData.targetGlasses}
                   onAdd={handleAddWater}
+                  onRemove={handleRemoveWater}
                 />
               )}
             </View>
@@ -942,5 +980,131 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
     color: '#334155',
+  },
+  fullMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+  },
+  fullMenuContent: {
+    flex: 1,
+  },
+  fullMenuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  fullMenuCloseButton: {
+    padding: 8,
+    borderRadius: 12,
+  },
+  fullMenuTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  fullMenuScroll: {
+    padding: 24,
+  },
+  fullMenuUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 32,
+  },
+  fullMenuAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullMenuAvatarText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FFF',
+  },
+  fullMenuUserName: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  fullMenuUserEmail: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  fullMenuScoreCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 32,
+  },
+  fullMenuScoreTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFF',
+  },
+  fullMenuScoreDesc: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  fullMenuScoreCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullMenuScoreValue: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFF',
+  },
+  fullMenuList: {
+    gap: 12,
+    marginBottom: 32,
+  },
+  fullMenuListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 16,
+    gap: 16,
+  },
+  fullMenuIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullMenuListItemText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  fullMenuLogoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+    backgroundColor: '#fef2f2',
+    marginBottom: 32,
+  },
+  fullMenuLogoutText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ef4444',
+  },
+  fullMenuVersion: {
+    fontSize: 12,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });

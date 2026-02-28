@@ -1,4 +1,4 @@
-# Nutrivibes Diet Planner
+# DateWithDiet
 
 A comprehensive meal planning application built with Next.js that allows users to create, manage, and export personalized diet plans.
 

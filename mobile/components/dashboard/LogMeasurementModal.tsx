@@ -94,15 +94,17 @@ export default function LogMeasurementModal({ isOpen, onClose, onSave, initialVa
                     </TouchableOpacity>
 
                     <View style={styles.valueContainer}>
-                        <TextInput
-                            style={[styles.valueText, { color: theme.brandForest, minWidth: 80, textAlign: 'center' }]}
-                            value={value?.toString()}
-                            onChangeText={(text) => setValues((prev: any) => ({ ...prev, [item.key]: text }))}
-                            keyboardType="numeric"
-                            returnKeyType="done"
-                            maxLength={5}
-                        />
-                        <Text style={styles.unitText}>{unit}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
+                            <TextInput
+                                style={[styles.valueText, { color: theme.brandForest, minWidth: 60, textAlign: 'center' }]}
+                                value={value?.toString()}
+                                onChangeText={(text) => setValues((prev: any) => ({ ...prev, [item.key]: text }))}
+                                keyboardType="numeric"
+                                returnKeyType="done"
+                                maxLength={5}
+                            />
+                            <Text style={styles.unitText}>{unit}</Text>
+                        </View>
                     </View>
 
                     <TouchableOpacity
@@ -221,9 +223,8 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         color: '#F97316', // Orange
-        position: 'absolute',
-        right: -30,
-        bottom: 8,
+        marginLeft: 4,
+        marginBottom: 6,
     },
     saveButton: {
         width: '100%',

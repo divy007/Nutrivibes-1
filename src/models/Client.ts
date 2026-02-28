@@ -20,6 +20,7 @@ export interface IClient extends Document {
     gender?: 'male' | 'female' | 'other';
     city?: string;
     state?: string;
+    country?: string;
     address?: string;
     pincode?: string;
     height?: number;
@@ -96,6 +97,7 @@ const ClientSchema = new Schema(
         gender: { type: String, enum: ['male', 'female', 'other'] },
         city: { type: String },
         state: { type: String },
+        country: { type: String },
         address: { type: String },
         pincode: { type: String },
         age: { type: Number },

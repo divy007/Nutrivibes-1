@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import User from '@/models/User';
 import WeightLog from '@/models/WeightLog';
+import MeasurementLog from '@/models/MeasurementLog';
 import DietPlan from '@/models/DietPlan';
 import { getAuthUser } from '@/lib/auth';
 import { generateToken } from '@/lib/auth';
@@ -190,6 +191,16 @@ export async function PATCH(req: Request) {
         }
 
         const { name, email, phone, userId, dieticianId, _id, ...updateFields } = body;
+
+        // Check if reset is needed (if weight or height changed)
+        const weightChanged = updateFields.weight !== undefined && updateFields.weight !== client.weight;
+        const heightChanged = updateFields.height !== undefined && updateFields.height !== client.height;
+
+        if (weightChanged || heightChanged) {
+            console.log(`Resetting progress for client ${client._id} due to ${weightChanged ? 'weight' : ''} ${heightChanged ? 'height' : ''} update`);
+            await WeightLog.deleteMany({ clientId: client._id });
+            await MeasurementLog.deleteMany({ clientId: client._id });
+        }
 
         const isProfileComplete = !!(
             (updateFields.pincode || client.pincode) &&

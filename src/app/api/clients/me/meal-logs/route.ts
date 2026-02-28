@@ -49,7 +49,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Client profile not found' }, { status: 404 });
         }
 
-        const { date, category, items } = await req.json();
+        const { date, category, items, ...stats } = await req.json();
 
         if (!category || !items || !Array.isArray(items)) {
             return NextResponse.json({ error: 'Invalid meal data' }, { status: 400 });
@@ -60,7 +60,17 @@ export async function POST(req: Request) {
         // Update if exists for this category and date, else create
         const log = await MealLog.findOneAndUpdate(
             { clientId: client._id, date: queryDate, category },
-            { $set: { items } },
+            {
+                $set: {
+                    items,
+                    // DateWithDiet Fields - only update if provided
+                    ...(stats.hungerLevel && { hungerLevel: stats.hungerLevel }),
+                    ...(stats.satisfactionLevel && { satisfactionLevel: stats.satisfactionLevel }),
+                    ...(stats.emotionalState && { emotionalState: stats.emotionalState }),
+                    ...(stats.isTreat !== undefined && { isTreat: stats.isTreat }),
+                    ...(stats.chewCount && { chewCount: stats.chewCount })
+                }
+            },
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
 

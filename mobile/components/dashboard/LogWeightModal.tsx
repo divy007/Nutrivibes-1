@@ -79,13 +79,25 @@ export default function LogWeightModal({ isOpen, onClose, onSave, initialWeight 
 
                                     <View style={styles.unitToggle}>
                                         <TouchableOpacity
-                                            onPress={() => setUnit('kg')}
+                                            onPress={() => {
+                                                if (unit === 'lb' && weight) {
+                                                    const converted = (parseFloat(weight) / 2.20462).toFixed(1);
+                                                    setWeight(converted);
+                                                }
+                                                setUnit('kg');
+                                            }}
                                             style={[styles.unitButton, unit === 'kg' && styles.unitButtonActive]}
                                         >
                                             <Text style={[styles.unitButtonText, unit === 'kg' && styles.unitButtonTextActive]}>KG</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            onPress={() => setUnit('lb')}
+                                            onPress={() => {
+                                                if (unit === 'kg' && weight) {
+                                                    const converted = (parseFloat(weight) * 2.20462).toFixed(1);
+                                                    setWeight(converted);
+                                                }
+                                                setUnit('lb');
+                                            }}
                                             style={[styles.unitButton, unit === 'lb' && styles.unitButtonActive]}
                                         >
                                             <Text style={[styles.unitButtonText, unit === 'lb' && styles.unitButtonTextActive]}>LB</Text>

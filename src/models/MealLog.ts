@@ -24,7 +24,13 @@ const MealLogSchema = new Schema(
             name: { type: String, required: true },
             quantity: { type: String, required: true },
             calories: { type: Number }
-        }]
+        }],
+        // DateWithDiet / Mindful Eating Fields
+        hungerLevel: { type: Number, min: 1, max: 10 }, // 1 (Starving) - 10 (Full)
+        satisfactionLevel: { type: Number, min: 1, max: 10 }, // 1 (Unhappy) - 10 (Satisfied)
+        emotionalState: { type: String }, // e.g., 'Happy', 'Stressed', 'Bored'
+        isTreat: { type: Boolean, default: false }, // "Treat Date" flag
+        chewCount: { type: Number }, // Optional mindfulness metric
     },
     { timestamps: true }
 );

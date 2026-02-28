@@ -14,7 +14,7 @@ export default function ContactScreen() {
     const insets = useSafeAreaInsets();
 
     const handleCall = () => {
-        Linking.openURL('tel:9824359944');
+        Linking.openURL('tel:+919824359944');
     };
 
     const handleEmail = () => {
@@ -55,8 +55,8 @@ export default function ContactScreen() {
                                 <Phone size={20} color="#fff" />
                             </View>
                             <View style={[styles.contactButtonText, { backgroundColor: 'transparent' }]}>
-                                <Text style={styles.contactLabel}>Phone</Text>
-                                <Text style={styles.contactValue}>9824359944</Text>
+                                <Text style={styles.contactLabel}>Contact No</Text>
+                                <Text style={styles.contactValue}>+91 9824359944</Text>
                             </View>
                         </TouchableOpacity>
 

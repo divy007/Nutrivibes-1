@@ -3,15 +3,16 @@ import { StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Droplet, Plus } from 'lucide-react-native';
+import { Droplet, Plus, Minus } from 'lucide-react-native';
 
 interface WaterTrackerProps {
     currentGlasses: number;
     targetGlasses: number;
     onAdd: () => void;
+    onRemove: () => void;
 }
 
-const WaterTracker = React.memo(function WaterTracker({ currentGlasses, targetGlasses, onAdd }: WaterTrackerProps) {
+const WaterTracker = React.memo(function WaterTracker({ currentGlasses, targetGlasses, onAdd, onRemove }: WaterTrackerProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
@@ -25,13 +26,23 @@ const WaterTracker = React.memo(function WaterTracker({ currentGlasses, targetGl
                     <Text style={[styles.label, { color: theme.brandForest }]}>Water Intake</Text>
                     <Text style={styles.subtitle}>{currentGlasses * 250}ml / {targetGlasses * 250}ml</Text>
                 </View>
-                <TouchableOpacity
-                    style={[styles.addButton, { backgroundColor: theme.brandSage, shadowColor: theme.brandSage }]}
-                    onPress={onAdd}
-                    activeOpacity={0.7}
-                >
-                    <Plus size={24} color="#FFF" />
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        style={[styles.smallActionButton, { backgroundColor: '#f1f5f9' }]}
+                        onPress={onRemove}
+                        activeOpacity={0.7}
+                        disabled={currentGlasses <= 0}
+                    >
+                        <Minus size={20} color={currentGlasses > 0 ? '#64748b' : '#cbd5e1'} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.addButton, { backgroundColor: theme.brandSage, shadowColor: theme.brandSage }]}
+                        onPress={onAdd}
+                        activeOpacity={0.7}
+                    >
+                        <Plus size={24} color="#FFF" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.grid}>
@@ -99,8 +110,22 @@ const styles = StyleSheet.create({
         color: '#64748b',
         fontWeight: '600',
     },
-    addButton: {
+    actionButtons: {
         marginLeft: 'auto',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    smallActionButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    addButton: {
         width: 44,
         height: 44,
         borderRadius: 14,

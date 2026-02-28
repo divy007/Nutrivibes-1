@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nutrivibes.mobile",
+      "bundleIdentifier": "com.datewithdiet.mobile",
       "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.nutrivibes.mobile",
+      "package": "com.datewithdiet.mobile",
       "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

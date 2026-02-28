@@ -41,6 +41,10 @@ interface MealLog {
     category: string;
     items: { name: string; quantity: string }[];
     date: string;
+    hungerLevel?: number;
+    satisfactionLevel?: number;
+    emotionalState?: string;
+    isTreat?: boolean;
 }
 
 interface MeasurementLog {
@@ -134,9 +138,19 @@ export default function ClientDashboard() {
         }
     };
 
-    const handleSaveMeal = async (category: string, items: { name: string; quantity: string }[]) => {
+    const handleSaveMeal = async (
+        category: string,
+        items: { name: string; quantity: string }[],
+        stats: {
+            hungerLevel: number;
+            satisfactionLevel: number;
+            emotionalState: string;
+            isTreat: boolean;
+            chewCount?: number;
+        }
+    ) => {
         try {
-            await api.post('/api/clients/me/meal-logs', { category, items });
+            await api.post('/api/clients/me/meal-logs', { category, items, ...stats });
             await fetchData(); // Refresh data
         } catch (error) {
             console.error('Failed to save meal log:', error);
@@ -194,7 +208,10 @@ export default function ClientDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Left Column - Main Tracking */}
                 <div className="lg:col-span-8 space-y-8">
-                    <MealLogCard onLogClick={() => setIsMealModalOpen(true)} />
+                    <MealLogCard
+                        logs={mealLogs}
+                        onLogClick={() => setIsMealModalOpen(true)}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <WeightTrackerCard

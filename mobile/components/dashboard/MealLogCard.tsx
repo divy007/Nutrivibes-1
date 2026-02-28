@@ -55,10 +55,31 @@ const MealLogCard = React.memo(function MealLogCard({ logs, onAdd, onEdit }: Mea
                                 <cat.icon size={16} color={cat.color} />
                             </View>
                             <View style={styles.mealInfo}>
-                                <Text style={[styles.mealName, { color: theme.text }]}>{cat.name}</Text>
+                                <View style={styles.mealHeader}>
+                                    <Text style={[styles.mealName, { color: theme.text }]}>{cat.name}</Text>
+                                    {log?.isTreat && (
+                                        <View style={styles.treatBadge}>
+                                            <Text style={styles.treatBadgeText}>Treat 🎉</Text>
+                                        </View>
+                                    )}
+                                </View>
                                 <Text style={styles.mealStatus}>
                                     {log ? `${log.items.length} items logged` : 'Not logged yet'}
                                 </Text>
+                                {log && (
+                                    <View style={styles.metricsRow}>
+                                        {log.emotionalState && (
+                                            <View style={styles.metricPill}>
+                                                <Text style={styles.metricText}>{log.emotionalState}</Text>
+                                            </View>
+                                        )}
+                                        {log.hungerLevel && (
+                                            <Text style={styles.metricStats}>
+                                                Hunger: {log.hungerLevel} • Sat: {log.satisfactionLevel}
+                                            </Text>
+                                        )}
+                                    </View>
+                                )}
                             </View>
                             {log && (
                                 <View style={[styles.dot, { backgroundColor: cat.color }]} />
@@ -194,5 +215,45 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-    }
+    },
+    mealHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    treatBadge: {
+        backgroundColor: '#fce7f3',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#fbcfe8',
+    },
+    treatBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#db2777',
+    },
+    metricsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 4,
+    },
+    metricPill: {
+        backgroundColor: '#f1f5f9',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    metricText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#64748b',
+    },
+    metricStats: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#94a3b8',
+    },
 });

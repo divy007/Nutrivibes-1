@@ -11,11 +11,15 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: Request) {
+    const start = Date.now();
+    console.log('--- LOGIN REQUEST RECEIVED ---');
 
     try {
         await connectDB();
+        console.log(`[LOGIN DEBUG] DB Connected in ${Date.now() - start}ms`);
 
         const body = await req.json();
+        console.log(`[LOGIN DEBUG] Body parsed in ${Date.now() - start}ms`);
 
         // Validate request body
         const validationResult = loginSchema.safeParse(body);
@@ -33,6 +37,7 @@ export async function POST(req: Request) {
 
         // Find user (case-insensitive)
         const user = await User.findOne({ email: email.toLowerCase() });
+        console.log(`[LOGIN DEBUG] User found in ${Date.now() - start}ms`);
 
         if (!user) {
             return NextResponse.json(
@@ -43,6 +48,7 @@ export async function POST(req: Request) {
 
         // Check password
         const isMatch = await user.comparePassword(password);
+        console.log(`[LOGIN DEBUG] Password checked in ${Date.now() - start}ms`);
 
         if (!isMatch) {
             return NextResponse.json(
@@ -54,11 +60,13 @@ export async function POST(req: Request) {
         let isProfileComplete = false;
         if (user.role === 'CLIENT') {
             const client = await Client.findOne({ userId: user._id });
+            console.log(`[LOGIN DEBUG] Client profile found in ${Date.now() - start}ms`);
             isProfileComplete = client?.isProfileComplete || false;
         }
 
         // Generate token
         const token = generateToken(user, isProfileComplete);
+        console.log(`[LOGIN DEBUG] Token generated in ${Date.now() - start}ms`);
 
         // Remove password from response
         const userResponse = user.toJSON();

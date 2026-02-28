@@ -29,10 +29,14 @@ export default function ProfileScreen() {
         age: '', // Derived for display
         city: '',
         state: '',
+        country: '',
+        pincode: '',
         gender: '' as 'male' | 'female' | 'other' | '',
         preferences: '', // Single selection logic for UI
         primaryGoal: [] as string[]
     });
+
+    const [isPincodeLoading, setIsPincodeLoading] = useState(false);
 
     const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
     const [heightFt, setHeightFt] = useState('');
@@ -58,24 +62,16 @@ export default function ProfileScreen() {
                 age: '', // We use dob now
                 city: data.city || '',
                 state: data.state || '',
+                country: data.country || '',
+                pincode: data.pincode || '',
                 gender: data.gender || '',
                 preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
                 primaryGoal: Array.isArray(data.primaryGoal) ? data.primaryGoal : (data.primaryGoal ? [data.primaryGoal] : [])
             });
 
-            // Initialize height in ft/in if we have data
-            if (data.height) {
-                const totalInches = data.height / 2.54;
-                const feet = Math.floor(totalInches / 12);
-                const inches = Math.round(totalInches % 12);
-                setHeightFt(feet.toString());
-                setHeightIn(inches.toString());
-                setIsHeightLocked(true);
-            }
-
-            if (data.weight) {
-                setIsWeightLocked(true);
-            }
+            // Unlocked as per requirement
+            setIsHeightLocked(false);
+            setIsWeightLocked(false);
         } catch (error) {
             console.error('Failed to fetch profile:', error);
             Alert.alert('Error', 'Failed to load profile data');
@@ -116,6 +112,8 @@ export default function ProfileScreen() {
                 weight: parseFloat(formData.weight) || undefined,
                 city: formData.city,
                 state: formData.state,
+                country: formData.country,
+                pincode: formData.pincode,
                 gender: formData.gender,
                 // Convert DD/MM/YYYY to Date object
                 dob: formData.dob ? (() => {
@@ -143,6 +141,30 @@ export default function ProfileScreen() {
                 : [...prev.primaryGoal, goal];
             return { ...prev, primaryGoal: goals };
         });
+    };
+
+    const handlePincodeChange = async (pincode: string) => {
+        setFormData(prev => ({ ...prev, pincode }));
+        if (pincode.length === 6) {
+            setIsPincodeLoading(true);
+            try {
+                const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                const data = await response.json();
+                if (data[0].Status === 'Success') {
+                    const postOffice = data[0].PostOffice[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        city: postOffice.District,
+                        state: postOffice.State,
+                        country: 'India'
+                    }));
+                }
+            } catch (error) {
+                console.error('Pincode lookup failed:', error);
+            } finally {
+                setIsPincodeLoading(false);
+            }
+        }
     };
 
     const isValidDate = (dateString: string) => {
@@ -204,21 +226,6 @@ export default function ProfileScreen() {
                             <Text style={[styles.emailText, { color: '#94a3b8' }]}>{formData.email}</Text>
                         </View>
 
-                        <TouchableOpacity
-                            style={[styles.referCard, { backgroundColor: theme.brandForest }]}
-                            onPress={() => router.push('/(tabs)/refer-earn' as any)}
-                        >
-                            <View style={styles.referContent}>
-                                <View style={styles.referIcon}>
-                                    <Gift size={20} color={theme.brandForest} />
-                                </View>
-                                <View>
-                                    <Text style={styles.referTitle}>Refer & Earn</Text>
-                                    <Text style={styles.referSubtitle}>Get up to 60 days free extension!</Text>
-                                </View>
-                            </View>
-                            <ChevronRight size={20} color="rgba(255,255,255,0.8)" />
-                        </TouchableOpacity>
 
                         <View style={styles.form}>
                             <View style={styles.inputGroup}>
@@ -339,12 +346,28 @@ export default function ProfileScreen() {
                                         style={[styles.input, { color: theme.text }]}
                                         value={formData.dob}
                                         onChangeText={(t) => {
-                                            // Simple mask logic or just let them type
+                                            // Handle the text change logic here if needed
                                             setFormData({ ...formData, dob: t });
                                         }}
                                         placeholder="DD/MM/YYYY"
                                         keyboardType="numbers-and-punctuation"
                                     />
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Pincode</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <Target size={20} color="#94a3b8" />
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.pincode}
+                                        onChangeText={handlePincodeChange}
+                                        placeholder="6-digit Pincode"
+                                        keyboardType="numeric"
+                                        maxLength={6}
+                                    />
+                                    {isPincodeLoading && <ActivityIndicator size="small" color={theme.brandSage} />}
                                 </View>
                             </View>
 
@@ -437,15 +460,39 @@ export default function ProfileScreen() {
                                 </View>
                             </View>
 
+                            <View style={styles.row}>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>City</Text>
+                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <TextInput
+                                            style={[styles.input, { color: theme.text }]}
+                                            value={formData.city}
+                                            onChangeText={(t) => setFormData({ ...formData, city: t })}
+                                            placeholder="City"
+                                        />
+                                    </View>
+                                </View>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>State</Text>
+                                    <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                        <TextInput
+                                            style={[styles.input, { color: theme.text }]}
+                                            value={formData.state}
+                                            onChangeText={(t) => setFormData({ ...formData, state: t })}
+                                            placeholder="State"
+                                        />
+                                    </View>
+                                </View>
+                            </View>
+
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Location</Text>
+                                <Text style={styles.label}>Country</Text>
                                 <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
-                                    <UserCircle size={20} color="#94a3b8" />
                                     <TextInput
                                         style={[styles.input, { color: theme.text }]}
-                                        value={formData.city}
-                                        onChangeText={(t) => setFormData({ ...formData, city: t })}
-                                        placeholder="City"
+                                        value={formData.country}
+                                        onChangeText={(t) => setFormData({ ...formData, country: t })}
+                                        placeholder="Country"
                                     />
                                 </View>
                             </View>

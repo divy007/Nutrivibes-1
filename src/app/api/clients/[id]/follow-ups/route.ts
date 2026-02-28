@@ -77,9 +77,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
 
         const body = await req.json();
+        const normalizedDate = normalizeDateUTC(body.date);
+
+        // Check for double booking
+        if (body.timing) {
+            const existingFollowUp = await FollowUp.findOne({
+                date: normalizedDate,
+                timing: body.timing,
+                status: { $in: ['Pending', 'Completed'] }
+            });
+
+            if (existingFollowUp) {
+                return NextResponse.json({ error: 'This time slot is already booked. Please choose another time.' }, { status: 400 });
+            }
+        }
+
         const followUp = await FollowUp.create({
             ...body,
-            date: normalizeDateUTC(body.date),
+            date: normalizedDate,
             clientId,
             dieticianId: user._id,
         });

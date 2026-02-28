@@ -35,13 +35,13 @@ export async function GET(req: Request) {
         const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
         const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog, assessment] = await Promise.all([
-            WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean(),
-            WaterIntake.findOne({ clientId: client._id, date: today }).lean(),
-            MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean(),
-            MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean(),
-            DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }),
-            PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean(),
-            HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean()
+            WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean().catch(e => { console.error('WeightLog fetch failed:', e); return []; }),
+            WaterIntake.findOne({ clientId: client._id, date: today }).lean().catch(e => { console.error('WaterIntake fetch failed:', e); return null; }),
+            MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean().catch(e => { console.error('MealLog fetch failed:', e); return []; }),
+            MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean().catch(e => { console.error('MeasurementLog fetch failed:', e); return []; }),
+            DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }).catch(e => { console.error('DietPlan fetch failed:', e); return null; }),
+            PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean().catch(e => { console.error('PeriodLog fetch failed:', e); return null; }),
+            HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean().catch(e => { console.error('HealthAssessment fetch failed:', e); return null; })
         ]);
 
         // Process diet plan to only show PUBLISHED items
