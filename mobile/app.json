@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 15,
+      "versionCode": 16,
       "permissions": [],
       "edgeToEdge": true,
       "adaptiveIcon": {
