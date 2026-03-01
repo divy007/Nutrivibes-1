@@ -28,7 +28,8 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 14,
+      "versionCode": 15,
+      "permissions": [],
       "edgeToEdge": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
