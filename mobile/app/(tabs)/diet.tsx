@@ -9,7 +9,6 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Clock } from 'lucide-react-native';
-import * as ScreenCapture from 'expo-screen-capture';
 import { useIsFocused } from '@react-navigation/native';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 
@@ -32,17 +31,6 @@ export default function DietPlanScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
     const isFocused = useIsFocused();
-
-    useEffect(() => {
-        if (isFocused) {
-            ScreenCapture.preventScreenCaptureAsync();
-        } else {
-            ScreenCapture.allowScreenCaptureAsync();
-        }
-        return () => {
-            ScreenCapture.allowScreenCaptureAsync();
-        };
-    }, [isFocused]);
 
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
