@@ -30,6 +30,7 @@ export default function ProfileScreen() {
         city: '',
         state: '',
         country: '',
+        address: '',
         pincode: '',
         gender: '' as 'male' | 'female' | 'other' | '',
         preferences: '', // Single selection logic for UI
@@ -63,6 +64,7 @@ export default function ProfileScreen() {
                 city: data.city || '',
                 state: data.state || '',
                 country: data.country || '',
+                address: data.address || '',
                 pincode: data.pincode || '',
                 gender: data.gender || '',
                 preferences: data.dietaryPreferences && data.dietaryPreferences.length > 0 ? data.dietaryPreferences[0] : '',
@@ -72,6 +74,15 @@ export default function ProfileScreen() {
             // Unlocked as per requirement
             setIsHeightLocked(false);
             setIsWeightLocked(false);
+
+            // Initialize height in ft/in if we have data
+            if (data.height) {
+                const totalInches = data.height / 2.54;
+                const feet = Math.floor(totalInches / 12);
+                const inches = Math.round(totalInches % 12);
+                setHeightFt(feet.toString());
+                setHeightIn(inches.toString());
+            }
         } catch (error) {
             console.error('Failed to fetch profile:', error);
             Alert.alert('Error', 'Failed to load profile data');
@@ -120,6 +131,7 @@ export default function ProfileScreen() {
                     const [day, month, year] = formData.dob.split('/');
                     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                 })() : undefined,
+                address: formData.address,
                 dietaryPreferences: formData.preferences ? [formData.preferences] : [],
                 primaryGoal: formData.primaryGoal
             });
@@ -515,6 +527,20 @@ export default function ProfileScreen() {
                                         value={formData.country}
                                         onChangeText={(t) => setFormData({ ...formData, country: t })}
                                         placeholder="Country"
+                                    />
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Address</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9', height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text, height: '100%' }]}
+                                        value={formData.address}
+                                        onChangeText={(t) => setFormData({ ...formData, address: t })}
+                                        placeholder="Enter your full address"
+                                        multiline
+                                        textAlignVertical="top"
                                     />
                                 </View>
                             </View>

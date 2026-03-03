@@ -36,14 +36,17 @@ export default function CompleteProfileScreen() {
         weight: '',
         dob: '',
         age: '', // Derived from DOB
-        city: '', // Kept for backward compatibility/read but usually replaced by address/pincode
+        city: '',
         state: '',
+        country: '',
         address: '',
         pincode: '',
         gender: '' as 'male' | 'female' | 'other' | '',
         preferences: '',
         primaryGoal: [] as string[]
     });
+
+    const [isPincodeLoading, setIsPincodeLoading] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -66,6 +69,7 @@ export default function CompleteProfileScreen() {
                 age: '',
                 city: data.city || '',
                 state: data.state || '',
+                country: data.country || '',
                 address: data.address || '',
                 pincode: data.pincode || '',
                 gender: data.gender || '',
@@ -138,10 +142,11 @@ export default function CompleteProfileScreen() {
                 height: heightInCm,
                 weight: weightValue,
                 dob: dobDate,
-                city: formData.city, // Optional legacy
+                city: formData.city,
+                state: formData.state,
+                country: formData.country,
                 address: formData.address,
                 pincode: formData.pincode,
-                state: formData.state,
                 gender: formData.gender,
                 dietaryPreferences: [formData.preferences],
                 primaryGoal: formData.primaryGoal,
@@ -165,6 +170,30 @@ export default function CompleteProfileScreen() {
                 : [...prev.primaryGoal, goal];
             return { ...prev, primaryGoal: goals };
         });
+    };
+
+    const handlePincodeChange = async (pincode: string) => {
+        setFormData(prev => ({ ...prev, pincode }));
+        if (pincode.length === 6) {
+            setIsPincodeLoading(true);
+            try {
+                const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                const data = await response.json();
+                if (data[0].Status === 'Success') {
+                    const postOffice = data[0].PostOffice[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        city: postOffice.District,
+                        state: postOffice.State,
+                        country: 'India'
+                    }));
+                }
+            } catch (error) {
+                console.error('Pincode lookup failed:', error);
+            } finally {
+                setIsPincodeLoading(false);
+            }
+        }
     };
 
     const calculateAge = (dob: string) => {
@@ -505,10 +534,48 @@ export default function CompleteProfileScreen() {
                                 <TextInput
                                     style={[styles.input, { color: theme.text }]}
                                     value={formData.pincode}
-                                    onChangeText={(t) => setFormData({ ...formData, pincode: t })}
+                                    onChangeText={handlePincodeChange}
                                     placeholder="Enter pincode"
                                     keyboardType="number-pad"
                                     maxLength={6}
+                                />
+                                {isPincodeLoading && <ActivityIndicator size="small" color={theme.brandSage} />}
+                            </View>
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.label}>City</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.city}
+                                        onChangeText={(t) => setFormData({ ...formData, city: t })}
+                                        placeholder="City"
+                                    />
+                                </View>
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.label}>State</Text>
+                                <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                    <TextInput
+                                        style={[styles.input, { color: theme.text }]}
+                                        value={formData.state}
+                                        onChangeText={(t) => setFormData({ ...formData, state: t })}
+                                        placeholder="State"
+                                    />
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Country</Text>
+                            <View style={[styles.inputContainer, { backgroundColor: '#f8fafc', borderColor: '#f1f5f9' }]}>
+                                <TextInput
+                                    style={[styles.input, { color: theme.text }]}
+                                    value={formData.country}
+                                    onChangeText={(t) => setFormData({ ...formData, country: t })}
+                                    placeholder="Country"
                                 />
                             </View>
                         </View>
