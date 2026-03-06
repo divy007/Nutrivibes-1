@@ -78,11 +78,11 @@ export default function LandingPage() {
                                     className="transition-all transform hover:-translate-y-1 active:scale-95"
                                 >
                                     <Image
-                                        src="/google-play-badge.png"
+                                        src="/google-play-badge.svg"
                                         alt="Get it on Google Play"
-                                        width={180}
-                                        height={54}
-                                        className="h-14 w-auto"
+                                        width={160}
+                                        height={48}
+                                        className="h-12 w-auto"
                                     />
                                 </a>
                                 <a
@@ -92,16 +92,16 @@ export default function LandingPage() {
                                     className="transition-all transform hover:-translate-y-1 active:scale-95"
                                 >
                                     <Image
-                                        src="/app-store-badge.png"
+                                        src="/app-store-badge.svg"
                                         alt="Download on the App Store"
-                                        width={180}
-                                        height={54}
-                                        className="h-14 w-auto"
+                                        width={160}
+                                        height={48}
+                                        className="h-12 w-auto"
                                     />
                                 </a>
                                 <Link
                                     href="/login"
-                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-[52px]"
+                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-[48px]"
                                 >
                                     Staff Login
                                     <ArrowRight className="w-5 h-5 ml-2.5" />
@@ -337,28 +337,28 @@ export default function LandingPage() {
                             href="https://play.google.com/store/apps/details?id=com.nutrivibes.mobile"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl shadow-brand-forest/20 rounded-2xl overflow-hidden"
+                            className="transition-all transform hover:-translate-y-1 active:scale-95"
                         >
                             <Image
-                                src="/google-play-badge.png"
+                                src="/google-play-badge.svg"
                                 alt="Get it on Google Play"
-                                width={200}
-                                height={60}
-                                className="h-16 w-auto"
+                                width={180}
+                                height={54}
+                                className="h-14 w-auto drop-shadow-md"
                             />
                         </a>
                         <a
                             href="https://apps.apple.com/us/app/datewithdiet/id6759826984"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl shadow-brand-forest/20 rounded-2xl overflow-hidden"
+                            className="transition-all transform hover:-translate-y-1 active:scale-95"
                         >
                             <Image
-                                src="/app-store-badge.png"
+                                src="/app-store-badge.svg"
                                 alt="Download on the App Store"
-                                width={194}
-                                height={60}
-                                className="h-16 w-auto"
+                                width={180}
+                                height={54}
+                                className="h-14 w-auto drop-shadow-md"
                             />
                         </a>
                     </div>
