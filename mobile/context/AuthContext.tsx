@@ -71,17 +71,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
         const inAuthGroup = segments[0] === '(tabs)';
         const inLoginGroup = segments[0] === 'login';
-
-
+        const inCompleteProfile = segments[0] === 'complete-profile';
 
         if (!user && inAuthGroup) {
-
             router.replace('/login');
-        } else if (user && inLoginGroup) {
-
-            if (!user.isProfileComplete) {
+        } else if (user && (inLoginGroup || (inAuthGroup && !user.isProfileComplete))) {
+            if (!user.isProfileComplete && !inCompleteProfile) {
                 router.replace('/complete-profile' as any);
-            } else {
+            } else if (user.isProfileComplete && (inLoginGroup || inCompleteProfile)) {
                 router.replace('/(tabs)' as any);
             }
         }
