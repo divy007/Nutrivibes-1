@@ -54,19 +54,19 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                     <div className="lg:grid lg:grid-cols-12 lg:gap-20 items-center">
                         <div className="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0">
-                            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white border border-brand-sage/20 shadow-sm text-brand-forest text-sm font-bold mb-10 hover:shadow-md transition-shadow cursor-default">
-                                <span className="relative flex h-2.5 w-2.5">
+                            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white border border-brand-sage/20 shadow-sm text-brand-forest text-sm font-bold mb-8 hover:shadow-md transition-shadow cursor-default whitespace-nowrap">
+                                <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-forest opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-forest"></span>
                                 </span>
-                                Now Official on App Store & Play Store
+                                Now Live on App Store & Play Store
                             </div>
-                            <h1 className="text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-8 tracking-tight">
+                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-8 tracking-tight">
                                 Your Personal <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-forest to-brand-sage">Wellness Journey</span>
                                 <br /> Starts Here.
                             </h1>
-                            <p className="text-xl text-gray-600 mb-12 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
+                            <p className="text-lg sm:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
                                 Connect directly with Dt. Mansi Anajwala. Get personalized diet plans,
                                 track your progress, and achieve your health goals with DateWithDiet.
                             </p>
@@ -75,36 +75,38 @@ export default function LandingPage() {
                                     href="https://play.google.com/store/apps/details?id=com.nutrivibes.mobile"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="transition-all transform hover:-translate-y-1 active:scale-95"
+                                    className="transition-all transform hover:-translate-y-1 active:scale-95 flex-shrink-0"
                                 >
                                     <Image
-                                        src="/google-play-badge.svg"
+                                        src="/google-play-badge-v2.svg"
                                         alt="Get it on Google Play"
-                                        width={160}
-                                        height={48}
-                                        className="h-12 w-auto"
+                                        width={140}
+                                        height={42}
+                                        className="h-11 w-auto"
+                                        priority
                                     />
                                 </a>
                                 <a
                                     href="https://apps.apple.com/us/app/datewithdiet/id6759826984"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="transition-all transform hover:-translate-y-1 active:scale-95"
+                                    className="transition-all transform hover:-translate-y-1 active:scale-95 flex-shrink-0"
                                 >
                                     <Image
-                                        src="/app-store-badge.svg"
+                                        src="/app-store-badge-v2.svg"
                                         alt="Download on the App Store"
-                                        width={160}
-                                        height={48}
-                                        className="h-12 w-auto"
+                                        width={140}
+                                        height={42}
+                                        className="h-11 w-auto"
+                                        priority
                                     />
                                 </a>
                                 <Link
                                     href="/login"
-                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-[48px]"
+                                    className="inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-11"
                                 >
                                     Staff Login
-                                    <ArrowRight className="w-5 h-5 ml-2.5" />
+                                    <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
                             </div>
                             <div className="mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-80 pt-8 border-t border-gray-100">
@@ -340,7 +342,7 @@ export default function LandingPage() {
                             className="transition-all transform hover:-translate-y-1 active:scale-95"
                         >
                             <Image
-                                src="/google-play-badge.svg"
+                                src="/google-play-badge-v2.svg"
                                 alt="Get it on Google Play"
                                 width={180}
                                 height={54}
@@ -354,7 +356,7 @@ export default function LandingPage() {
                             className="transition-all transform hover:-translate-y-1 active:scale-95"
                         >
                             <Image
-                                src="/app-store-badge.svg"
+                                src="/app-store-badge-v2.svg"
                                 alt="Download on the App Store"
                                 width={180}
                                 height={54}
