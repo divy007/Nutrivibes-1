@@ -5,6 +5,6 @@ export async function GET() {
         status: 'ok',
         message: 'DateWithDiet Server is reachable',
         time: new Date().toISOString(),
-        ipHint: '192.168.1.17'
+        ipHint: '192.168.1.23'
     });
 }
