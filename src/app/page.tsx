@@ -43,7 +43,7 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-32 bg-gradient-to-b from-white to-gray-50/50">
+            <section className="relative overflow-hidden pt-36 pb-20 lg:pt-40 lg:pb-32 bg-gradient-to-b from-white to-gray-50/50">
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 user-select-none pointer-events-none">
                     <div className="w-[500px] h-[500px] bg-brand-sage/20 rounded-full blur-[100px] opacity-60 mix-blend-multiply" />
                 </div>
@@ -54,7 +54,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                     <div className="lg:grid lg:grid-cols-12 lg:gap-20 items-center">
                         <div className="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0">
-                            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white border border-brand-sage/20 shadow-sm text-brand-forest text-sm font-bold mb-8 hover:shadow-md transition-shadow cursor-default">
+                            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-white border border-brand-sage/20 shadow-sm text-brand-forest text-sm font-bold mb-8 hover:shadow-md transition-shadow cursor-default w-fit mx-auto lg:mx-0">
                                 <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-forest opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-forest"></span>
