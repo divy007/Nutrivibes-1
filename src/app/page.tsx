@@ -59,7 +59,7 @@ export default function LandingPage() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-forest opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-forest"></span>
                                 </span>
-                                Now Available for Android
+                                Now Official on App Store & Play Store
                             </div>
                             <h1 className="text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-8 tracking-tight">
                                 Your Personal <br />
@@ -70,17 +70,38 @@ export default function LandingPage() {
                                 Connect directly with Dt. Mansi Anajwala. Get personalized diet plans,
                                 track your progress, and achieve your health goals with DateWithDiet.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
                                 <a
-                                    href="#download"
-                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-brand-forest rounded-2xl shadow-xl shadow-brand-forest/30 hover:bg-brand-dark hover:shadow-brand-forest/40 transition-all transform hover:-translate-y-1 active:scale-95"
+                                    href="https://play.google.com/store/apps/details?id=com.nutrivibes.mobile"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="transition-all transform hover:-translate-y-1 active:scale-95"
                                 >
-                                    <Download className="w-5 h-5 mr-2.5" />
-                                    Download for Android
+                                    <Image
+                                        src="/google-play-badge.png"
+                                        alt="Get it on Google Play"
+                                        width={180}
+                                        height={54}
+                                        className="h-14 w-auto"
+                                    />
+                                </a>
+                                <a
+                                    href="https://apps.apple.com/us/app/datewithdiet/id6759826984"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="transition-all transform hover:-translate-y-1 active:scale-95"
+                                >
+                                    <Image
+                                        src="/app-store-badge.png"
+                                        alt="Download on the App Store"
+                                        width={180}
+                                        height={54}
+                                        className="h-14 w-auto"
+                                    />
                                 </a>
                                 <Link
                                     href="/login"
-                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
+                                    className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-[52px]"
                                 >
                                     Staff Login
                                     <ArrowRight className="w-5 h-5 ml-2.5" />
@@ -97,7 +118,7 @@ export default function LandingPage() {
                                     <div className="p-2 rounded-lg bg-brand-sage/10 text-brand-forest group-hover:scale-110 transition-transform">
                                         <Smartphone className="w-5 h-5" />
                                     </div>
-                                    <span className="text-sm font-bold text-gray-600">Mobile First</span>
+                                    <span className="text-sm font-bold text-gray-600">Multi-Platform</span>
                                 </div>
                                 <div className="flex items-center gap-2 group">
                                     <div className="p-2 rounded-lg bg-brand-sage/10 text-brand-forest group-hover:scale-110 transition-transform">
@@ -254,7 +275,7 @@ export default function LandingPage() {
                                     <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-brand-forest text-white flex items-center justify-center font-black text-xl shadow-lg shadow-brand-forest/20 group-hover:scale-110 transition-transform">1</div>
                                     <div>
                                         <h4 className="text-2xl font-bold text-white mb-2">Download the App</h4>
-                                        <p className="text-gray-400 text-lg leading-relaxed">Get the latest version of DateWithDiet directly from this page.</p>
+                                        <p className="text-gray-400 text-lg leading-relaxed">Official app now available on the Google Play Store.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-6 group">
@@ -309,32 +330,37 @@ export default function LandingPage() {
                 <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                     <h2 className="text-4xl lg:text-6xl font-black text-gray-900 mb-8 tracking-tight">Ready to transform?</h2>
                     <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-                        Download the official DateWithDiet app now. Compatible with Android devices running Android 6.0 and above.
+                        Download the official DateWithDiet app for iOS and Android and start your wellness journey today.
                     </p>
-                    <div className="bg-brand-forest p-10 rounded-[3rem] shadow-2xl shadow-brand-forest/30 max-w-2xl mx-auto relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
-                        <div className="absolute bottom-0 left-0 p-32 bg-black/10 rounded-full blur-3xl -ml-16 -mb-16 transition-opacity duration-700 group-hover:opacity-75"></div>
-
-                        <div className="relative z-10">
-                            <div className="text-white/90 font-bold mb-8 flex items-center justify-center gap-3">
-                                <div className="p-2 bg-white/10 rounded-lg">
-                                    <Smartphone className="w-6 h-6 text-white" />
-                                </div>
-                                <span className="text-lg">Android Application Package (APK)</span>
-                            </div>
-                            <a
-                                href="https://github.com/divy007/Nutrivibes-1/releases/download/v1.0/DateWithDiet.apk"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center justify-center gap-3 bg-white text-brand-forest font-black text-xl py-6 px-10 rounded-2xl hover:bg-gray-50 transition-all transform hover:-translate-y-1 shadow-xl"
-                            >
-                                <Download className="w-6 h-6" />
-                                Download Now
-                            </a>
-                            <p className="text-white/60 text-sm mt-6 font-medium">
-                                Version 1.0.0 • Size: ~30MB • Secure Download
-                            </p>
-                        </div>
+                    <div className="flex flex-col sm:flex-row justify-center gap-6 items-center">
+                        <a
+                            href="https://play.google.com/store/apps/details?id=com.nutrivibes.mobile"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl shadow-brand-forest/20 rounded-2xl overflow-hidden"
+                        >
+                            <Image
+                                src="/google-play-badge.png"
+                                alt="Get it on Google Play"
+                                width={200}
+                                height={60}
+                                className="h-16 w-auto"
+                            />
+                        </a>
+                        <a
+                            href="https://apps.apple.com/us/app/datewithdiet/id6759826984"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl shadow-brand-forest/20 rounded-2xl overflow-hidden"
+                        >
+                            <Image
+                                src="/app-store-badge.png"
+                                alt="Download on the App Store"
+                                width={194}
+                                height={60}
+                                className="h-16 w-auto"
+                            />
+                        </a>
                     </div>
                 </div>
             </section>

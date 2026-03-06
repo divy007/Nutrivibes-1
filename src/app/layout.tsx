@@ -8,8 +8,18 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "DateWithDiet",
-  description: "Fall in Love with Healthy Eating",
+  title: "DateWithDiet | Personalized Nutrition by Dt. Mansi Anajwala",
+  description: "Official DateWithDiet app. Get personalized diet plans, expert nutrition guidance, and health tracking. Fall in love with healthy eating today.",
+  metadataBase: new URL("https://datewithdiet.in"),
+  keywords: ["diet plan", "nutritionist", "Dt. Mansi Anajwala", "health tracking", "weight loss", "DateWithDiet"],
+  openGraph: {
+    title: "DateWithDiet | Personalized Nutrition",
+    description: "Your personal wellness journey starts here. Download the official app for iOS and Android.",
+    url: "https://datewithdiet.in",
+    siteName: "DateWithDiet",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
