@@ -33,7 +33,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch, isRefetching } = useDashboardData(!!user);
+  const { data, isLoading, isError, refetch, isRefetching } = useDashboardData(!!user);
 
   // Derived state from Query Data
   const profile = data?.profile;
@@ -299,7 +299,29 @@ export default function DashboardScreen() {
     setEditMealData(null); // Reset edit data on close
   }, []);
 
-  if (isLoading) {
+  if (isError) {
+    return (
+      <View style={[styles.mainContainer, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.brandSage + '20', width: 64, height: 64, borderRadius: 32, marginBottom: 24 }]}>
+          <X size={32} color={theme.brandForest} />
+        </View>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text, marginBottom: 8, textAlign: 'center' }}>
+          Dashboard Unavailable
+        </Text>
+        <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginBottom: 32, lineHeight: 22 }}>
+          We couldn't load your data right now. Please check your internet connection and try again.
+        </Text>
+        <TouchableOpacity
+          style={[styles.updateButton, { backgroundColor: theme.brandSage, width: '100%', maxWidth: 300, paddingVertical: 16 }]}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.updateButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (isLoading || (!data && !isError)) {
     return (
       <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
         <View style={[styles.scrollContent, { paddingTop: insets.top + 24 }]}>
@@ -638,6 +660,27 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  updateButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  updateButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   goalBanner: {
     padding: 20,

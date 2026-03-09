@@ -11,6 +11,7 @@ import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Clock } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 const MEAL_SLOTS = [
     { time: '07:00 AM', name: 'Early Morning' },
@@ -25,6 +26,8 @@ export default function DietPlanScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
+    const { data: dashboardData } = useDashboardData(!!user);
+    const profile = dashboardData?.profile;
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekPlan, setWeekPlan] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -41,8 +44,8 @@ export default function DietPlanScreen() {
     };
 
     const weekStart = React.useMemo(() => {
-        if ((user as any)?.dietStartDate) {
-            const dietStart = getLocalDateFromStr((user as any).dietStartDate);
+        if (profile?.dietStartDate) {
+            const dietStart = getLocalDateFromStr(profile.dietStartDate);
             // Calculate the start of the week relative to the diet start day
             const startDayIndex = dietStart.getDay(); // 0-6
             const currentDayIndex = selectedDate.getDay();
@@ -53,15 +56,15 @@ export default function DietPlanScreen() {
             return start;
         }
         return startOfWeek(selectedDate, { weekStartsOn: 1 });
-    }, [selectedDate, user]);
+    }, [selectedDate, profile]);
 
     const weekDays = React.useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)), [weekStart]);
 
     useEffect(() => {
         if (user) {
             // 1. Handle jumping to future diet start date if applicable
-            if ((user as any)?.dietStartDate) {
-                const dietStart = getLocalDateFromStr((user as any).dietStartDate);
+            if (profile?.dietStartDate) {
+                const dietStart = getLocalDateFromStr(profile.dietStartDate);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
@@ -76,7 +79,7 @@ export default function DietPlanScreen() {
             // 2. Fetch the plan for the current week
             fetchDietPlan();
         }
-    }, [user, weekStart]);
+    }, [user, weekStart, profile]);
 
     const fetchDietPlan = async () => {
         setLoading(true);
