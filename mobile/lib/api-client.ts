@@ -9,7 +9,7 @@ const PROD_URL = 'https://datewithdiet.in';
 const LOCAL_URL = 'http://192.168.1.23:3000'; // Change to your Mac's IP for local dev
 
 // Automatically set to true in production builds (eas build --profile production)
-const IS_PROD = !__DEV__;
+const IS_PROD = true;
 
 const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
 
