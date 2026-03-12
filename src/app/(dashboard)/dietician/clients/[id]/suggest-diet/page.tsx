@@ -152,7 +152,21 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         setLoadingPlan(true);
         try {
             const formattedDate = format(startDate, 'yyyy-MM-dd');
-            const data = await api.get<any>(`/api/clients/${clientId}/diet-plan?startDate=${formattedDate}`);
+            let data = await api.get<any>(`/api/clients/${clientId}/diet-plan?startDate=${formattedDate}`);
+
+            // Fallback: if no plan found for the anchor-derived week start,
+            // also try the Monday-based week start for the same period.
+            // This handles plans saved before dietStartDate was set (when Monday was the default).
+            if (!data?.days) {
+                const mondayStart = startOfWeek(startDate, { weekStartsOn: 1 });
+                const mondayFormatted = format(mondayStart, 'yyyy-MM-dd');
+                if (mondayFormatted !== formattedDate) {
+                    const fallbackData = await api.get<any>(`/api/clients/${clientId}/diet-plan?startDate=${mondayFormatted}`);
+                    if (fallbackData?.days) {
+                        data = fallbackData;
+                    }
+                }
+            }
 
             if (data && data.days) {
                 // Determine the base structure from state/ref
@@ -223,6 +237,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     }, [clientInfo]);
 
     useEffect(() => {
+
         const fetchClient = async () => {
             try {
                 const data = await api.get<any>(`/api/clients/${id}`);
@@ -249,7 +264,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 setClientInfo(info);
 
                 if (data.dietStartDate) {
-                    // Use the diet start date directly, ensuring we parse it as local time to avoid timezone shifts
+                    // Weeks are anchored to the dietStartDate's day-of-week
+                    // so the same day-of-week always starts a new "diet week"
                     const dateStr = typeof data.dietStartDate === 'string'
                         ? data.dietStartDate.split('T')[0]
                         : new Date(data.dietStartDate).toISOString().split('T')[0];
@@ -259,22 +275,22 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     today.setHours(0, 0, 0, 0);
 
                     if (dietStart <= today) {
-                        // Current or Past diet: Jump to the week containing today
-                        // We use the same day-of-week logic to keep weeks consistent
+                        // Past or current diet: navigate to the week containing today
+                        // anchored on the same day-of-week as dietStartDate
                         const startDayIndex = dietStart.getDay();
                         const currentDayIndex = today.getDay();
                         const diff = (currentDayIndex - startDayIndex + 7) % 7;
                         const startOfCurrentWeek = addDays(today, -diff);
                         setCurrentWeekStart(startOfCurrentWeek);
                     } else {
-                        // Future diet: Keep at start date
+                        // Future diet: jump to diet start date
                         setCurrentWeekStart(dietStart);
                     }
                 } else {
-                    // If no diet start date, use today's week start
-                    const today = startOfWeek(new Date(), { weekStartsOn: 1 });
-                    setCurrentWeekStart(today);
+                    // No diet start date — use standard Monday-based week
+                    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
                 }
+
             } catch (error) {
                 console.error('Failed to fetch client for diet planner:', error);
             } finally {
