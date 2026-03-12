@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap, UserPlus, FileText, Upload, Eye, Download, X } from 'lucide-react';
+import { Loader2, Key, Trash2, Pencil, Plus, ChevronRight, Activity, Utensils, Calendar, Clock, Zap, UserPlus, FileText, Upload, Eye, Download, X, CalendarDays } from 'lucide-react';
 
 import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
@@ -59,6 +59,25 @@ export default function ClientSummaryPage() {
 
     // Plan Management State
     const [showPlanModal, setShowPlanModal] = useState(false);
+
+    // Diet Start Date State
+    const [showDietStartEdit, setShowDietStartEdit] = useState(false);
+    const [dietStartDateInput, setDietStartDateInput] = useState('');
+    const [dietStartSaving, setDietStartSaving] = useState(false);
+
+    const handleDietStartDateSave = async () => {
+        if (!client || !dietStartDateInput) return;
+        setDietStartSaving(true);
+        try {
+            await api.patch(`/api/clients/${client._id}`, { dietStartDate: dietStartDateInput });
+            await refreshClient();
+            setShowDietStartEdit(false);
+        } catch (err) {
+            alert('Failed to update diet start date');
+        } finally {
+            setDietStartSaving(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -454,6 +473,91 @@ export default function ClientSummaryPage() {
 
                         {/* Decorative Background */}
                         <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-50 rounded-full blur-2xl z-0 pointer-events-none" />
+                    </div>
+
+                    {/* Diet Start Date Card */}
+                    <div className="bg-white rounded-lg border border-slate-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <CalendarDays size={14} className="text-emerald-500" />
+                                Diet Start Date
+                            </h3>
+                            {!showDietStartEdit && (
+                                <button
+                                    onClick={() => {
+                                        setDietStartDateInput(
+                                            client.dietStartDate
+                                                ? new Date(client.dietStartDate).toISOString().split('T')[0]
+                                                : ''
+                                        );
+                                        setShowDietStartEdit(true);
+                                    }}
+                                    className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider hover:text-emerald-700 flex items-center gap-1"
+                                >
+                                    <Pencil size={12} />
+                                    {client.dietStartDate ? 'Change' : 'Set'}
+                                </button>
+                            )}
+                        </div>
+
+                        {showDietStartEdit ? (
+                            <div className="space-y-3">
+                                <input
+                                    type="date"
+                                    value={dietStartDateInput}
+                                    onChange={(e) => setDietStartDateInput(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                                <p className="text-[10px] text-amber-600 font-medium">
+                                    ⚠️ Changing this will also update the subscription end date.
+                                </p>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setShowDietStartEdit(false)}
+                                        className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleDietStartDateSave}
+                                        disabled={!dietStartDateInput || dietStartSaving}
+                                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        {dietStartSaving ? <Loader2 size={12} className="animate-spin" /> : null}
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                {client.dietStartDate ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-emerald-50 rounded flex items-center justify-center text-emerald-500 flex-shrink-0">
+                                            <CalendarDays size={18} />
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-slate-800">
+                                                {new Date(client.dietStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                {(() => {
+                                                    const start = new Date(client.dietStartDate!);
+                                                    const today = new Date();
+                                                    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                                    if (diffDays < 0) return `Starts in ${Math.abs(diffDays)} days`;
+                                                    if (diffDays === 0) return 'Starts today';
+                                                    return `Day ${diffDays + 1} of diet`;
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                                        <p className="text-xs text-slate-400 italic">No diet start date set</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Medical Report Card */}

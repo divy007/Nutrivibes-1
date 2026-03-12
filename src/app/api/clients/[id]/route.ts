@@ -196,6 +196,36 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             }
         }
 
+        // Diet Start Date Change → Recalculate Subscription Dates
+        if (body.dietStartDate && !body.planId && !body.recoverAction) {
+            const Subscription = (await import('@/models/Subscription')).default;
+            const Plan = (await import('@/models/Plan')).default;
+
+            const activeSubscription = await Subscription.findOne({
+                clientId: id as any,
+                status: { $in: ['ASSIGNED', 'ACTIVE', 'PAUSED'] }
+            }).sort({ createdAt: -1 });
+
+            if (activeSubscription && activeSubscription.planId) {
+                const plan = await Plan.findById(activeSubscription.planId);
+                if (plan) {
+                    const newStart = new Date(body.dietStartDate);
+                    const durationDays = plan.durationMonths * 30;
+                    const newEnd = new Date(newStart);
+                    newEnd.setDate(newEnd.getDate() + durationDays);
+
+                    activeSubscription.startDate = newStart;
+                    activeSubscription.endDate = newEnd;
+                    // Activate if it was pending (placeholder 2099 date)
+                    if (activeSubscription.status === 'ASSIGNED') {
+                        activeSubscription.status = 'ACTIVE';
+                    }
+                    await activeSubscription.save();
+                    console.log('[Client PATCH] Subscription dates recalculated for new dietStartDate:', body.dietStartDate);
+                }
+            }
+        }
+
         // Subscription Creation Logic
         if (body.planId) {
             const Plan = (await import('@/models/Plan')).default;
