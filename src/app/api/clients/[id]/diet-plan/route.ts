@@ -27,10 +27,32 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const startDate = url.searchParams.get('startDate') || format(new Date(), 'yyyy-MM-dd');
 
     try {
-        const dietPlan = await DietPlan.findOne({
+        const targetDate = normalizeDateUTC(startDate);
+        
+        // 1. Exact match for weekStartDate
+        let dietPlan = await DietPlan.findOne({
             clientId: id,
-            weekStartDate: normalizeDateUTC(startDate)
+            weekStartDate: targetDate
         });
+
+        // 2. Containment match for shifted dietStartDate
+        if (!dietPlan) {
+            dietPlan = await DietPlan.findOne({
+                clientId: id,
+                'days.date': targetDate
+            });
+        }
+
+        // 3. Fallback to Monday map
+        if (!dietPlan) {
+            const mondayStart = format(startOfWeek(new Date(startDate), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            if (mondayStart !== startDate) {
+                dietPlan = await DietPlan.findOne({
+                    clientId: id,
+                    weekStartDate: normalizeDateUTC(mondayStart)
+                });
+            }
+        }
 
         return NextResponse.json(dietPlan || { success: true, message: 'No plan found' });
     } catch (error) {

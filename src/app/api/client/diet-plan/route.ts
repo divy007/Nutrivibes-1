@@ -34,12 +34,34 @@ export async function GET(req: Request) {
 
         const url = new URL(req.url);
         const startDate = url.searchParams.get('startDate') || format(new Date(), 'yyyy-MM-dd');
+        const targetDate = normalizeDateUTC(startDate);
 
-        // Fetch diet plan using the actual Client ID
-        const dietPlan = await DietPlan.findOne({
+        // 1. Fetch diet plan using the exact requested week start date
+        let dietPlan = await DietPlan.findOne({
             clientId: client._id,
-            weekStartDate: normalizeDateUTC(startDate)
+            weekStartDate: targetDate
         });
+
+        // 2. Fallback: If the dietician changed the diet start date, the anchor day shifts.
+        // The requested week start date might exist inside an older plan's saved days.
+        if (!dietPlan) {
+            dietPlan = await DietPlan.findOne({
+                clientId: client._id,
+                'days.date': targetDate
+            });
+        }
+
+        // 3. Fallback: Check for legacy plans saved with a Monday start
+        if (!dietPlan) {
+            const { startOfWeek } = await import('date-fns');
+            const mondayStart = format(startOfWeek(new Date(startDate), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            if (mondayStart !== startDate) {
+                dietPlan = await DietPlan.findOne({
+                    clientId: client._id,
+                    weekStartDate: normalizeDateUTC(mondayStart)
+                });
+            }
+        }
 
         if (!dietPlan) {
             return NextResponse.json({

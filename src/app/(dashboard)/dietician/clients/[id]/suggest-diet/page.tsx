@@ -477,7 +477,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
     const autoSavePlan = async (days: DayPlan[]) => {
         try {
-            const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+            // Use the actual startDate from the loaded plan to prevent mismatched updates
+            // if we loaded a fallback plan from a previous anchor day.
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
                 days: days
@@ -668,7 +671,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         if (anyChanges) {
             setWeekPlan(newPlan);
             try {
-                const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+                const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+                const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
                 await api.post(`/api/clients/${id}/diet-plan`, {
                     weekStartDate: formattedStartDate,
                     days: newPlan.days
@@ -756,7 +760,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         newDays[dayIndex] = { ...newDays[dayIndex], status: 'PUBLISHED' };
 
         try {
-            const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
                 days: newDays
@@ -775,7 +780,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         newDays[dayIndex] = { ...newDays[dayIndex], status: hasFood ? 'NOT_SAVED' : 'NO_DIET' };
 
         try {
-            const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
                 days: newDays
@@ -803,7 +809,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         });
 
         try {
-            const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
                 days: daysToSave
@@ -835,7 +842,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         }));
 
         try {
-            const formattedStartDate = format(currentWeekStart, 'yyyy-MM-dd');
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
                 days: newDays

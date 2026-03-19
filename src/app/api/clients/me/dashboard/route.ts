@@ -39,7 +39,13 @@ export async function GET(req: Request) {
             WaterIntake.findOne({ clientId: client._id, date: today }).lean().catch(e => { console.error('WaterIntake fetch failed:', e); return null; }),
             MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean().catch(e => { console.error('MealLog fetch failed:', e); return []; }),
             MeasurementLog.find({ clientId: client._id }).sort({ date: -1 }).limit(5).lean().catch(e => { console.error('MeasurementLog fetch failed:', e); return []; }),
-            DietPlan.findOne({ clientId: client._id, weekStartDate: weekStart }).catch(e => { console.error('DietPlan fetch failed:', e); return null; }),
+            DietPlan.findOne({ 
+                clientId: client._id, 
+                $or: [
+                    { weekStartDate: weekStart },
+                    { 'days.date': today }
+                ]
+            }).catch(e => { console.error('DietPlan fetch failed:', e); return null; }),
             PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean().catch(e => { console.error('PeriodLog fetch failed:', e); return null; }),
             HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean().catch(e => { console.error('HealthAssessment fetch failed:', e); return null; })
         ]);
