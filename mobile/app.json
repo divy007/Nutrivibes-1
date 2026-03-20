@@ -2,7 +2,7 @@
   "expo": {
     "name": "DateWithDiet",
     "slug": "mobile",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nutrivibes.mobile",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 21,
+      "versionCode": 22,
       "permissions": [],
       "edgeToEdge": true,
       "adaptiveIcon": {

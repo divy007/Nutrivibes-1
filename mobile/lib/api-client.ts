@@ -8,8 +8,8 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 const PROD_URL = 'https://www.datewithdiet.in';
 const LOCAL_URL = 'http://192.168.1.23:3000'; // Change to your Mac's IP for local dev
 
-// Set to false for local testing
-const IS_PROD = false;
+// Automatically point to production in released builds
+const IS_PROD = !__DEV__;
 
 const BASE_URL = IS_PROD ? PROD_URL : LOCAL_URL;
 
