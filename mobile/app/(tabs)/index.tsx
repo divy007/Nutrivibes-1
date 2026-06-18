@@ -67,6 +67,7 @@ export default function DashboardScreen() {
   const [isSavingSymptoms, setIsSavingSymptoms] = useState(false);
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
   const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = (Colors as any)[colorScheme ?? 'light'];
@@ -149,8 +150,15 @@ export default function DashboardScreen() {
     }
   }, [queryClient]);
 
-  const onRefresh = useCallback(() => {
-    refetch();
+  const onRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Manual refresh failed:', error);
+    } finally {
+      setIsManualRefreshing(false);
+    }
   }, [refetch]);
 
   const dismissWelcome = useCallback(async () => {
@@ -344,7 +352,7 @@ export default function DashboardScreen() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }
         ]}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={theme.brandSage} />
+          <RefreshControl refreshing={isManualRefreshing} onRefresh={onRefresh} tintColor={theme.brandSage} />
         }
       >
         <View style={styles.header}>
