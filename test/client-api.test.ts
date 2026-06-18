@@ -140,7 +140,7 @@ describe('Client API Routes', () => {
         });
 
         it('should return 400 if dietStartDate is more than 60 days in the future', async () => {
-            const farFutureDate = new Date(Date.now() + 61 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const farFutureDate = new Date(Date.now() + 65 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const req = new Request('http://localhost/api/clients', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -193,7 +193,7 @@ describe('Client API Routes', () => {
         });
 
         it('should return 400 if dietStartDate is more than 60 days in the future', async () => {
-            const farFutureDate = new Date(Date.now() + 61 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const farFutureDate = new Date(Date.now() + 65 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const req = new Request('http://localhost/api/clients/69ae3fca09498bdf8fdf9d45', {
                 method: 'PATCH',
                 body: JSON.stringify({

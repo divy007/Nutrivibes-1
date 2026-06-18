@@ -15,7 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CompleteProfileScreen() {
     const router = useRouter();
-    const { login } = useAuth();
+    const { refreshUser } = useAuth();
     const insets = useSafeAreaInsets();
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
@@ -152,6 +152,8 @@ export default function CompleteProfileScreen() {
                 primaryGoal: formData.primaryGoal,
                 isProfileComplete: true
             });
+
+            await refreshUser();
 
             router.replace('/audit-prompt');
         } catch (error: any) {
