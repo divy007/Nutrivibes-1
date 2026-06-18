@@ -14,6 +14,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const clientsRaw = await Client.find({ dieticianId: user._id });
+        const { syncClientSubscription } = await import('@/lib/subscription-sync');
+        await Promise.all(clientsRaw.map(c => syncClientSubscription(c._id)));
+
         const clients = await Client.find({ dieticianId: user._id })
             .populate('referredBy', 'name')
             .lean();

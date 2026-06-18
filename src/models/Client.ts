@@ -86,6 +86,7 @@ export interface IClient extends Document {
         fromClientId: mongoose.Schema.Types.ObjectId;
         note: string;
     }[];
+    pendingReferralDays?: number;
 }
 
 const ClientSchema = new Schema(
@@ -199,7 +200,8 @@ const ClientSchema = new Schema(
             daysEarned: Number,
             fromClientId: { type: Schema.Types.ObjectId, ref: 'Client' },
             note: String
-        }]
+        }],
+        pendingReferralDays: { type: Number, default: 0 }
     },
     { timestamps: true }
 );

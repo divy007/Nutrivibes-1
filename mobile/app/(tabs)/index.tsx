@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar, Gift, ChevronRight } from 'lucide-react-native';
+import { User as UserIcon, LogOut, Target, Sparkles, X, Phone, Trash2, Settings, Calendar, Gift, ChevronRight, ShieldAlert, Pause } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -104,13 +104,8 @@ export default function DashboardScreen() {
   }, []);
 
   const handleSavePeriod = useCallback(async (startDate: Date, endDate?: Date, intensity?: string) => {
-    // Check if there's an active period (started within last 10 days)
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-
-    const hasActivePeriod = lastPeriodLog &&
-      new Date(lastPeriodLog.startDate) > tenDaysAgo &&
-      !lastPeriodLog.endDate;
+    // Check if there's an active period (started but not ended yet)
+    const hasActivePeriod = lastPeriodLog && !lastPeriodLog.endDate;
 
     if (hasActivePeriod) {
       // Update existing period with end date if provided
@@ -491,7 +486,25 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.content}>
-          {user?.status !== 'ACTIVE' && (
+          {profile?.status === 'PAUSED' && (
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <View style={[styles.leadCard, { backgroundColor: '#fffbeb', borderColor: '#fcd34d', borderWidth: 1, marginBottom: 12 }]}>
+                  <View style={[styles.leadIconContainer, { backgroundColor: '#f59e0b' }]}>
+                    <ShieldAlert size={24} color="#fff" />
+                  </View>
+                  <View style={[styles.leadTextContainer, { backgroundColor: 'transparent' }]}>
+                    <Text style={[styles.leadTitle, { color: '#b45309' }]}>Plan Paused</Text>
+                    <Text style={[styles.leadSubtitle, { color: '#b45309' }]}>
+                      Your diet plan is currently paused. Please contact your dietician to resume.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {profile?.status !== 'ACTIVE' && profile?.status !== 'PAUSED' && (
             <TouchableOpacity
               style={[styles.bookAppointmentCard, { backgroundColor: theme.brandForest }]}
               onPress={() => setIsBookAppointmentOpen(true)}

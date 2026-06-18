@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Scale, TrendingDown, Target } from 'lucide-react-native';
+import { Scale, TrendingDown, TrendingUp, Target } from 'lucide-react-native';
 
 interface WeightTrackerProps {
     currentWeight: number;
@@ -19,6 +19,17 @@ const WeightTracker = React.memo(function WeightTracker({ currentWeight, startWe
     const progress = startWeight === idealWeight ? 100 : Math.max(0, Math.min(100,
         ((startWeight - currentWeight) / (startWeight - idealWeight)) * 100
     ));
+
+    const weightChange = currentWeight - startWeight;
+    const hasGained = weightChange > 0;
+    const changeText = `${hasGained ? '+' : '-'}${Math.abs(weightChange).toFixed(1)} kg`;
+    const TrendIcon = hasGained ? TrendingUp : TrendingDown;
+
+    // Check if change is progressing towards the ideal weight
+    const isTowardsIdeal = (startWeight > idealWeight && currentWeight < startWeight) || 
+                            (startWeight < idealWeight && currentWeight > startWeight);
+    const badgeColor = weightChange === 0 ? '#64748b' : (isTowardsIdeal ? '#10b981' : '#ef4444');
+    const badgeBg = weightChange === 0 ? '#f1f5f9' : (isTowardsIdeal ? '#ecfdf5' : '#fef2f2');
 
     return (
         <View
@@ -36,9 +47,9 @@ const WeightTracker = React.memo(function WeightTracker({ currentWeight, startWe
                     <Text style={[styles.weightValue, { color: theme.text }]}>{currentWeight.toFixed(1)}</Text>
                     <Text style={styles.unit}>kg</Text>
                 </View>
-                <View style={styles.badge}>
-                    <TrendingDown size={14} color="#10b981" />
-                    <Text style={styles.badgeText}>-{Math.abs(startWeight - currentWeight).toFixed(1)} kg</Text>
+                <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+                    <TrendIcon size={14} color={badgeColor} />
+                    <Text style={[styles.badgeText, { color: badgeColor }]}>{changeText}</Text>
                 </View>
             </View>
 

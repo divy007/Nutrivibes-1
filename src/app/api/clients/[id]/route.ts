@@ -214,6 +214,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     const newEnd = new Date(newStart);
                     newEnd.setDate(newEnd.getDate() + durationDays);
 
+                    const currentClient = await Client.findById(id);
+                    if (currentClient && currentClient.pendingReferralDays > 0) {
+                        const pendingDays = currentClient.pendingReferralDays;
+                        console.log(`[Client PATCH] Applying ${pendingDays} pending referral days during activation`);
+                        newEnd.setDate(newEnd.getDate() + pendingDays);
+                        
+                        if (!currentClient.referralRewards) {
+                            currentClient.referralRewards = [];
+                        }
+                        currentClient.referralRewards.push({
+                            date: new Date(),
+                            daysEarned: pendingDays,
+                            fromClientId: currentClient._id,
+                            note: `Redeemed ${pendingDays} pending referral days upon subscription activation (diet start)`
+                        });
+                        currentClient.pendingReferralDays = 0;
+                        await currentClient.save();
+                    }
+
                     activeSubscription.startDate = newStart;
                     activeSubscription.endDate = newEnd;
                     // Activate if it was pending (placeholder 2099 date)
@@ -240,6 +259,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const startDate = body.dietStartDate ? new Date(body.dietStartDate) : new Date();
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + selectedPlan.durationMonths);
+
+            const currentClient = await Client.findById(id);
+            if (currentClient && currentClient.pendingReferralDays > 0 && endDate.getFullYear() < 2099) {
+                const pendingDays = currentClient.pendingReferralDays;
+                console.log(`[Client PATCH] Applying ${pendingDays} pending referral days during plan assignment`);
+                endDate.setDate(endDate.getDate() + pendingDays);
+                
+                if (!currentClient.referralRewards) {
+                    currentClient.referralRewards = [];
+                }
+                currentClient.referralRewards.push({
+                    date: new Date(),
+                    daysEarned: pendingDays,
+                    fromClientId: currentClient._id,
+                    note: `Redeemed ${pendingDays} pending referral days upon subscription assignment`
+                });
+                currentClient.pendingReferralDays = 0;
+                await currentClient.save();
+            }
 
             // Find existing subscription for this client
             const existingSubscription = await Subscription.findOne({ clientId: id as any });
@@ -294,6 +332,68 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             // Referral Reward Trigger
             const { processReferralReward } = await import('@/lib/referral');
             await processReferralReward(id, selectedPlan.durationMonths);
+        }
+
+        // Synchronize Active Subscription Status
+        const currentClientForSync = await Client.findById(id);
+        if (currentClientForSync && body.status && body.status !== currentClientForSync.status) {
+            const Subscription = (await import('@/models/Subscription')).default;
+            const activeSub = await Subscription.findOne({
+                clientId: id as any,
+                status: { $in: ['ACTIVE', 'PAUSED'] }
+            });
+
+            if (activeSub) {
+                const today = new Date();
+                const { differenceInDays, addDays } = await import('date-fns');
+
+                if (body.status === 'PAUSED' && body.pausedUntil) {
+                    // Changing to PAUSED with specific pausedUntil date
+                    activeSub.status = 'PAUSED';
+                    if (!activeSub.pauseHistory) {
+                        activeSub.pauseHistory = [];
+                    }
+                    activeSub.pauseHistory.push({
+                        startDate: today,
+                        endDate: new Date(body.pausedUntil),
+                        reason: 'Client paused by dietician'
+                    });
+
+                    // Calculate duration and extend endDate
+                    const duration = Math.max(1, differenceInDays(new Date(body.pausedUntil), today));
+                    activeSub.pauseDaysUsed = (activeSub.pauseDaysUsed || 0) + duration;
+                    activeSub.endDate = addDays(new Date(activeSub.endDate), duration);
+                    await activeSub.save();
+                } else if (body.status === 'ACTIVE' && currentClientForSync.status === 'PAUSED') {
+                    // Resuming to ACTIVE from PAUSED
+                    activeSub.status = 'ACTIVE';
+
+                    // Find active pause entry and set its endDate
+                    const activePause = activeSub.pauseHistory?.find((h: any) => !h.endDate || new Date(h.endDate) > today);
+                    if (activePause) {
+                        const originalEndDate = activePause.endDate ? new Date(activePause.endDate) : null;
+                        activePause.endDate = today;
+
+                        if (originalEndDate && originalEndDate > today) {
+                            // Paused for fixed duration but resumed early!
+                            const approvedDuration = differenceInDays(originalEndDate, new Date(activePause.startDate));
+                            const actualDuration = Math.max(1, differenceInDays(today, new Date(activePause.startDate)));
+                            const earlyResumeDays = approvedDuration - actualDuration;
+
+                            if (earlyResumeDays > 0) {
+                                activeSub.pauseDaysUsed = Math.max(0, (activeSub.pauseDaysUsed || 0) - earlyResumeDays);
+                                activeSub.endDate = addDays(new Date(activeSub.endDate), -earlyResumeDays);
+                            }
+                        } else if (!originalEndDate) {
+                            // Indefinite manual pause - extend endDate by actual duration now
+                            const duration = Math.max(1, differenceInDays(today, new Date(activePause.startDate)));
+                            activeSub.pauseDaysUsed = (activeSub.pauseDaysUsed || 0) + duration;
+                            activeSub.endDate = addDays(new Date(activeSub.endDate), duration);
+                        }
+                    }
+                    await activeSub.save();
+                }
+            }
         }
 
         const client = await Client.findByIdAndUpdate(id, body, {

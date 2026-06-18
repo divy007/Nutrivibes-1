@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { StyleSheet, Modal, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Modal, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { X, Calendar as CalendarIcon, Droplets } from 'lucide-react-native';
 import { format } from 'date-fns';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
 
 interface LogPeriodModalProps {
     isOpen: boolean;
@@ -16,27 +17,58 @@ interface LogPeriodModalProps {
 export default function LogPeriodModal({ isOpen, onClose, onSave, lastPeriodLog }: LogPeriodModalProps) {
     const [intensity, setIntensity] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
     const [isSaving, setIsSaving] = useState(false);
+    const [startDate, setStartDate] = useState<Date>(new Date());
+    const [endDate, setEndDate] = useState<Date>(new Date());
+    const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+    const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
-    // Check if there's an active period (started within last 10 days and no end date)
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    // Check if there's an active period (started and no end date)
+    const hasActivePeriod = lastPeriodLog && !lastPeriodLog.endDate;
 
-    const hasActivePeriod = lastPeriodLog &&
-        new Date(lastPeriodLog.startDate) > tenDaysAgo &&
-        !lastPeriodLog.endDate;
+    useEffect(() => {
+        if (isOpen) {
+            if (lastPeriodLog && !lastPeriodLog.endDate) {
+                setStartDate(new Date(lastPeriodLog.startDate));
+                setEndDate(new Date());
+            } else {
+                setStartDate(new Date());
+                setEndDate(new Date());
+            }
+            setShowStartDatePicker(false);
+            setShowEndDatePicker(false);
+        }
+    }, [isOpen, lastPeriodLog]);
+
+    const onStartDateChange = (event: any, selectedDate?: Date) => {
+        setShowStartDatePicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setStartDate(selectedDate);
+        }
+    };
+
+    const onEndDateChange = (event: any, selectedDate?: Date) => {
+        setShowEndDatePicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setEndDate(selectedDate);
+        }
+    };
 
     const handleSave = async () => {
+        if (hasActivePeriod && endDate < startDate) {
+            Alert.alert('Invalid Date', 'End date cannot be before the start date.');
+            return;
+        }
         setIsSaving(true);
         try {
             if (hasActivePeriod) {
                 // Ending active period
-                await onSave(new Date(lastPeriodLog.startDate), new Date(), intensity);
+                await onSave(startDate, endDate, intensity);
             } else {
                 // Starting new period
-                await onSave(new Date(), undefined, intensity);
+                await onSave(startDate, undefined, intensity);
             }
             onClose();
         } catch (error) {
@@ -82,20 +114,64 @@ export default function LogPeriodModal({ isOpen, onClose, onSave, lastPeriodLog 
                         </Text>
 
                         <View style={[styles.inputCard, { backgroundColor: '#fff5f5', borderColor: '#ffe4e6' }]}>
-                            <View style={styles.dateBadge}>
-                                <CalendarIcon size={14} color="#f43f5e" />
-                                <Text style={styles.dateText}>
-                                    {hasActivePeriod
-                                        ? `End Date: ${format(new Date(), 'dd MMM yyyy')}`
-                                        : `Start Date: ${format(new Date(), 'dd MMM yyyy')}`
-                                    }
-                                </Text>
-                            </View>
+                            {hasActivePeriod ? (
+                                <View style={{ width: '100%', alignItems: 'center', gap: 12, marginBottom: 20, backgroundColor: 'transparent' }}>
+                                    {/* Read-only Start Date */}
+                                    <View style={[styles.dateBadge, { marginBottom: 0, opacity: 0.6, width: '100%', justifyContent: 'center' }]}>
+                                        <CalendarIcon size={14} color="#f43f5e" />
+                                        <Text style={styles.dateText}>
+                                            Start Date: {format(startDate, 'dd MMM yyyy')} (Locked)
+                                        </Text>
+                                    </View>
+                                    
+                                    {/* Tappable End Date */}
+                                    <TouchableOpacity 
+                                        onPress={() => setShowEndDatePicker(true)}
+                                        style={[styles.dateBadge, { marginBottom: 0, width: '100%', justifyContent: 'center' }]}
+                                    >
+                                        <CalendarIcon size={14} color="#f43f5e" />
+                                        <Text style={styles.dateText}>
+                                            End Date: {format(endDate, 'dd MMM yyyy')} ✏️
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <TouchableOpacity 
+                                    onPress={() => setShowStartDatePicker(true)}
+                                    style={[styles.dateBadge, { width: '100%', justifyContent: 'center' }]}
+                                >
+                                    <CalendarIcon size={14} color="#f43f5e" />
+                                    <Text style={styles.dateText}>
+                                        Start Date: {format(startDate, 'dd MMM yyyy')} ✏️
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {showStartDatePicker && (
+                                <RNDateTimePicker
+                                    value={startDate}
+                                    mode="date"
+                                    display="default"
+                                    onChange={onStartDateChange}
+                                    accentColor="#f43f5e"
+                                />
+                            )}
+
+                            {showEndDatePicker && (
+                                <RNDateTimePicker
+                                    value={endDate}
+                                    mode="date"
+                                    display="default"
+                                    minimumDate={startDate}
+                                    onChange={onEndDateChange}
+                                    accentColor="#f43f5e"
+                                />
+                            )}
 
                             <Text style={styles.infoText}>
                                 {hasActivePeriod
-                                    ? `Your period started on ${format(new Date(lastPeriodLog.startDate), 'dd MMM')}. Mark it as ended today.`
-                                    : 'Log the first day of your period. The app will automatically track which day you\'re on.'
+                                    ? `Your period started on ${format(startDate, 'dd MMM')}. Mark the date it ended.`
+                                    : 'Log the start date of your period. You can choose any past date if you forgot to log it.'
                                 }
                             </Text>
 

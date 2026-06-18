@@ -32,43 +32,96 @@ export async function POST(req: Request) {
 
         const { name, email, password, phone } = validationResult.data;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-        if (existingUser) {
+        // Check if user already exists by email or by phone
+        const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
+        const existingUserByPhone = phone ? await User.findOne({ phone }) : null;
+
+        let user;
+        let client;
+
+        // Check if phone matches an existing placeholder user created from a referral lead
+        if (existingUserByPhone && existingUserByPhone.email?.endsWith('@referral.placeholder')) {
+            // Check if the input email matches another user that is NOT this placeholder
+            if (existingUserByEmail && existingUserByEmail._id.toString() !== existingUserByPhone._id.toString()) {
+                return NextResponse.json(
+                    { success: false, message: 'This email is already registered. Please sign in instead.' },
+                    { status: 400 }
+                );
+            }
+
+            // Update placeholder user
+            existingUserByPhone.name = name;
+            existingUserByPhone.email = email.toLowerCase();
+            existingUserByPhone.password = password; // Hashed in pre-save hook
+            await existingUserByPhone.save();
+
+            user = existingUserByPhone;
+
+            // Update placeholder Client profile
+            const existingClient = await Client.findOne({ userId: user._id });
+            if (existingClient) {
+                existingClient.name = name;
+                existingClient.email = email.toLowerCase();
+                existingClient.phone = phone;
+                existingClient.status = 'LEAD';
+                existingClient.isProfileComplete = false;
+                await existingClient.save();
+                client = existingClient;
+            } else {
+                const dietician = await User.findOne({ role: 'DIETICIAN' }).sort({ createdAt: 1 });
+                if (!dietician) {
+                    throw new Error('System configuration error: No dietician available');
+                }
+                client = await Client.create({
+                    name,
+                    email: email.toLowerCase(),
+                    phone,
+                    userId: user._id,
+                    dieticianId: dietician._id,
+                    registrationSource: 'MOBILE_APP',
+                    status: 'LEAD',
+                    isProfileComplete: false,
+                });
+            }
+        } else if (existingUserByEmail || existingUserByPhone) {
+            const isEmailDup = !!existingUserByEmail;
             return NextResponse.json(
-                { success: false, message: 'This email is already registered. Please sign in instead.' },
+                { 
+                    success: false, 
+                    message: isEmailDup 
+                        ? 'This email is already registered. Please sign in instead.' 
+                        : 'An account with this phone number already exists.' 
+                },
                 { status: 400 }
             );
+        } else {
+            // Normal creation
+            user = await User.create({
+                name,
+                email: email.toLowerCase(),
+                password,
+                phone,
+                role: 'CLIENT',
+                loginMethod: 'EMAIL_PASSWORD',
+            });
+
+            const dietician = await User.findOne({ role: 'DIETICIAN' }).sort({ createdAt: 1 });
+            if (!dietician) {
+                console.error('No dietician found in system for lead assignment');
+                throw new Error('System configuration error: No dietician available');
+            }
+
+            client = await Client.create({
+                name,
+                email: email.toLowerCase(),
+                phone,
+                userId: user._id,
+                dieticianId: dietician._id,
+                registrationSource: 'MOBILE_APP',
+                status: 'LEAD',
+                isProfileComplete: false,
+            });
         }
-
-        // 1. Create User
-        const user = await User.create({
-            name,
-            email: email.toLowerCase(),
-            password,
-            phone,
-            role: 'CLIENT',
-            loginMethod: 'EMAIL_PASSWORD',
-        });
-
-        // Find the first dietician to assign as the primary contact for the lead
-        const dietician = await User.findOne({ role: 'DIETICIAN' }).sort({ createdAt: 1 });
-        if (!dietician) {
-            console.error('No dietician found in system for lead assignment');
-            throw new Error('System configuration error: No dietician available');
-        }
-
-        // 2. Create Client Profile as a LEAD
-        const client = await Client.create({
-            name,
-            email: email.toLowerCase(),
-            phone,
-            userId: user._id,
-            dieticianId: dietician._id, // Assign to the first dietician
-            registrationSource: 'MOBILE_APP',
-            status: 'LEAD',
-            isProfileComplete: false,
-        });
 
         // Generate token
         const token = generateToken(user, false);

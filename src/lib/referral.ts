@@ -94,9 +94,24 @@ export async function processReferralReward(clientId: string, planDurationMonths
 
             console.log('[Referral] Reward processed successfully.');
         } else {
-            console.log('[Referral] Referrer has no subscription history. Skipping reward application.');
-            // Optional: Should we store "Pending Rewards" for when they eventually buy a subscription? 
-            // For now, ignoring as per typical simple logic.
+            console.log('[Referral] Referrer has no subscription history. Queueing pending reward days.');
+            
+            referrer.pendingReferralDays = (referrer.pendingReferralDays || 0) + rewardDays;
+            if (!referrer.referralRewards) {
+                referrer.referralRewards = [];
+            }
+            referrer.referralRewards.push({
+                date: new Date(),
+                daysEarned: rewardDays,
+                fromClientId: client._id,
+                note: `Referral reward from ${client.name} (Pending subscription activation)`
+            });
+            await referrer.save();
+
+            client.referralStatus = 'REWARDED';
+            await client.save();
+
+            console.log('[Referral] Pending reward days queued successfully.');
         }
 
     } catch (error) {

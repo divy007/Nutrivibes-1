@@ -2,7 +2,26 @@ import { useMemo } from 'react';
 import { FoodItem } from '@/types';
 import { format, isSameDay, startOfDay, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { MEAL_SLOTS } from '@/data/meals';
+// Meal names by number for display
+const MEAL_NAMES_BY_NUMBER: Record<number, string> = {
+  1: 'Early Morning',
+  2: 'Breakfast',
+  3: 'Mid-Morning',
+  4: 'Lunch',
+  5: 'Evening',
+  6: 'Dinner',
+  // Extend as needed
+};
+
+// Convert 24h time to 12h format with AM/PM
+const formatTimeTo12Hour = (timeStr: string): string => {
+  if (/am|pm/i.test(timeStr)) return timeStr;
+  const [hourStr, minute] = timeStr.split(':');
+  let hour = parseInt(hourStr, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour.toString().padStart(2, '0')}:${minute} ${period}`;
+};
 
 interface MealSlot {
     time: string;
@@ -117,54 +136,69 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                                 </div>
 
                                 {/* Meal Slots */}
-                                <div className="flex flex-col gap-3">
-                                    {MEAL_SLOTS.map((slot, index) => {
-                                        const meal = getMealForSlot(dayPlan, slot.time);
-                                        const hasFood = meal && meal.foodItems.length > 0 && isDietPublished;
+                                <div className="flex flex-col gap-3"                                    {(() => {
+                                        // Determine slots to render: use dayPlan meals if available, otherwise fall back to default placeholders
+                                        const meals = dayPlan?.meals?.slice().sort((a, b) => a.mealNumber - b.mealNumber) || [];
+                                        const maxSlots = Math.max(meals.length, 6); // ensure at least default 6 slots
+                                        const slots = [];
+                                        for (let i = 1; i <= maxSlots; i++) {
+                                            const meal = meals.find(m => m.mealNumber === i);
+                                            slots.push({
+                                                mealNumber: i,
+                                                time: meal?.time || `${i < 12 ? `0${i}` : i}:00`, // placeholder time if missing
+                                                foodItems: meal?.foodItems || [],
+                                                exists: !!meal,
+                                            });
+                                        }
+                                        return slots.map((slot, idx) => {
+                                            const hasFood = slot.foodItems.length > 0 && isDietPublished;
+                                            return (
+                                                <div
+                                                    key={`${date.toISOString()}-slot-${slot.mealNumber}`}
+                                                    className={`bg-white rounded-lg border shadow-sm flex flex-col h-40 overflow-hidden ${isDietPublished ? 'border-slate-200' : 'border-slate-100 bg-slate-50/50'}
+                                                        `}
+                                                >
+                                                    {/* Slot Header */}
+                                                    <div className={`px-3 py-2 border-b flex justify-between items-center text-xs ${isDietPublished
+                                                        ? 'bg-slate-50 border-slate-100 text-slate-500'
+                                                        : 'bg-slate-100 border-slate-200 text-slate-400'}
+                                                    `}>
+                                                        <span className={`font-medium ${isDietPublished ? 'text-slate-700' : 'text-slate-400'}`}>
+                                                            #{slot.mealNumber} {formatTimeTo12Hour(slot.time)}
+                                                            {/* Meal name */}
+                                                            <span className="ml-2 text-slate-600">{MEAL_NAMES_BY_NUMBER[slot.mealNumber] || `Meal ${slot.mealNumber}`}</span>
+                                                        </span>
+                                                    </div>
 
-                                        return (
-                                            <div
-                                                key={`${date.toISOString()}-${slot.time}`}
-                                                className={`bg-white rounded-lg border shadow-sm flex flex-col h-40 overflow-hidden ${isDietPublished ? 'border-slate-200' : 'border-slate-100 bg-slate-50/50'
-                                                    }`}
-                                            >
-                                                {/* Slot Header */}
-                                                <div className={`px-3 py-2 border-b flex justify-between items-center text-xs ${isDietPublished
-                                                    ? 'bg-slate-50 border-slate-100 text-slate-500'
-                                                    : 'bg-slate-100 border-slate-200 text-slate-400'
-                                                    }`}>
-                                                    <span className={`font-medium ${isDietPublished ? 'text-slate-700' : 'text-slate-400'}`}>
-                                                        #{index + 1} {slot.time}
-                                                    </span>
+                                                    {/* Slot Content */}
+                                                    <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
+                                                        {hasFood ? (
+                                                            <ul className="list-disc list-inside space-y-1">
+                                                                {slot.foodItems.map((item, idx) => (
+                                                                    <li key={idx} className="text-xs text-slate-700 leading-tight">
+                                                                        <span className="font-medium">{item.name}</span>
+                                                                        {item.portion && (
+                                                                            <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
+                                                                        )}
+                                                                        {item.quantity && (
+                                                                            <span className="text-slate-500 text-[10px] ml-1">- {item.quantity}</span>
+                                                                        )}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        ) : (
+                                                            <div className="h-full flex items-center justify-center">
+                                                                <span className="text-xs text-slate-400 italic">
+                                                                    {isDietPublished ? 'No items' : 'No diet'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-
-                                                {/* Slot Content */}
-                                                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
-                                                    {hasFood ? (
-                                                        <ul className="list-disc list-inside space-y-1">
-                                                            {meal.foodItems.map((item, idx) => (
-                                                                <li key={idx} className="text-xs text-slate-700 leading-tight">
-                                                                    <span className="font-medium">{item.name}</span>
-                                                                    {item.portion && (
-                                                                        <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
-                                                                    )}
-                                                                    {item.quantity && (
-                                                                        <span className="text-slate-500 text-[10px] ml-1">- {item.quantity}</span>
-                                                                    )}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <div className="h-full flex items-center justify-center">
-                                                            <span className="text-xs text-slate-400 italic">
-                                                                {isDietPublished ? 'No items' : 'No diet'}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        });
+                                    })()}
+}
                                 </div>
                             </div>
                         );

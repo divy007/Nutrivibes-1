@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, RotateCcw, Plus } from 'lucide-react';
+import { X, Clock, Plus, Trash2 } from 'lucide-react';
 import { MealTiming } from '@/types';
 
 interface UpdateMealTimingsModalProps {
@@ -19,7 +19,10 @@ export const UpdateMealTimingsModal: React.FC<UpdateMealTimingsModalProps> = ({
 
     useEffect(() => {
         if (isOpen) {
-            setTimings([...currentTimings]);
+            setTimings(currentTimings.map(t => ({
+                ...t,
+                originalMealNumber: t.originalMealNumber ?? t.mealNumber
+            })));
         }
     }, [isOpen, currentTimings]);
 
@@ -34,8 +37,21 @@ export const UpdateMealTimingsModal: React.FC<UpdateMealTimingsModalProps> = ({
         setTimings([...timings, { mealNumber: nextMealNumber, time: '12:00' }]);
     };
 
+    const handleDeleteMeal = (index: number) => {
+        const newTimings = timings.filter((_, i) => i !== index);
+        // Renumber remaining meals sequentially
+        const renumberedTimings = newTimings.map((timing, i) => ({
+            ...timing,
+            mealNumber: i + 1
+        }));
+        setTimings(renumberedTimings);
+    };
+
     const handleReset = () => {
-        setTimings([...currentTimings]);
+        setTimings(currentTimings.map(t => ({
+            ...t,
+            originalMealNumber: t.originalMealNumber ?? t.mealNumber
+        })));
     };
 
     const handleSave = () => {
@@ -83,9 +99,18 @@ export const UpdateMealTimingsModal: React.FC<UpdateMealTimingsModalProps> = ({
                                     />
                                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
                                 </div>
-                                <button className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors">
-                                    <RotateCcw size={16} />
-                                </button>
+                                <div className="flex shrink-0">
+                                    {timings.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteMeal(index)}
+                                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                            title="Delete Meal"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>

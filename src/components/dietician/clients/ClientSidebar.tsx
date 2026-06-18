@@ -41,20 +41,22 @@ export const ClientSidebar = ({ clientId }: { clientId: string }) => {
     ];
 
     return (
-        <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col shrink-0">
-            <nav className="flex-1 py-1 overflow-y-auto custom-scrollbar">
+        <aside className="w-64 bg-white border-r border-slate-100 hidden lg:flex flex-col shrink-0 py-6 px-4">
+            <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
                 {menuItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
                             key={item.label}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-2 text-xs font-semibold transition-all duration-200 border-l-4 ${isActive
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-500'
-                                : 'text-slate-500 hover:bg-slate-50 border-transparent'
+                            className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wider rounded-2xl transition-all duration-300 group ${isActive
+                                ? 'bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-700 shadow-sm border border-emerald-500/10 scale-[1.02]'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:scale-[1.01]'
                                 }`}
                         >
-                            <item.icon size={16} />
+                            <div className={`p-1.5 rounded-xl transition-colors duration-300 ${isActive ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>
+                                <item.icon size={14} />
+                            </div>
                             <span>{item.label}</span>
                         </Link>
                     );

@@ -36,7 +36,13 @@ const PHASE_METADATA: Record<CyclePhase, { title: string; description: string; n
     },
 };
 
-export function calculateCycleStatus(lastPeriodStart: Date, cycleLength: number = 28, referenceDate: Date = new Date()): CycleStatus {
+export function calculateCycleStatus(
+    lastPeriodStart: Date,
+    cycleLength: number = 28,
+    referenceDate: Date = new Date(),
+    averagePeriodDuration: number = 5,
+    lastPeriodEnd?: Date | null
+): CycleStatus {
     // Use UTC methods to avoid timezone issues
     const ref = new Date(referenceDate);
     ref.setUTCHours(0, 0, 0, 0);
@@ -49,12 +55,26 @@ export function calculateCycleStatus(lastPeriodStart: Date, cycleLength: number 
     const normalizedDiff = ((diff % cycleLength) + cycleLength) % cycleLength;
     const dayOfCycle = normalizedDiff + 1;
 
-    let phase: CyclePhase = 'PERIOD';
-    if (dayOfCycle >= 1 && dayOfCycle <= 5) {
+    let phase: CyclePhase = 'FOLLICULAR';
+
+    const isCurrentlyBleeding = () => {
+        if (diff >= 0 && diff < cycleLength) {
+            if (lastPeriodEnd) {
+                const lastEnd = new Date(lastPeriodEnd);
+                lastEnd.setUTCHours(0, 0, 0, 0);
+                return ref <= lastEnd;
+            }
+        }
+        return dayOfCycle <= averagePeriodDuration;
+    };
+
+    const ovulationDay = Math.max(1, cycleLength - 14);
+
+    if (isCurrentlyBleeding()) {
         phase = 'PERIOD';
-    } else if (dayOfCycle > 5 && dayOfCycle <= 13) {
+    } else if (dayOfCycle < ovulationDay) {
         phase = 'FOLLICULAR';
-    } else if (dayOfCycle === 14) {
+    } else if (dayOfCycle === ovulationDay) {
         phase = 'OVULATION';
     } else {
         phase = 'LUTEAL';

@@ -13,14 +13,27 @@ import { useIsFocused } from '@react-navigation/native';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
-const MEAL_SLOTS = [
-    { time: '07:00 AM', name: 'Early Morning' },
-    { time: '09:00 AM', name: 'Breakfast' },
-    { time: '11:30 AM', name: 'Mid-Morning' },
-    { time: '01:30 PM', name: 'Lunch' },
-    { time: '04:30 PM', name: 'Evening' },
-    { time: '08:30 PM', name: 'Dinner' },
-];
+const MEAL_NAMES_BY_NUMBER: Record<number, string> = {
+  1: 'Early Morning',
+  2: 'Breakfast',
+  3: 'Mid-Morning',
+  4: 'Lunch',
+  5: 'Evening',
+  6: 'Dinner',
+  // Add more if needed
+};
+
+// Convert 24-hour time string (e.g., '07:00') or existing time format to 12-hour with AM/PM
+const formatTimeTo12Hour = (timeStr: string): string => {
+  // If already contains AM/PM, return as is
+  if (/am|pm/i.test(timeStr)) return timeStr;
+  // Assume timeStr is in HH:mm format
+  const [hourStr, minute] = timeStr.split(':');
+  let hour = parseInt(hourStr, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour.toString().padStart(2, '0')}:${minute} ${period}`;
+};
 
 export default function DietPlanScreen() {
     const router = useRouter();
@@ -125,6 +138,7 @@ export default function DietPlanScreen() {
 
     const dayPlan = weekPlan?.days?.find((d: any) => isSameDay(new Date(d.date), selectedDate));
     const isPublished = dayPlan?.status === 'PUBLISHED';
+    const hasAnyPublishedMeals = isPublished && dayPlan?.meals?.some((meal: any) => meal.foodItems?.length > 0);
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top + 24 }]}>
@@ -203,18 +217,18 @@ export default function DietPlanScreen() {
                     </Text>
                 </View>
 
-                {dayPlan?.meals?.length > 0 ? (
+                {hasAnyPublishedMeals ? (
                     dayPlan.meals.map((mealEntry: any, index: number) => {
-                        const hasFood = mealEntry.foodItems?.length > 0 && isPublished;
+                        const hasFood = mealEntry.foodItems?.length > 0;
                         if (!hasFood) return null;
 
                         return (
                             <View key={index} style={[styles.slotCard, { borderColor: theme.brandSage + '10' }]}>
                                 <View style={styles.slotHeader}>
                                     <Clock size={14} color={theme.brandSage} />
-                                    <Text style={styles.slotTime}>{mealEntry.time}</Text>
+                                    <Text style={styles.slotTime}>{formatTimeTo12Hour(mealEntry.time)}</Text>
                                     <Text style={[styles.slotName, { color: theme.brandForest }]}>
-                                        {MEAL_SLOTS.find(m => m.time === mealEntry.time)?.name || `Meal ${index + 1}`}
+                                        {MEAL_NAMES_BY_NUMBER[mealEntry.mealNumber] || `Meal ${mealEntry.mealNumber}`}
                                     </Text>
                                 </View>
 

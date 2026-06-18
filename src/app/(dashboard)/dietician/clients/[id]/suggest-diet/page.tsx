@@ -76,7 +76,7 @@ const ClinicalAlertBanner = ({ clientInfo }: { clientInfo: ClientInfo | null }) 
     }
 
     return (
-        <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-4 mb-6 shadow-sm sticky top-[72px] z-30">
+        <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-4 mb-6 shadow-sm relative">
             <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 shadow-inner">
                     <AlertTriangle size={24} />
@@ -459,14 +459,31 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         setMealTimings(newTimings);
         if (weekPlan) {
             const newDays = weekPlan.days.map(day => {
-                const newMeals = newTimings.map((timing, idx) => {
-                    const existingMeal = day.meals[idx];
-                    if (existingMeal) return { ...existingMeal, time: timing.time, mealNumber: timing.mealNumber };
-                    return { time: timing.time, mealNumber: timing.mealNumber, foodItems: [] };
+                const newMeals = newTimings.map((timing) => {
+                    // Find existing meal that matches the original meal number
+                    const existingMeal = timing.originalMealNumber
+                        ? day.meals.find(m => m.mealNumber === timing.originalMealNumber)
+                        : null;
+
+                    if (existingMeal) {
+                        return {
+                            ...existingMeal,
+                            time: timing.time,
+                            mealNumber: timing.mealNumber
+                        };
+                    }
+
+                    // Otherwise create a new blank slot
+                    return {
+                        time: timing.time,
+                        mealNumber: timing.mealNumber,
+                        foodItems: []
+                    };
                 });
                 return { ...day, meals: newMeals };
             });
             setWeekPlan({ ...weekPlan, days: newDays });
+            autoSavePlan(newDays);
         }
         try {
             await api.patch(`/api/clients/${id}`, { mealTimings: newTimings });
@@ -691,10 +708,6 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         const preference = clientInfo.preferences; // "Vegan", "Vegetarian", "Non-Vegetarian", etc.
 
         // Define forbidden sets based on preference
-        // "Vegan" -> Forbid Non-Veg, Vegetarian (Dairy)
-        // "Vegetarian", "Eggetarian" -> Forbid Non-Veg (Wait, Eggetarian allows Eggs which are usually flagged Non-Veg or Egg? Our data has 'Non-Vegetarian', 'Vegetarian', 'Vegan'. )
-        // Let's look at recipe data: "dietPref": "Vegan" | "Vegetarian" | "Non-Vegetarian"
-
         const forbiddenTypes: string[] = [];
         if (preference.includes('Vegan')) {
             forbiddenTypes.push('Non-Vegetarian', 'Vegetarian'); // Strict Vegan
@@ -709,17 +722,19 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             ? clientInfo.counsellingProfile.allergies.toLowerCase().split(',').map((a: string) => a.trim())
             : [];
 
+        // Normalize and expand singular/plural forms of allergies to avoid partial mismatch (e.g. "nuts" -> "nut")
+        const normalizedAllergies = allergies.flatMap((a: string) => {
+            if (a.endsWith('s') && a.length > 1) {
+                return [a, a.slice(0, -1)];
+            }
+            return [a];
+        });
+
         for (const day of daysToValidate) {
             for (const meal of day.meals) {
                 for (const food of meal.foodItems) {
                     // Check Diet Preference
                     if (forbiddenTypes.length > 0 && food.dietPref && forbiddenTypes.includes(food.dietPref)) {
-                        // Exception: If client is Eggitarian and food is "Vegetarian", it's fine. 
-                        // But if food is Non-Veg it's bad.
-                        // My logic above adds 'Non-Vegetarian' to forbidden for Vegetarian/Eggetarian.
-                        // So checking forbiddenTypes.includes(food.dietPref) works.
-
-                        // Double check: Vegan forbids Vegetarian (Dairy/Honey).
                         return {
                             valid: false,
                             error: `Diet Persona Conflict: Client is '${preference}' but diet contains '${food.name}' which is '${food.dietPref}'.`
@@ -727,10 +742,9 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     }
 
                     // Check Allergies
-                    // Simple string matching: if allergy word appears in food name
-                    if (allergies.length > 0) {
+                    if (normalizedAllergies.length > 0) {
                         const foodName = food.name.toLowerCase();
-                        for (const allergy of allergies) {
+                        for (const allergy of normalizedAllergies) {
                             if (allergy && foodName.includes(allergy)) {
                                 return {
                                     valid: false,
@@ -829,6 +843,16 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
         // Identify days that will be published (status changed to PUBLISHED)
         const daysToPublish = weekPlan.days.filter(day => day.meals.some(m => m.foodItems.length > 0));
 
+        if (daysToPublish.length === 0) {
+            alert('Cannot publish: There are no food items logged in any days of this week.');
+            return;
+        }
+
+        const confirmPublish = window.confirm(
+            `Are you sure you want to publish the diet plan for ${daysToPublish.length} day(s) of this week? The client will immediately see these plans.`
+        );
+        if (!confirmPublish) return;
+
         // Validate all days that are being published
         const validation = validateDiet(daysToPublish);
         if (!validation.valid) {
@@ -852,6 +876,41 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             alert('All diets with food have been published and are now visible to the client.');
         } catch (error) {
             alert('Failed to save and publish');
+        }
+    };
+
+    const handleDeleteEntireWeek = async () => {
+        if (!weekPlan) return;
+
+        // Check if any day is published
+        const hasPublishedDays = weekPlan.days.some(day => day.status === 'PUBLISHED');
+        if (hasPublishedDays) {
+            alert('Cannot delete weekly plan: One or more days are published. Please unpublish those days first.');
+            return;
+        }
+
+        const confirmDelete = window.confirm('Are you sure you want to clear all food items and reset the diet plan for this entire week? This action cannot be undone.');
+        if (!confirmDelete) return;
+
+        const newDays = weekPlan.days.map(day => ({
+            ...day,
+            meals: day.meals.map(meal => ({ ...meal, foodItems: [] })),
+            status: 'NO_DIET' as const
+        }));
+
+        const newPlan = { ...weekPlan, days: newDays };
+        setWeekPlan(newPlan);
+        
+        try {
+            const targetDateForSave = weekPlan?.startDate || currentWeekStart;
+            const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
+            await api.post(`/api/clients/${id}/diet-plan`, {
+                weekStartDate: formattedStartDate,
+                days: newDays
+            });
+            alert('Weekly diet plan cleared successfully');
+        } catch (error) {
+            alert('Failed to clear weekly plan on server');
         }
     };
 
@@ -1047,7 +1106,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                             <ExternalLink size={16} className="text-purple-500" />
                                             <span>Export Diet</span>
                                         </button>
-                                        <button className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                                        <button 
+                                            onClick={() => { handleDeleteEntireWeek(); setIsActionOpen(false); }}
+                                            className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                                        >
                                             <Trash2 size={16} />
                                             <span className="font-medium">Delete Diets</span>
                                         </button>

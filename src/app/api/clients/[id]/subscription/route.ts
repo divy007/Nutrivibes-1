@@ -4,6 +4,7 @@ import Client from '@/models/Client';
 import Subscription from '@/models/Subscription';
 import Plan from '@/models/Plan';
 import mongoose from 'mongoose';
+import { differenceInDays, addDays } from 'date-fns';
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await connectDB();
@@ -186,6 +187,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
 
 
+        // Check for any pending referral rewards to apply
+        // We only apply them if the subscription is not in the placeholder state (not set to 2099)
+        const pendingDays = client.pendingReferralDays || 0;
+        if (pendingDays > 0 && endDate.getFullYear() < 2099) {
+            console.log(`[Subscription API] Applying ${pendingDays} pending referral days to client ${client._id}`);
+            endDate.setDate(endDate.getDate() + pendingDays);
+            
+            if (!client.referralRewards) {
+                client.referralRewards = [];
+            }
+            client.referralRewards.push({
+                date: new Date(),
+                daysEarned: pendingDays,
+                fromClientId: client._id,
+                note: `Redeemed ${pendingDays} pending referral days upon subscription activation`
+            });
+            client.pendingReferralDays = 0;
+            await client.save();
+        }
+
         // ============================================================
         // UPDATE EXISTING OR CREATE NEW SUBSCRIPTION
         // One subscription per client - update if exists, create if new
@@ -292,5 +313,90 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     } catch (error) {
         console.error('Error fetching subscriptions:', error);
         return NextResponse.json({ error: 'Failed to fetch subscriptions' }, { status: 500 });
+    }
+}
+
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    await connectDB();
+    const { id } = await params;
+
+    if (!mongoose.isValidObjectId(id)) {
+        return NextResponse.json({ error: 'Invalid client ID' }, { status: 400 });
+    }
+
+    try {
+        const { subscriptionId, action, reason } = await req.json();
+
+        if (!['PAUSE', 'RESUME'].includes(action)) {
+            return NextResponse.json({ error: 'Invalid action. Must be PAUSE or RESUME' }, { status: 400 });
+        }
+
+        if (!mongoose.isValidObjectId(subscriptionId)) {
+            return NextResponse.json({ error: 'Invalid subscription ID' }, { status: 400 });
+        }
+
+        const subscription = await Subscription.findById(subscriptionId);
+        if (!subscription) {
+            return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
+        }
+
+        const client = await Client.findById(id);
+        if (!client) {
+            return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        }
+
+        const today = new Date();
+
+        if (action === 'PAUSE') {
+            if (subscription.status === 'PAUSED') {
+                return NextResponse.json({ error: 'Subscription is already paused' }, { status: 400 });
+            }
+
+            subscription.status = 'PAUSED';
+            if (!subscription.pauseHistory) {
+                subscription.pauseHistory = [];
+            }
+            subscription.pauseHistory.push({
+                startDate: today,
+                reason: reason || 'Manual dietician pause'
+            });
+
+            client.status = 'PAUSED';
+            client.pausedUntil = undefined; // Indefinite manual pause
+
+            await Promise.all([subscription.save(), client.save()]);
+        } else if (action === 'RESUME') {
+            if (subscription.status !== 'PAUSED') {
+                return NextResponse.json({ error: 'Subscription is not paused' }, { status: 400 });
+            }
+
+            subscription.status = 'ACTIVE';
+
+            // Find the active pause entry in pauseHistory
+            const activePause = subscription.pauseHistory?.find((h: any) => !h.endDate);
+            if (activePause) {
+                activePause.endDate = today;
+                const duration = Math.max(1, differenceInDays(today, new Date(activePause.startDate)));
+                subscription.pauseDaysUsed = (subscription.pauseDaysUsed || 0) + duration;
+                subscription.endDate = addDays(new Date(subscription.endDate), duration);
+            }
+
+            client.status = 'ACTIVE';
+            client.pausedUntil = undefined;
+
+            await Promise.all([subscription.save(), client.save()]);
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Subscription ${action.toLowerCase()}d successfully`,
+            subscription
+        });
+
+    } catch (error: any) {
+        console.error('[Subscription PUT] Error:', error);
+        return NextResponse.json({
+            error: error.message || 'Failed to update subscription status'
+        }, { status: 500 });
     }
 }

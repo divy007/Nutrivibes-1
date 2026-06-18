@@ -63,68 +63,15 @@ export async function GET(req: Request) {
         }
 
         await import('@/models/Plan');
-        const Subscription = (await import('@/models/Subscription')).default;
+        const { syncClientSubscription } = await import('@/lib/subscription-sync');
+        let activeSub = await syncClientSubscription(client._id);
 
-        // Find 'closest' subscription - could be Active, Paused, or Assigned
-        let activeSub = await Subscription.findOne({
-            clientId: client._id,
-            status: { $in: ['ASSIGNED', 'ACTIVE', 'PAUSED'] }
-        }).sort({ createdAt: -1 }).populate('planId');
-
-        // LAZY STATUS SYNC: Check if status needs to change based on dates
         if (activeSub) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            let statusChanged = false;
-            let newStatus = activeSub.status;
-
-            // Check if currently inside a pause window
-            const inPauseWindow = activeSub.pauseHistory?.some((p: any) => {
-                const start = new Date(p.startDate);
-                const end = new Date(p.endDate);
-                start.setHours(0, 0, 0, 0);
-                end.setHours(0, 0, 0, 0);
-                return today >= start && today < end;
-            });
-
-            if (inPauseWindow) {
-                if (activeSub.status !== 'PAUSED') {
-                    newStatus = 'PAUSED';
-                    statusChanged = true;
-                }
-            } else {
-                // Not in pause window. Should be ACTIVE or ASSIGNED.
-                if (activeSub.status === 'PAUSED') {
-                    // Un-pause
-                    newStatus = 'ACTIVE';
-                    statusChanged = true;
-                } else if (activeSub.status === 'ASSIGNED') {
-                    // Check if we should activate
-                    if (activeSub.startDate) {
-                        const start = new Date(activeSub.startDate);
-                        start.setHours(0, 0, 0, 0);
-                        if (today >= start) {
-                            newStatus = 'ACTIVE';
-                            statusChanged = true;
-                        }
-                    }
-                }
-            }
-
-            if (statusChanged) {
-                console.log(`Auto-Updating Subscription ${activeSub._id} status: ${activeSub.status} -> ${newStatus}`);
-                activeSub.status = newStatus;
-                await activeSub.save();
-
-                // Sync Client Status
-                if (newStatus === 'PAUSED') {
-                    await Client.findByIdAndUpdate(client._id, { status: 'PAUSED' });
-                    client.status = 'PAUSED';
-                } else if (newStatus === 'ACTIVE' && client.status !== 'ACTIVE') {
-                    await Client.findByIdAndUpdate(client._id, { status: 'ACTIVE' });
-                    client.status = 'ACTIVE';
-                }
+            const Subscription = (await import('@/models/Subscription')).default;
+            const sub = await Subscription.findById(activeSub._id).populate('planId');
+            if (sub) {
+                activeSub = sub;
+                client.status = sub.status;
             }
         }
 

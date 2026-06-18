@@ -92,7 +92,9 @@ export async function GET(req: Request) {
             cycleStatus = calculateCycleStatus(
                 lastPeriodLog.startDate,
                 client.cycleLength || 28,
-                today  // Pass normalized IST date as reference
+                today,  // Pass normalized IST date as reference
+                client.averagePeriodDuration || 5,
+                lastPeriodLog.endDate
             );
         }
 

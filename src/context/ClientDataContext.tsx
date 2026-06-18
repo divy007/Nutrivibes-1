@@ -62,7 +62,8 @@ export const ClientDataProvider: React.FC<{ id: string; children: React.ReactNod
                 assessment: assessmentData,
                 counsellingProfile: data.counsellingProfile,
                 cycleLength: data.cycleLength,
-                activeSubscription: data.activeSubscription, // ADD THIS LINE
+                activeSubscription: data.activeSubscription,
+                pausedUntil: data.pausedUntil,
             });
 
         } catch (error) {

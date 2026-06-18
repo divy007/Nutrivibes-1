@@ -46,7 +46,7 @@ const WaterTracker = React.memo(function WaterTracker({ currentGlasses, targetGl
             </View>
 
             <View style={styles.grid}>
-                {Array.from({ length: targetGlasses }).map((_, i) => (
+                {Array.from({ length: Math.max(targetGlasses, currentGlasses) }).map((_, i) => (
                     <View
                         key={i}
                         style={[

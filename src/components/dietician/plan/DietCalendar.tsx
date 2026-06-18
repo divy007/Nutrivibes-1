@@ -10,7 +10,26 @@ interface DietCalendarProps {
     onWeekChange: (direction: 'prev' | 'next') => void;
 }
 
-import { MEAL_SLOTS } from '@/data/meals';
+// Dynamic meal names by number
+const MEAL_NAMES_BY_NUMBER: Record<number, string> = {
+  1: 'Early Morning',
+  2: 'Breakfast',
+  3: 'Mid-Morning',
+  4: 'Lunch',
+  5: 'Evening',
+  6: 'Dinner',
+  // Extend as needed
+};
+
+// Convert 24h to 12h format
+const formatTimeTo12Hour = (timeStr: string): string => {
+  if (/am|pm/i.test(timeStr)) return timeStr;
+  const [hourStr, minute] = timeStr.split(':');
+  let hour = parseInt(hourStr, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour.toString().padStart(2, '0')}:${minute} ${period}`;
+};
 
 export const DietCalendar: React.FC<DietCalendarProps> = ({
     weekPlan,
@@ -72,63 +91,82 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
 
                                 {/* Meal Slots */}
                                 <div className="flex flex-col gap-3">
-                                    {MEAL_SLOTS.map((slot, index) => {
-                                        const meal = getMealForSlot(dayPlan, slot.time);
-                                        const hasFood = meal && meal.foodItems.length > 0;
+                                    {(() => {
+    // Build slots from existing meals or placeholders
+    const meals = dayPlan?.meals?.slice().sort((a, b) => a.mealNumber - b.mealNumber) || [];
+    const maxSlots = Math.max(meals.length, 6);
+    const slots = [];
+    for (let i = 1; i <= maxSlots; i++) {
+        const meal = meals.find(m => m.mealNumber === i);
+        slots.push({
+            mealNumber: i,
+            time: meal?.time || `${i < 12 ? `0${i}` : i}:00`,
+            foodItems: meal?.foodItems || [],
+        });
+    }
+    return slots.map((slot) => {
+        const hasFood = slot.foodItems.length > 0;
+        return (
+            <div
+                key={`${date.toISOString()}-slot-${slot.mealNumber}`}
+                className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-40 overflow-hidden group"
+            >
+                {/* Slot Header */}
+                <div className="px-3 py-2 bg-slate-50 border-b flex justify-between items-center text-xs text-slate-500">
+                    <span className="font-medium text-slate-700">
+                        #{slot.mealNumber} {formatTimeTo12Hour(slot.time)}{' '}
+                        <span className="ml-2 text-slate-600">{MEAL_NAMES_BY_NUMBER[slot.mealNumber] || `Meal ${slot.mealNumber}`}</span>
+                    </span>
+                    {hasFood ? (
+                        <button
+                            onClick={() => onMealEdit(date, slot.time, slot.foodItems)}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 rounded transition-all"
+                            title="Edit Meal"
+                        >
+                            <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => onMealAdd(date, slot.time)}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-emerald-100 text-emerald-600 rounded transition-all"
+                            title="Add Food"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
 
-                                        return (
-                                            <div
-                                                key={`${date.toISOString()}-${slot.time}`}
-                                                className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-40 overflow-hidden group"
-                                            >
-                                                {/* Slot Header */}
-                                                <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                                                    <span className="font-medium text-slate-700">#{index + 1} {slot.time}</span>
-                                                    {/* Action Buttons */}
-                                                    {hasFood ? (
-                                                        <button
-                                                            onClick={() => meal && onMealEdit(date, slot.time, meal.foodItems)}
-                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 rounded transition-all"
-                                                            title="Edit Meal"
-                                                        >
-                                                            <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => onMealAdd(date, slot.time)}
-                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-emerald-100 text-emerald-600 rounded transition-all"
-                                                            title="Add Food"
-                                                        >
-                                                            <Plus className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {/* Slot Content */}
-                                                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
-                                                    {hasFood ? (
-                                                        <ul className="list-disc list-inside space-y-1">
-                                                            {meal.foodItems.map((item, idx) => (
-                                                                <li key={idx} className="text-xs text-slate-700 leading-tight">
-                                                                    <span className="font-medium">{item.name}</span>
-                                                                    <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <div className="h-full flex items-center justify-center">
-                                                            <button
-                                                                onClick={() => onMealAdd(date, slot.time)}
-                                                                className="text-xs text-slate-400 hover:text-emerald-500 flex items-center gap-1 transition-colors"
-                                                            >
-                                                                <Plus className="w-3 h-3" /> Add
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                {/* Slot Content */}
+                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
+                    {hasFood ? (
+                        <ul className="list-disc list-inside space-y-1">
+                            {slot.foodItems.map((item, idx) => (
+                                <li key={idx} className="text-xs text-slate-700 leading-tight">
+                                    <span className="font-medium">{item.name}</span>
+                                    {item.portion && (
+                                        <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
+                                    )}
+                                    {item.quantity && (
+                                        <span className="text-slate-500 text-[10px] ml-1">- {item.quantity}</span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="h-full flex items-center justify-center">
+                            <button
+                                onClick={() => onMealAdd(date, slot.time)}
+                                className="text-xs text-slate-400 hover:text-emerald-500 flex items-center gap-1 transition-colors"
+                            >
+                                <Plus className="w-3 h-3" /> Add
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    });
+})()}
                                 </div>
                             </div>
                         );

@@ -128,7 +128,9 @@ export default function ProgressPage() {
                     const status = calculateCycleStatus(
                         new Date(targetCycle.startDate),
                         clientInfo.cycleLength || 28,
-                        logDate
+                        logDate,
+                        clientInfo.averagePeriodDuration || 5,
+                        targetCycle.endDate
                     );
                     phase = status.phase;
                 }

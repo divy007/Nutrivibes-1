@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle, Phone, UserPlus } from 'lucide-react';
@@ -286,6 +287,13 @@ export default function ClientsPage() {
                 {/* Header Section */}
                 <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white rounded-t-[32px]">
                     <h1 className="text-2xl font-black text-brand-forest">Manage Members</h1>
+                    <Link
+                        href="/dietician/clients/new"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-sage text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-brand-forest hover:text-white transition-all shadow-md hover:shadow-lg scale-[1.01] hover:scale-[1.03]"
+                    >
+                        <UserPlus size={14} />
+                        Register Member
+                    </Link>
                 </div>
 
                 {/* Filters Section */}
@@ -429,6 +437,11 @@ export default function ClientsPage() {
                                                             <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`}></span>
                                                             {styles.label}
                                                         </span>
+                                                        {client.status === 'PAUSED' && client.pausedUntil && (
+                                                            <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100/50 uppercase tracking-tighter shadow-sm animate-pulse">
+                                                                Until {new Date(client.pausedUntil).toLocaleDateString()}
+                                                            </span>
+                                                        )}
                                                         <span className="text-[8px] font-black text-slate-400 tracking-tighter uppercase">
                                                             via {isMobile ? 'Mobile' : 'Dietician'}
                                                         </span>

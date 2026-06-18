@@ -10,7 +10,13 @@ import {
     Clock,
     Trash2,
     ExternalLink,
-    Phone
+    Phone,
+    User,
+    Ruler,
+    Scale,
+    Activity,
+    Hash,
+    Sparkles
 } from 'lucide-react';
 import { DietPreferenceModal } from './DietPreferenceModal';
 
@@ -33,16 +39,16 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             .toUpperCase() || 'CLI';
     };
 
-    const DetailItem = ({ label, value, icon: Icon, editable = true }: { label: string, value: string | number | undefined, icon?: any, editable?: boolean }) => (
-        <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">{label}</span>
-            <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-slate-700">{value || 'N/A'}</span>
-                {editable && (
-                    <button className="text-emerald-500 hover:text-emerald-600">
-                        <Pencil size={12} strokeWidth={3} />
-                    </button>
-                )}
+    const DetailItem = ({ label, value, icon: Icon, bgClass = 'bg-slate-50', textClass = 'text-slate-600' }: { label: string, value: string | number | undefined, icon?: any, bgClass?: string, textClass?: string }) => (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm shrink-0">
+            {Icon && (
+                <div className={`p-1.5 rounded-lg ${bgClass} ${textClass}`}>
+                    <Icon size={12} />
+                </div>
+            )}
+            <div className="flex flex-col">
+                <span className="text-[8px] uppercase font-extrabold text-slate-400 tracking-wider leading-none mb-1">{label}</span>
+                <span className="text-xs font-black text-slate-700 leading-none">{value || 'N/A'}</span>
             </div>
         </div>
     );
@@ -66,16 +72,20 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     </div>
 
                     {/* Metrics Horizontal Scroll/Grid */}
-                    <div className="flex-1 flex items-center overflow-x-auto py-1 custom-scrollbar">
-                        <DetailItem label="Id" value={clientInfo.id} editable={false} />
-                        <DetailItem label="Age" value={clientInfo.age} editable={false} />
-                        <DetailItem label="Gender" value={clientInfo.gender} editable={false} />
-                        <DetailItem label="Height" value={clientInfo.height ? `${clientInfo.height}cm` : undefined} editable={false} />
-                        <DetailItem label="Weight" value={clientInfo.weight ? `${clientInfo.weight}kg` : undefined} editable={false} />
-                        <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">BMI</span>
-                            <div className="flex items-center gap-1.5">
-                                <span className={`text-sm font-bold ${clientInfo.height && clientInfo.weight ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <div className="flex-1 flex items-center gap-3 overflow-x-auto py-1.5 custom-scrollbar">
+                        <DetailItem label="Id" value={clientInfo.id} icon={Hash} bgClass="bg-slate-100" textClass="text-slate-500" />
+                        <DetailItem label="Age" value={clientInfo.age} icon={User} bgClass="bg-indigo-50" textClass="text-indigo-500" />
+                        <DetailItem label="Gender" value={clientInfo.gender} icon={User} bgClass="bg-pink-50" textClass="text-pink-500" />
+                        <DetailItem label="Height" value={clientInfo.height ? `${clientInfo.height}cm` : undefined} icon={Ruler} bgClass="bg-blue-50" textClass="text-blue-500" />
+                        <DetailItem label="Weight" value={clientInfo.weight ? `${clientInfo.weight}kg` : undefined} icon={Scale} bgClass="bg-teal-50" textClass="text-teal-500" />
+                        
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm shrink-0">
+                            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-500">
+                                <Activity size={12} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[8px] uppercase font-extrabold text-slate-400 tracking-wider leading-none mb-1">BMI</span>
+                                <span className={`text-xs font-black leading-none ${clientInfo.height && clientInfo.weight ? 'text-emerald-600' : 'text-slate-400'}`}>
                                     {(() => {
                                         if (clientInfo.height && clientInfo.weight) {
                                             const h = clientInfo.height / 100;
@@ -86,13 +96,35 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                                 </span>
                             </div>
                         </div>
-                        <DetailItem label="Phone" value={clientInfo.phone} editable={false} />
 
-                        <div className="flex flex-col px-4 border-r border-slate-200 last:border-r-0">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Status</span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase self-start">
-                                {clientInfo.status || 'ACTIVE'}
-                            </span>
+                        <DetailItem label="Phone" value={clientInfo.phone} icon={Phone} bgClass="bg-violet-50" textClass="text-violet-500" />
+
+                        {/* Status badge with correct type-based styling */}
+                        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm shrink-0">
+                            <div className={`p-1.5 rounded-lg ${
+                                clientInfo.status === 'PAUSED' ? 'bg-amber-100 text-amber-500' :
+                                clientInfo.status === 'DELETED' ? 'bg-rose-100 text-rose-500' :
+                                clientInfo.status === 'NEW' ? 'bg-blue-100 text-blue-500' :
+                                'bg-emerald-100 text-emerald-500'
+                            }`}>
+                                <Sparkles size={12} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[8px] uppercase font-extrabold text-slate-400 tracking-wider leading-none mb-1">Status</span>
+                                <span className={`text-xs font-black uppercase leading-none ${
+                                    clientInfo.status === 'PAUSED' ? 'text-amber-700' :
+                                    clientInfo.status === 'DELETED' ? 'text-rose-700' :
+                                    clientInfo.status === 'NEW' ? 'text-blue-700' :
+                                    'text-emerald-700'
+                                }`}>
+                                    {clientInfo.status || 'ACTIVE'}
+                                </span>
+                                {clientInfo.status === 'PAUSED' && clientInfo.pausedUntil && (
+                                    <span className="text-[8px] font-bold text-amber-500 mt-0.5">
+                                        Until {new Date(clientInfo.pausedUntil).toLocaleDateString()}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

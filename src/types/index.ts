@@ -19,6 +19,7 @@ export interface FoodItem {
 export interface MealTiming {
     mealNumber: number;
     time: string;
+    originalMealNumber?: number;
 }
 
 export interface MealSlot {
@@ -96,6 +97,7 @@ export interface ClientInfo {
         status: string;
     };
     referredBy?: string | { _id: string; name: string; };
+    pausedUntil?: string | Date;
 }
 
 export interface WeekPlan {
