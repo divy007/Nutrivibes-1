@@ -148,6 +148,33 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             body.idealWeight = parseFloat((22 * heightInM * heightInM).toFixed(1));
         }
 
+        // Validation for dietStartDate boundaries
+        if (body.dietStartDate) {
+            const existingClient = await Client.findById(id);
+            if (!existingClient) {
+                return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+            }
+
+            const startDate = new Date(body.dietStartDate);
+            startDate.setHours(0, 0, 0, 0);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const minDate = new Date(today);
+            minDate.setDate(minDate.getDate() - 365);
+
+            const maxDate = new Date(today);
+            maxDate.setDate(maxDate.getDate() + 60);
+
+            if (startDate < minDate) {
+                return NextResponse.json({ error: 'Diet start date cannot be more than 365 days in the past' }, { status: 400 });
+            }
+            if (startDate > maxDate) {
+                return NextResponse.json({ error: 'Diet start date cannot be more than 60 days in the future' }, { status: 400 });
+            }
+        }
+
         // Handle Advanced Recovery Logic
         if (body.recoverAction) {
             const currentClient = await Client.findById(id);
@@ -238,6 +265,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     // Activate if it was pending (placeholder 2099 date)
                     if (activeSubscription.status === 'ASSIGNED') {
                         activeSubscription.status = 'ACTIVE';
+                        body.status = 'ACTIVE';
                     }
                     await activeSubscription.save();
                     console.log('[Client PATCH] Subscription dates recalculated for new dietStartDate:', body.dietStartDate);
@@ -403,6 +431,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         if (!client) {
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        }
+
+        // Trigger automatic follow-up generation if dietStartDate was updated
+        if (body.dietStartDate) {
+            try {
+                const { generateFollowUps } = await import('@/lib/follow-up-utils');
+                await generateFollowUps(client._id.toString(), client.dieticianId.toString(), new Date(body.dietStartDate));
+            } catch (err) {
+                console.error('Failed to auto-generate follow-ups for updated client:', err);
+            }
         }
 
         return NextResponse.json(client);

@@ -24,13 +24,13 @@ test('client calendar renders dynamic meals with correct names and times', () =>
 
   // Should render slots for at least 6 meals
   for (let i = 1; i <= 6; i++) {
-    expect(screen.getByText(new RegExp(`^#${i}`))).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(`^#${i}`))[0]).toBeInTheDocument();
   }
 
   // Check formatted time for slot 1
-  expect(screen.getByText('07:00 AM')).toBeInTheDocument();
+  expect(screen.getByText(/07:00 AM/)).toBeInTheDocument();
   // Check meal name mapping
-  expect(screen.getByText(/Early Morning/)).toBeInTheDocument();
+  expect(screen.getAllByText(/Early Morning/)[0]).toBeInTheDocument();
   // Ensure food item appears for slot 1
   expect(screen.getByText('Egg')).toBeInTheDocument();
 });

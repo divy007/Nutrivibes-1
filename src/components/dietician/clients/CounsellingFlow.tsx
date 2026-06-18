@@ -956,7 +956,8 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                                 type="date"
                                 value={formData.dietStartDate}
                                 onChange={(e) => setFormData({ ...formData, dietStartDate: e.target.value })}
-                                min={new Date().toISOString().split('T')[0]}
+                                min={new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                max={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                             />
                             <p className="text-xs text-slate-500 mt-2 italic">

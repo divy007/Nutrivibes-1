@@ -46,3 +46,58 @@ export function getLocalDateString(date: Date = new Date()): string {
         day: '2-digit'
     });
 }
+
+/**
+ * Re-anchors a diet plan's days array to start on the target date.
+ * If a day in the new range exists in the original plan, its meals and status are copied.
+ * Otherwise, the day is initialized as a blank day.
+ */
+export function reanchorDietPlan(dietPlan: any, targetDate: Date): any {
+    const targetDateStr = targetDate.toISOString().split('T')[0];
+    const planDateStr = new Date(dietPlan.weekStartDate).toISOString().split('T')[0];
+
+    if (planDateStr === targetDateStr) {
+        return dietPlan;
+    }
+
+    const newDays = [];
+    const dayMap = new Map();
+    const daysArray = Array.isArray(dietPlan.days) ? dietPlan.days : [];
+
+    // Map existing days by their YYYY-MM-DD date string
+    for (const day of daysArray) {
+        if (day.date) {
+            const dateStr = new Date(day.date).toISOString().split('T')[0];
+            dayMap.set(dateStr, day);
+        }
+    }
+
+    for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(targetDate);
+        currentDate.setDate(currentDate.getDate() + i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+
+        const existingDay = dayMap.get(dateStr);
+        if (existingDay) {
+            newDays.push({
+                date: currentDate,
+                status: existingDay.status || 'NO_DIET',
+                meals: existingDay.meals || []
+            });
+        } else {
+            newDays.push({
+                date: currentDate,
+                status: 'NO_DIET',
+                meals: []
+            });
+        }
+    }
+
+    // Return plain object
+    const plainPlan = typeof dietPlan.toObject === 'function' ? dietPlan.toObject() : dietPlan;
+    return {
+        ...plainPlan,
+        weekStartDate: targetDate,
+        days: newDays
+    };
+}

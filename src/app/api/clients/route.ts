@@ -149,6 +149,28 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Either Email or Phone number is required' }, { status: 400 });
         }
 
+        // Validation for dietStartDate boundaries
+        if (clientData.dietStartDate) {
+            const startDate = new Date(clientData.dietStartDate);
+            startDate.setHours(0, 0, 0, 0);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const minDate = new Date(today);
+            minDate.setDate(minDate.getDate() - 365);
+
+            const maxDate = new Date(today);
+            maxDate.setDate(maxDate.getDate() + 60);
+
+            if (startDate < minDate) {
+                return NextResponse.json({ error: 'Diet start date cannot be more than 365 days in the past' }, { status: 400 });
+            }
+            if (startDate > maxDate) {
+                return NextResponse.json({ error: 'Diet start date cannot be more than 60 days in the future' }, { status: 400 });
+            }
+        }
+
         // 1. Check if User/Email exists (if email provided)
         let linkedUser = null;
         if (email) {
@@ -225,15 +247,15 @@ export async function POST(req: Request) {
 
         const client = await Client.create(clientDataCreate);
 
-        // // Trigger automatic follow-up generation if dietStartDate was provided
-        // if (clientData.dietStartDate) {
-        //     try {
-        //         const { generateFollowUps } = await import('@/lib/follow-up-utils');
-        //         await generateFollowUps((client as any)._id.toString(), user._id.toString(), new Date(clientData.dietStartDate));
-        //     } catch (err) {
-        //         console.error('Failed to auto-generate follow-ups for new client:', err);
-        //     }
-        // }
+        // Trigger automatic follow-up generation if dietStartDate was provided
+        if (clientData.dietStartDate) {
+            try {
+                const { generateFollowUps } = await import('@/lib/follow-up-utils');
+                await generateFollowUps((client as any)._id.toString(), user._id.toString(), new Date(clientData.dietStartDate));
+            } catch (err) {
+                console.error('Failed to auto-generate follow-ups for new client:', err);
+            }
+        }
 
         return NextResponse.json(client, { status: 201 });
     } catch (error) {

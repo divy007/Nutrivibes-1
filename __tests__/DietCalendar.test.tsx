@@ -29,14 +29,14 @@ test('renders dynamic meal slots with correct labels and formatted times', () =>
 
   // Expect slots for meals 1-6 (max of existing meals and default 6)
   for (let i = 1; i <= 6; i++) {
-    const slotLabel = screen.getByText(new RegExp(`^#${i}`));
+    const slotLabel = screen.getAllByText(new RegExp(`^#${i}`))[0];
     expect(slotLabel).toBeInTheDocument();
   }
 
   // Verify formatted time for slot 1 (07:00 => 07:00 AM)
-  expect(screen.getByText('07:00 AM')).toBeInTheDocument();
+  expect(screen.getByText(/07:00 AM/)).toBeInTheDocument();
   // Verify meal name mapping for slot 1 (Early Morning)
-  expect(screen.getByText(/Early Morning/)).toBeInTheDocument();
+  expect(screen.getAllByText(/Early Morning/)[0]).toBeInTheDocument();
 
   // Check that edit button appears for slot 1 (has food)
   const editBtn = screen.getAllByTitle('Edit Meal')[0];

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB as dbConnect } from '@/lib/mongodb';
 import DietPlan from '@/models/DietPlan';
 import { startOfWeek, format } from 'date-fns';
-import { normalizeDateUTC } from '@/lib/date-utils';
+import { normalizeDateUTC, reanchorDietPlan } from '@/lib/date-utils';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
@@ -28,18 +28,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     try {
         const targetDate = normalizeDateUTC(startDate);
-        
+        const endDate = new Date(targetDate);
+        endDate.setDate(endDate.getDate() + 6);
+
         // 1. Exact match for weekStartDate
         let dietPlan = await DietPlan.findOne({
             clientId: id,
             weekStartDate: targetDate
         });
 
-        // 2. Containment match for shifted dietStartDate
+        // 2. Overlap match: Find any plan containing days within the requested week range
         if (!dietPlan) {
             dietPlan = await DietPlan.findOne({
                 clientId: id,
-                'days.date': targetDate
+                'days.date': { $gte: targetDate, $lte: endDate }
             });
         }
 
@@ -52,6 +54,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                     weekStartDate: normalizeDateUTC(mondayStart)
                 });
             }
+        }
+
+        if (dietPlan) {
+            // Dynamically re-anchor the plan days to align with the requested week starting date
+            dietPlan = reanchorDietPlan(dietPlan, targetDate);
         }
 
         return NextResponse.json(dietPlan || { success: true, message: 'No plan found' });

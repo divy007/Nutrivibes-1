@@ -182,7 +182,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
     };
 
     // Helper for simple text inputs
-    const InputField = ({ label, field, placeholder, type = 'text', readOnly = false }: any) => {
+    const InputField = ({ label, field, placeholder, type = 'text', readOnly = false, min, max }: any) => {
         const val = (formData as any)[field];
         if (!isEditing) {
             return (
@@ -201,6 +201,8 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                     onChange={readOnly ? undefined : (e) => setFormData({ ...formData, [field]: e.target.value })}
                     readOnly={readOnly}
                     placeholder={placeholder}
+                    min={min}
+                    max={max}
                     className={`p-2 border rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none ${readOnly ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-white border-slate-200 text-slate-700'
                         }`}
                 />
@@ -327,7 +329,13 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                                     <InputField label="Age" field="age" type="number" />
                                     <InputField label="Gender" field="gender" />
                                     <InputField label="Country" field="country" />
-                                    <InputField label="Diet Start" field="dietStartDate" type="date" />
+                                    <InputField
+                                        label="Diet Start"
+                                        field="dietStartDate"
+                                        type="date"
+                                        min={new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                        max={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                    />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 bg-slate-50 p-2 rounded-lg">
                                     <div className="flex gap-2 items-end">

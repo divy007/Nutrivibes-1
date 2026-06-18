@@ -4,7 +4,7 @@ import DietPlan from '@/models/DietPlan';
 import Client from '@/models/Client';
 import { format } from 'date-fns';
 import { verifyToken } from '@/lib/auth';
-import { normalizeDateUTC } from '@/lib/date-utils';
+import { normalizeDateUTC, reanchorDietPlan } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
     await dbConnect();
@@ -35,6 +35,8 @@ export async function GET(req: Request) {
         const url = new URL(req.url);
         const startDate = url.searchParams.get('startDate') || format(new Date(), 'yyyy-MM-dd');
         const targetDate = normalizeDateUTC(startDate);
+        const endDate = new Date(targetDate);
+        endDate.setDate(endDate.getDate() + 6);
 
         // 1. Fetch diet plan using the exact requested week start date
         let dietPlan = await DietPlan.findOne({
@@ -42,12 +44,11 @@ export async function GET(req: Request) {
             weekStartDate: targetDate
         });
 
-        // 2. Fallback: If the dietician changed the diet start date, the anchor day shifts.
-        // The requested week start date might exist inside an older plan's saved days.
+        // 2. Overlap match: Find any plan containing days within the requested week range
         if (!dietPlan) {
             dietPlan = await DietPlan.findOne({
                 clientId: client._id,
-                'days.date': targetDate
+                'days.date': { $gte: targetDate, $lte: endDate }
             });
         }
 
@@ -71,15 +72,18 @@ export async function GET(req: Request) {
             });
         }
 
+        // Dynamically re-anchor the plan days to align with the requested week starting date
+        const reanchoredPlan = reanchorDietPlan(dietPlan, targetDate);
+
         // Filter to only return PUBLISHED days
-        const filteredDays = dietPlan.days.map((day: any) => ({
-            ...day.toObject(),
+        const filteredDays = reanchoredPlan.days.map((day: any) => ({
+            ...day,
             meals: day.status === 'PUBLISHED' ? day.meals : [],
             status: day.status === 'PUBLISHED' ? 'PUBLISHED' : 'NO_DIET'
         }));
 
         const response = {
-            ...dietPlan.toObject(),
+            ...reanchoredPlan,
             days: filteredDays
         };
 
