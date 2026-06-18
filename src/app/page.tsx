@@ -6,6 +6,7 @@ import BMICalculator from '@/components/landing/BMICalculator';
 import FAQ from '@/components/landing/FAQ';
 import WhatsAppButton from '@/components/landing/WhatsAppButton';
 import LeadBot from '@/components/landing/LeadBot';
+import HomeHero from '@/components/home/HomeHero';
 
 export default function LandingPage() {
     return (
@@ -42,126 +43,7 @@ export default function LandingPage() {
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <section className="relative overflow-hidden pt-36 pb-20 lg:pt-40 lg:pb-32 bg-gradient-to-b from-white to-gray-50/50">
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 user-select-none pointer-events-none">
-                    <div className="w-[500px] h-[500px] bg-brand-sage/20 rounded-full blur-[100px] opacity-60 mix-blend-multiply" />
-                </div>
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 user-select-none pointer-events-none">
-                    <div className="w-[500px] h-[500px] bg-brand-forest/10 rounded-full blur-[100px] opacity-60 mix-blend-multiply" />
-                </div>
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                    <div className="lg:grid lg:grid-cols-12 lg:gap-20 items-center">
-                        <div className="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0">
-                            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-white border border-brand-sage/20 shadow-sm text-brand-forest text-sm font-bold mb-8 hover:shadow-md transition-shadow cursor-default w-fit mx-auto lg:mx-0">
-                                <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-forest opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-forest"></span>
-                                </span>
-                                Now Live on App Store & Play Store
-                            </div>
-                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-8 tracking-tight">
-                                Your Personal <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-forest to-brand-sage">Wellness Journey</span>
-                                <br /> Starts Here.
-                            </h1>
-                            <p className="text-lg sm:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
-                                Connect directly with Dt. Mansi Anajwala. Get personalized diet plans,
-                                track your progress, and achieve your health goals with DateWithDiet.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
-                                <a
-                                    href="https://play.google.com/store/apps/details?id=com.nutrivibes.mobile"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="transition-all transform hover:-translate-y-1 active:scale-95 flex-shrink-0"
-                                >
-                                    <Image
-                                        src="/google-play-badge-v2.svg"
-                                        alt="Get it on Google Play"
-                                        width={140}
-                                        height={42}
-                                        className="h-11 w-auto"
-                                        priority
-                                    />
-                                </a>
-                                <a
-                                    href="https://apps.apple.com/us/app/datewithdiet/id6759826984"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="transition-all transform hover:-translate-y-1 active:scale-95 flex-shrink-0"
-                                >
-                                    <Image
-                                        src="/app-store-badge-v2.svg"
-                                        alt="Download on the App Store"
-                                        width={140}
-                                        height={42}
-                                        className="h-11 w-auto"
-                                        priority
-                                    />
-                                </a>
-                                <Link
-                                    href="/login"
-                                    className="inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-gray-700 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 hover:bg-gray-50 transition-all active:scale-95 h-11"
-                                >
-                                    Staff Login
-                                    <ArrowRight className="w-4 h-4 ml-2" />
-                                </Link>
-                            </div>
-                            <div className="mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-80 pt-8 border-t border-gray-100">
-                                <div className="flex items-center gap-2 group">
-                                    <div className="p-2 rounded-lg bg-brand-sage/10 text-brand-forest group-hover:scale-110 transition-transform">
-                                        <Shield className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-600">Secure Data</span>
-                                </div>
-                                <div className="flex items-center gap-2 group">
-                                    <div className="p-2 rounded-lg bg-brand-sage/10 text-brand-forest group-hover:scale-110 transition-transform">
-                                        <Smartphone className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-600">Multi-Platform</span>
-                                </div>
-                                <div className="flex items-center gap-2 group">
-                                    <div className="p-2 rounded-lg bg-brand-sage/10 text-brand-forest group-hover:scale-110 transition-transform">
-                                        <Heart className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-600">Personal Care</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="lg:col-span-6 relative perspective-1000">
-                            <div className="relative mx-auto w-full max-w-[360px] aspect-[9/19] bg-gray-900 rounded-[3rem] border-8 border-gray-900 shadow-2xl shadow-brand-forest/20 overflow-hidden transform hover:scale-[1.02] transition-transform duration-500">
-                                {/* Status Bar Mock */}
-                                <div className="absolute top-0 left-0 right-0 h-8 bg-black z-20 flex justify-between px-6 items-center">
-                                    <div className="text-white text-[10px] font-medium">9:41</div>
-                                    <div className="flex gap-1.5">
-                                        <div className="w-3 h-3 bg-white/20 rounded-full"></div>
-                                        <div className="w-3 h-3 bg-white/20 rounded-full"></div>
-                                        <div className="w-3 h-3 bg-white/20 rounded-full"></div>
-                                    </div>
-                                </div>
-                                {/* App Screen Image */}
-                                <div className="absolute inset-0 bg-white">
-                                    <Image
-                                        src="/app-login-screen.png"
-                                        alt="DateWithDiet App Screen"
-                                        fill
-                                        className="object-cover"
-                                        priority
-                                    />
-                                </div>
-                                {/* Home Indicator */}
-                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full z-20 backdrop-blur-sm"></div>
-                            </div>
-                            {/* Decorative elements behind phone */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-radial from-brand-forest/10 to-transparent opacity-60 -z-10 blur-3xl"></div>
-                            <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-brand-sage/20 rounded-full blur-2xl animate-pulse"></div>
-                            <div className="absolute -top-12 -left-12 w-40 h-40 bg-brand-forest/10 rounded-full blur-2xl animate-pulse delay-700"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <HomeHero />
 
             {/* Success Metrics Bar */}
             <section className="bg-brand-forest py-12 relative overflow-hidden">
