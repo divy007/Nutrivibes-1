@@ -136,7 +136,7 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                                 </div>
 
                                 {/* Meal Slots */}
-                                <div className="flex flex-col gap-3"                                    {(() => {
+                                <div className="flex flex-col gap-3"> {(() => {
                                         // Determine slots to render: use dayPlan meals if available, otherwise fall back to default placeholders
                                         const meals = dayPlan?.meals?.slice().sort((a, b) => a.mealNumber - b.mealNumber) || [];
                                         const maxSlots = Math.max(meals.length, 6); // ensure at least default 6 slots
@@ -195,11 +195,9 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                                                         )}
                                                     </div>
                                                 </div>
-                                            );
-                                        });
-                                    })()}
-}
-                                </div>
+                                             );
+                                         });
+                                     })()}</div>
                             </div>
                         );
                     })}
