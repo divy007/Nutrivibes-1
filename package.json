@@ -25,9 +25,9 @@
     "lucide-react": "^0.555.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.0.2",
-    "next": "16.0.7",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "next": "^16.0.7",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "recharts": "^3.6.0",
     "swr": "^2.3.8",
     "uuid": "^13.0.0",
@@ -50,9 +50,6 @@
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "typescript": "^5",
-    "@playwright/test": "^1.45.0",
-    "@testing-library/react-native": "^12.2.0",
-    "jest-expo": "^53.0.0",
-    "expo-dev-client": "^5.0.0"
+    "@playwright/test": "^1.45.0"
   }
 }
