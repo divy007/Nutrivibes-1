@@ -1,6 +1,6 @@
 // e2e/setup/global-setup.ts
 import { FullConfig } from '@playwright/test';
-import { server } from '../../test/mocks/server';
+import { server } from '../../test/mocks/server.js';
 
 export default async function globalSetup(config: FullConfig) {
   // Start MSW server before any test runs

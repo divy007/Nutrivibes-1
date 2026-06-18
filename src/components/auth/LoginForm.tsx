@@ -120,6 +120,7 @@ export default function LoginForm() {
                     <div className="relative">
                         <input
                             type="email"
+                            id="email"
                             value={email}
                             onChange={(e) => handleInputChange(e, setEmail)}
                             onBlur={handleEmailBlur}
@@ -147,6 +148,7 @@ export default function LoginForm() {
                     <div className="relative">
                         <input
                             type={showPassword ? 'text' : 'password'}
+                            id="password"
                             value={password}
                             onChange={(e) => handleInputChange(e, setPassword)}
                             className="w-full px-4 py-2 text-brand-forest border border-brand-forest/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-forest focus:border-transparent transition-all pr-10 placeholder-brand-forest/50"
@@ -178,7 +180,7 @@ export default function LoginForm() {
                             Signing in...
                         </>
                     ) : (
-                        'Sign In'
+                        'Login'
                     )}
                 </button>
             </form>

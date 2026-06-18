@@ -1,7 +1,7 @@
-import { http, HttpResponse } from 'msw';
-import { seedPlan } from '../fixtures/seedPlan';
+const { http, HttpResponse } = require('msw');
+const { seedPlan } = require('../fixtures/seedPlan');
 
-export const handlers = [
+const handlers = [
   // Mock login – returns a static token and role based on email
   http.post('/api/auth/login', async ({ request }) => {
     const { email } = await request.json();
@@ -24,3 +24,5 @@ export const handlers = [
     return HttpResponse.json({ message: 'Plan resumed' }, { status: 200 });
   })
 ];
+
+module.exports = { handlers };

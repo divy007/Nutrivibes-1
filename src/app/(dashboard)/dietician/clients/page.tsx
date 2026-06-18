@@ -405,16 +405,25 @@ export default function ClientsPage() {
                                                 <span className="font-bold text-slate-700 text-sm group-hover:text-brand-forest transition-colors">
                                                     {client.name}
                                                 </span>
-                                                {client.phone && (
-                                                    <a
-                                                        href={`tel:${client.phone}`}
+                                                <div className="flex items-center gap-2">
+                                                    {client.phone && (
+                                                        <a
+                                                            href={`tel:${client.phone}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="p-1.5 bg-brand-sage/10 text-brand-sage rounded-full hover:bg-brand-sage hover:text-white transition-all shadow-sm"
+                                                            title="Call Client"
+                                                        >
+                                                            <Phone size={14} />
+                                                        </a>
+                                                    )}
+                                                    <Link
+                                                        href={`/dietician/clients/${client._id}`}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="p-1.5 bg-brand-sage/10 text-brand-sage rounded-full hover:bg-brand-sage hover:text-white transition-all shadow-sm"
-                                                        title="Call Client"
+                                                        className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all shadow-sm"
                                                     >
-                                                        <Phone size={14} />
-                                                    </a>
-                                                )}
+                                                        View
+                                                    </Link>
+                                                </div>
                                             </div>
                                             {client.referredBy && (
                                                 <div className="mt-1 flex items-center gap-1.5">
@@ -467,6 +476,7 @@ export default function ClientsPage() {
                                                     <button
                                                         onClick={(e) => toggleActions(e, client._id)}
                                                         className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                                                        data-testid="client-actions-trigger"
                                                     >
                                                         <MoreHorizontal size={18} />
                                                     </button>
