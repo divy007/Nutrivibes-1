@@ -7,8 +7,8 @@ const createJestConfig = nextJest({
 
 // Add any custom config to be passed to Jest
 const config = {
-  coverageProvider: 'v8',
-  testEnvironment: 'node', // Using node environment to test database models and backend routes
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ["@testing-library/jest-dom/extend-expect"],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
