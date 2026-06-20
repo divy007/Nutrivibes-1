@@ -3,11 +3,11 @@
 import useSWR from 'swr';
 import { api } from '@/lib/api-client';
 import { formatDistanceToNow } from 'date-fns';
-import { Activity, Droplet, Scale, Ruler, FileText, CalendarDays } from 'lucide-react';
+import { Activity, Droplet, Scale, Ruler, FileText, CalendarDays, Footprints } from 'lucide-react';
 
 interface ActivityLog {
     _id: string;
-    type: 'WEIGHT_LOG' | 'WATER_LOG' | 'MEASUREMENT_LOG' | 'SYMPTOM_LOG' | 'PERIOD_LOG';
+    type: 'WEIGHT_LOG' | 'WATER_LOG' | 'MEASUREMENT_LOG' | 'SYMPTOM_LOG' | 'PERIOD_LOG' | 'PROFILE_UPDATE' | 'STEPS_LOG';
     description: string;
     value?: string;
     timestamp: string;
@@ -37,6 +37,7 @@ export default function ActivityFeed() {
             case 'MEASUREMENT_LOG': return <Ruler size={14} className="text-indigo-500" />;
             case 'SYMPTOM_LOG': return <Activity size={14} className="text-rose-500" />;
             case 'PERIOD_LOG': return <CalendarDays size={14} className="text-pink-500" />;
+            case 'STEPS_LOG': return <Footprints size={14} className="text-emerald-500" />;
             default: return <FileText size={14} className="text-slate-400" />;
         }
     };

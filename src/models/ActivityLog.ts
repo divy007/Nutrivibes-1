@@ -15,7 +15,7 @@ const ActivityLogSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['WEIGHT_LOG', 'WATER_LOG', 'MEASUREMENT_LOG', 'SYMPTOM_LOG', 'PERIOD_LOG', 'PROFILE_UPDATE']
+        enum: ['WEIGHT_LOG', 'WATER_LOG', 'MEASUREMENT_LOG', 'SYMPTOM_LOG', 'PERIOD_LOG', 'PROFILE_UPDATE', 'STEPS_LOG']
     },
     description: {
         type: String,

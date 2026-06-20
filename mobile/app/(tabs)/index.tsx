@@ -17,6 +17,8 @@ import { toast } from 'sonner-native';
 
 import WeightTracker from '@/components/dashboard/WeightTracker';
 import WaterTracker from '@/components/dashboard/WaterTracker';
+import StepsTracker from '@/components/dashboard/StepsTracker';
+import LogStepsModal from '@/components/dashboard/LogStepsModal';
 import MealLogCard from '@/components/dashboard/MealLogCard';
 import LogWeightModal from '@/components/dashboard/LogWeightModal';
 import MeasurementTracker from '@/components/dashboard/MeasurementTracker';
@@ -39,6 +41,7 @@ export default function DashboardScreen() {
   const profile = data?.profile;
   const weightLogs = data?.weightLogs || [];
   const waterData = data?.waterData;
+  const stepData = data?.stepData;
   const mealLogs = data?.mealLogs || [];
   const measurementLogs = data?.measurementLogs || [];
   const cycleStatus = data?.cycleStatus;
@@ -59,6 +62,7 @@ export default function DashboardScreen() {
   const [showWelcome, setShowWelcome] = useState(false);
 
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+  const [isStepsModalOpen, setIsStepsModalOpen] = useState(false);
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
   const [isCycleSettingsOpen, setIsCycleSettingsOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
@@ -245,6 +249,23 @@ export default function DashboardScreen() {
   const handleSaveWeight = useCallback(async (weight: number, unit: 'kg' | 'lb', date: Date) => {
     await weightMutation.mutateAsync({ weight, unit, date });
   }, [weightMutation]);
+
+  const stepsMutation = useMutation({
+    mutationFn: async (vars: { steps: number, targetSteps?: number, date?: Date }) => {
+      return api.post('/api/clients/me/step-logs', vars);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Steps updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update steps');
+    }
+  });
+
+  const handleSaveSteps = useCallback(async (steps: number, targetSteps?: number, date?: Date) => {
+    await stepsMutation.mutateAsync({ steps, targetSteps, date });
+  }, [stepsMutation]);
 
   const measureMutation = useMutation({
     mutationFn: async (vars: { measurements: any, unit: string, date: Date }) => {
@@ -611,6 +632,18 @@ export default function DashboardScreen() {
             </View>
           </View>
 
+          <View style={styles.row}>
+            <View style={styles.col}>
+              {stepData && (
+                <StepsTracker
+                  steps={stepData.steps}
+                  targetSteps={stepData.targetSteps}
+                  onPressLog={() => setIsStepsModalOpen(true)}
+                />
+              )}
+            </View>
+          </View>
+
           <MeasurementTracker
             logs={measurementLogs}
             onUpdateClick={() => setIsMeasurementModalOpen(true)}
@@ -632,6 +665,14 @@ export default function DashboardScreen() {
         onClose={() => setIsWeightModalOpen(false)}
         onSave={handleSaveWeight}
         initialWeight={currentWeight}
+      />
+
+      <LogStepsModal
+        isOpen={isStepsModalOpen}
+        onClose={() => setIsStepsModalOpen(false)}
+        onSave={handleSaveSteps}
+        initialSteps={stepData?.steps || 0}
+        initialTarget={stepData?.targetSteps || 10000}
       />
 
       <LogMeasurementModal

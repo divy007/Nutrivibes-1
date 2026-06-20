@@ -8,6 +8,7 @@ import MeasurementLog from '@/models/MeasurementLog';
 import DietPlan from '@/models/DietPlan';
 import PeriodLog from '@/models/PeriodLog';
 import HealthAssessment from '@/models/HealthAssessment';
+import StepLog from '@/models/StepLog';
 import { getAuthPayload } from '@/lib/auth';
 import { startOfDay, startOfWeek } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
         const today = normalizeDateUTC(clientDate || undefined);
         const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
-        const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog, assessment] = await Promise.all([
+        const [weightLogs, waterIntake, mealLogs, measurementLogs, dietPlan, lastPeriodLog, assessment, stepLog] = await Promise.all([
             WeightLog.find({ clientId: client._id }).sort({ date: -1, createdAt: -1 }).limit(10).lean().catch(e => { console.error('WeightLog fetch failed:', e); return []; }),
             WaterIntake.findOne({ clientId: client._id, date: today }).lean().catch(e => { console.error('WaterIntake fetch failed:', e); return null; }),
             MealLog.find({ clientId: client._id, date: today }).sort({ createdAt: -1 }).limit(5).lean().catch(e => { console.error('MealLog fetch failed:', e); return []; }),
@@ -47,7 +48,8 @@ export async function GET(req: Request) {
                 ]
             }).catch(e => { console.error('DietPlan fetch failed:', e); return null; }),
             PeriodLog.findOne({ clientId: client._id }).sort({ startDate: -1 }).lean().catch(e => { console.error('PeriodLog fetch failed:', e); return null; }),
-            HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean().catch(e => { console.error('HealthAssessment fetch failed:', e); return null; })
+            HealthAssessment.findOne({ clientId: client._id }).sort({ date: -1 }).lean().catch(e => { console.error('HealthAssessment fetch failed:', e); return null; }),
+            StepLog.findOne({ clientId: client._id, date: today }).lean().catch(e => { console.error('StepLog fetch failed:', e); return null; })
         ]);
 
         // Process diet plan to only show PUBLISHED items
@@ -64,7 +66,6 @@ export async function GET(req: Request) {
             };
         }
 
-        // Ensure water intake exists for today
         // Ensure water intake exists for today
         let todayWater = waterIntake;
         if (!todayWater) {
@@ -86,6 +87,25 @@ export async function GET(req: Request) {
             }
         }
 
+        // Ensure steps log exists for today
+        let todaySteps = stepLog;
+        if (!todaySteps) {
+            try {
+                todaySteps = await StepLog.create({
+                    clientId: client._id,
+                    date: today,
+                    steps: 0,
+                    targetSteps: 10000
+                });
+            } catch (err: any) {
+                if (err.code === 11000) {
+                    todaySteps = await StepLog.findOne({ clientId: client._id, date: today }).lean();
+                } else {
+                    console.error('Failed to create step log record:', err);
+                }
+            }
+        }
+
         // Calculate cycle status if client is female
         let cycleStatus = null;
         if (client.gender === 'female' && lastPeriodLog) {
@@ -102,6 +122,7 @@ export async function GET(req: Request) {
             profile: client,
             weightLogs,
             waterData: todayWater,
+            stepData: todaySteps,
             mealLogs,
             measurementLogs,
             dietPlan: processedDietPlan,

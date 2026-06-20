@@ -7,7 +7,7 @@ import Client from '@/models/Client';
  */
 export async function logActivity(
     clientId: string,
-    type: 'WEIGHT_LOG' | 'WATER_LOG' | 'MEASUREMENT_LOG' | 'SYMPTOM_LOG' | 'PERIOD_LOG' | 'PROFILE_UPDATE',
+    type: 'WEIGHT_LOG' | 'WATER_LOG' | 'MEASUREMENT_LOG' | 'SYMPTOM_LOG' | 'PERIOD_LOG' | 'PROFILE_UPDATE' | 'STEPS_LOG',
     description: string,
     value?: string
 ) {
