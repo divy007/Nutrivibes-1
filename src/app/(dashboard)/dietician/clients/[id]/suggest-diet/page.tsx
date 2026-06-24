@@ -162,20 +162,6 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedDate = format(startDate, 'yyyy-MM-dd');
             let data = await api.get<any>(`/api/clients/${clientId}/diet-plan?startDate=${formattedDate}`);
 
-            // Fallback: if no plan found for the anchor-derived week start,
-            // also try the Monday-based week start for the same period.
-            // This handles plans saved before dietStartDate was set (when Monday was the default).
-            if (!data?.days) {
-                const mondayStart = startOfWeek(startDate, { weekStartsOn: 1 });
-                const mondayFormatted = format(mondayStart, 'yyyy-MM-dd');
-                if (mondayFormatted !== formattedDate) {
-                    const fallbackData = await api.get<any>(`/api/clients/${clientId}/diet-plan?startDate=${mondayFormatted}`);
-                    if (fallbackData?.days) {
-                        data = fallbackData;
-                    }
-                }
-            }
-
             if (data && data.days) {
                 // Determine the base structure from state/ref
                 let currentTimings = [...mealTimingsRef.current];
