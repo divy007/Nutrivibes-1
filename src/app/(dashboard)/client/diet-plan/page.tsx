@@ -34,11 +34,43 @@ export default function ClientDietPlanPage() {
 
     // Initialize view to the current week
     useEffect(() => {
-        const initializeView = () => {
-            // Point to Monday of current week by default
-            const today = new Date();
-            setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 1 }));
-            setIsInitialLoad(false);
+        const initializeView = async () => {
+            try {
+                // Fetch the client profile to see if they have an anchored diet start date
+                const profileData = await api.get<any>('/api/clients/me');
+                let dietStart = null;
+                if (profileData && profileData.dietStartDate) {
+                    dietStart = parseToLocalDate(profileData.dietStartDate);
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (dietStart) {
+                    if (dietStart <= today) {
+                        // Past or current diet: navigate to the week containing today
+                        // anchored on the same day-of-week as dietStartDate
+                        const startDayIndex = dietStart.getDay();
+                        const currentDayIndex = today.getDay();
+                        const diff = (currentDayIndex - startDayIndex + 7) % 7;
+                        const startOfCurrentWeek = new Date(today);
+                        startOfCurrentWeek.setDate(today.getDate() - diff);
+                        setCurrentWeekStart(startOfCurrentWeek);
+                    } else {
+                        // Future diet: jump to diet start date
+                        setCurrentWeekStart(dietStart);
+                    }
+                } else {
+                    // No diet start date — use standard Monday-based week
+                    setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 1 }));
+                }
+            } catch (error) {
+                console.error('Failed to load profile for diet week anchoring, falling back to Monday:', error);
+                const today = new Date();
+                setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 1 }));
+            } finally {
+                setIsInitialLoad(false);
+            }
         };
 
         if (user) {

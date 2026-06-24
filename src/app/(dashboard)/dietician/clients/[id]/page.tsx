@@ -9,6 +9,8 @@ import { useClientData } from '@/context/ClientDataContext';
 import { SymptomHistory } from '@/components/dietician/client/SymptomHistory';
 import { PlanActionModal } from '@/components/dietician/clients/PlanActionModal';
 import { calculateCycleStatus, CycleStatus } from '@/lib/cycle-utils';
+import { parseToLocalDate } from '@/lib/date-utils';
+import { format } from 'date-fns';
 
 export default function ClientSummaryPage() {
     const { clientInfo: client, loading, refreshClient } = useClientData();
@@ -184,7 +186,7 @@ export default function ClientSummaryPage() {
                                     }`}>{client.status}</span>
                                     {client.status === 'PAUSED' && client.pausedUntil && (
                                         <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 uppercase tracking-widest animate-pulse">
-                                            Paused Until: {new Date(client.pausedUntil).toLocaleDateString()}
+                                            Paused Until: {parseToLocalDate(client.pausedUntil).toLocaleDateString()}
                                         </span>
                                     )}
                                 </div>
@@ -193,7 +195,7 @@ export default function ClientSummaryPage() {
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"> • {client.age} Years Old</span>
                                 )}
                                 {client.dob && (
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest block mt-0.5">DOB: {new Date(client.dob).toLocaleDateString()}</span>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest block mt-0.5">DOB: {parseToLocalDate(client.dob).toLocaleDateString()}</span>
                                 )}
                             </div>
                         </div>
@@ -441,7 +443,7 @@ export default function ClientSummaryPage() {
                                     </span>
                                     <span>•</span>
                                     {(() => {
-                                        const endDate = new Date(client.activeSubscription.endDate);
+                                        const endDate = parseToLocalDate(client.activeSubscription.endDate);
                                         const isPending = endDate.getFullYear() === 2099; // Placeholder date
                                         return isPending ? (
                                             <span className="text-amber-600 font-medium italic">Pending Diet Start Date</span>
@@ -467,8 +469,8 @@ export default function ClientSummaryPage() {
                                     return (
                                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                                             {(() => {
-                                                const start = new Date(client.activeSubscription.startDate).getTime();
-                                                const end = new Date(client.activeSubscription.endDate).getTime();
+                                                const start = parseToLocalDate(client.activeSubscription.startDate).getTime();
+                                                const end = parseToLocalDate(client.activeSubscription.endDate).getTime();
                                                 const now = new Date().getTime();
                                                 const total = end - start;
                                                 const progress = total > 0 ? Math.min(100, Math.max(0, ((now - start) / total) * 100)) : 0;
@@ -503,7 +505,7 @@ export default function ClientSummaryPage() {
                                     onClick={() => {
                                         setDietStartDateInput(
                                             client.dietStartDate
-                                                ? new Date(client.dietStartDate).toISOString().split('T')[0]
+                                                ? format(parseToLocalDate(client.dietStartDate), 'yyyy-MM-dd')
                                                 : ''
                                         );
                                         setShowDietStartEdit(true);
@@ -553,12 +555,13 @@ export default function ClientSummaryPage() {
                                         </div>
                                         <div>
                                             <div className="text-lg font-bold text-slate-800">
-                                                {new Date(client.dietStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                {parseToLocalDate(client.dietStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </div>
                                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                                 {(() => {
-                                                    const start = new Date(client.dietStartDate!);
+                                                    const start = parseToLocalDate(client.dietStartDate!);
                                                     const today = new Date();
+                                                    today.setHours(0, 0, 0, 0);
                                                     const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
                                                     if (diffDays < 0) return `Starts in ${Math.abs(diffDays)} days`;
                                                     if (diffDays === 0) return 'Starts today';

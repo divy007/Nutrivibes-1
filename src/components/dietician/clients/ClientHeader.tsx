@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ClientInfo } from '@/types';
+import { parseToLocalDate } from '@/lib/date-utils';
 import {
     Download,
     ChevronDown,
@@ -121,7 +122,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                                 </span>
                                 {clientInfo.status === 'PAUSED' && clientInfo.pausedUntil && (
                                     <span className="text-[8px] font-bold text-amber-500 mt-0.5">
-                                        Until {new Date(clientInfo.pausedUntil).toLocaleDateString()}
+                                        Until {parseToLocalDate(clientInfo.pausedUntil).toLocaleDateString()}
                                     </span>
                                 )}
                             </div>

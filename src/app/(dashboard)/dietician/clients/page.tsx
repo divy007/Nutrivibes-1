@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api-client';
 import { Search, Loader2, MoreHorizontal, Filter, ChevronDown, Calendar, PauseCircle, Trash2, PlayCircle, Phone, UserPlus } from 'lucide-react';
 import { ClientInfo } from '@/types';
+import { parseToLocalDate } from '@/lib/date-utils';
 
 const PauseModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: () => void, onConfirm: (date: string) => void }) => {
     const [date, setDate] = useState('');
@@ -448,7 +449,7 @@ export default function ClientsPage() {
                                                         </span>
                                                         {client.status === 'PAUSED' && client.pausedUntil && (
                                                             <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100/50 uppercase tracking-tighter shadow-sm animate-pulse">
-                                                                Until {new Date(client.pausedUntil).toLocaleDateString()}
+                                                                Until {parseToLocalDate(client.pausedUntil).toLocaleDateString()}
                                                             </span>
                                                         )}
                                                         <span className="text-[8px] font-black text-slate-400 tracking-tighter uppercase">

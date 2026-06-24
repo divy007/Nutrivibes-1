@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { Loader2, X, Check, AlertTriangle, ArrowRight, Calendar } from 'lucide-react';
 import { ClientInfo } from '@/types';
+import { parseToLocalDate } from '@/lib/date-utils';
 
 interface Plan {
     _id: string;
@@ -28,8 +29,10 @@ export const PlanActionModal = ({ client, onClose, onSuccess }: PlanActionModalP
     const activeSub = client.activeSubscription;
     const currentPlan = typeof activeSub?.planId === 'object' ? activeSub.planId : null;
 
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
     // Determine if diet has started
-    const dietStarted = client.dietStartDate && new Date(client.dietStartDate) <= new Date();
+    const dietStarted = client.dietStartDate && parseToLocalDate(client.dietStartDate) <= todayDate;
     const hasAssignedPlan = activeSub && activeSub.status === 'ASSIGNED';
     const hasActivePlan = activeSub && activeSub.status === 'ACTIVE';
 
@@ -66,7 +69,7 @@ export const PlanActionModal = ({ client, onClose, onSuccess }: PlanActionModalP
         if (!activeSub || !currentPlan || !dietStarted) return false;
 
         // Check 30 days window
-        const startDate = new Date(activeSub.startDate);
+        const startDate = parseToLocalDate(activeSub.startDate);
         const today = new Date();
         const diffDays = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -78,7 +81,7 @@ export const PlanActionModal = ({ client, onClose, onSuccess }: PlanActionModalP
         if (!activeSub) return true; // Can renew if no subscription
 
         // Check if near expiry (within 7 days)
-        const endDate = new Date(activeSub.endDate);
+        const endDate = parseToLocalDate(activeSub.endDate);
         const today = new Date();
         const daysUntilExpiry = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -185,7 +188,7 @@ export const PlanActionModal = ({ client, onClose, onSuccess }: PlanActionModalP
                             {client.dietStartDate ? (
                                 <div className={`text-xs mt-1 ${activeSub.status === 'ASSIGNED' ? 'text-blue-600/80' : 'text-emerald-600/80'
                                     }`}>
-                                    {activeSub.status === 'ASSIGNED' ? 'Starts' : 'Ends'} on {new Date(activeSub.status === 'ASSIGNED' ? activeSub.startDate : activeSub.endDate).toLocaleDateString()}
+                                    {activeSub.status === 'ASSIGNED' ? 'Starts' : 'Ends'} on {parseToLocalDate(activeSub.status === 'ASSIGNED' ? activeSub.startDate : activeSub.endDate).toLocaleDateString()}
                                 </div>
                             ) : (
                                 <div className="text-xs mt-1 text-amber-600/80 italic">
@@ -285,7 +288,7 @@ export const PlanActionModal = ({ client, onClose, onSuccess }: PlanActionModalP
                                     </div>
                                     {action === 'ASSIGN' && (
                                         <div className="text-[10px] text-slate-400 italic mt-2 border-t border-slate-200 pt-2">
-                                            * Plan will start on {client.dietStartDate ? new Date(client.dietStartDate).toLocaleDateString() : new Date().toLocaleDateString() + ' (today)'}
+                                            * Plan will start on {client.dietStartDate ? parseToLocalDate(client.dietStartDate).toLocaleDateString() : new Date().toLocaleDateString() + ' (today)'}
                                         </div>
                                     )}
                                     {action === 'UPGRADE' && (

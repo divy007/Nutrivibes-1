@@ -12,6 +12,8 @@ import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, ChevronsLeft, Chev
 import { useIsFocused } from '@react-navigation/native';
 import BookAppointmentModal from '@/components/dashboard/BookAppointmentModal';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { parseToLocalDate } from '@/lib/date-utils';
+
 
 const MEAL_NAMES_BY_NUMBER: Record<number, string> = {
   1: 'Early Morning',
@@ -51,10 +53,10 @@ export default function DietPlanScreen() {
     const colorScheme = useColorScheme();
     const theme = (Colors as any)[colorScheme ?? 'light'];
 
-    const getLocalDateFromStr = (dateStr: string) => {
-        const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-        return new Date(y, m - 1, d);
+    const getLocalDateFromStr = (dateStr: any) => {
+        return parseToLocalDate(dateStr);
     };
+
 
     const weekStart = React.useMemo(() => {
         if (profile?.dietStartDate) {
@@ -106,7 +108,7 @@ export default function DietPlanScreen() {
                 setWeekPlan({
                     weekStartDate: weekStart,
                     days: Array.from({ length: 7 }).map((_, i) => ({
-                        date: addDays(weekStart, i),
+                        date: format(addDays(weekStart, i), 'yyyy-MM-dd'),
                         meals: [],
                         status: 'NO_DIET'
                     }))
@@ -117,7 +119,7 @@ export default function DietPlanScreen() {
             setWeekPlan({
                 weekStartDate: weekStart,
                 days: Array.from({ length: 7 }).map((_, i) => ({
-                    date: addDays(weekStart, i),
+                    date: format(addDays(weekStart, i), 'yyyy-MM-dd'),
                     meals: [],
                     status: 'NO_DIET'
                 }))
@@ -136,7 +138,7 @@ export default function DietPlanScreen() {
         }
     }, [weekStart]);
 
-    const dayPlan = weekPlan?.days?.find((d: any) => isSameDay(new Date(d.date), selectedDate));
+    const dayPlan = weekPlan?.days?.find((d: any) => isSameDay(getLocalDateFromStr(d.date), selectedDate));
     const isPublished = dayPlan?.status === 'PUBLISHED';
     const hasAnyPublishedMeals = isPublished && dayPlan?.meals?.some((meal: any) => meal.foodItems?.length > 0);
 
