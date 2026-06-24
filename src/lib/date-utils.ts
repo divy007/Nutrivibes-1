@@ -56,13 +56,33 @@ export function reanchorDietPlan(dietPlan: any, targetDate: Date): any {
     const targetDateStr = targetDate.toISOString().split('T')[0];
     const planDateStr = new Date(dietPlan.weekStartDate).toISOString().split('T')[0];
 
+    const daysArray = Array.isArray(dietPlan.days) ? dietPlan.days : [];
+    const firstDay = daysArray[0];
+    const firstDayDateStr = firstDay && firstDay.date ? new Date(firstDay.date).toISOString().split('T')[0] : null;
+
     if (planDateStr === targetDateStr) {
+        // If the plan is for the requested week start, but the days array is misaligned (e.g. due to legacy timezone bugs),
+        // we heal the day dates in place to align with the expected indices.
+        if (firstDayDateStr !== targetDateStr && daysArray.length === 7) {
+            const plainPlan = typeof dietPlan.toObject === 'function' ? dietPlan.toObject() : dietPlan;
+            const healedDays = plainPlan.days.map((day: any, i: number) => {
+                const expectedDate = new Date(targetDate);
+                expectedDate.setDate(expectedDate.getDate() + i);
+                return {
+                    ...day,
+                    date: expectedDate
+                };
+            });
+            return {
+                ...plainPlan,
+                days: healedDays
+            };
+        }
         return dietPlan;
     }
 
     const newDays = [];
     const dayMap = new Map();
-    const daysArray = Array.isArray(dietPlan.days) ? dietPlan.days : [];
 
     // Map existing days by their YYYY-MM-DD date string
     for (const day of daysArray) {

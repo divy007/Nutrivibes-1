@@ -94,6 +94,36 @@ describe('date-utils', () => {
             expect(result.days[6].status).toBe('NO_DIET');
             expect(result.days[6].meals.length).toBe(0);
         });
+
+        it('should heal misaligned day dates if planStartDate matches targetDate but days are shifted', () => {
+            const misalignedPlan = {
+                weekStartDate: new Date('2026-06-15T00:00:00.000Z'),
+                days: [
+                    {
+                        date: new Date('2026-06-14T00:00:00.000Z'), // Shifted back by 1 day
+                        status: 'PUBLISHED',
+                        meals: [{ mealNumber: 1, time: '08:00', foodItems: [{ name: 'Apple' }] }]
+                    },
+                    {
+                        date: new Date('2026-06-15T00:00:00.000Z'),
+                        status: 'PUBLISHED',
+                        meals: []
+                    },
+                    { date: new Date('2026-06-16T00:00:00.000Z'), meals: [] },
+                    { date: new Date('2026-06-17T00:00:00.000Z'), meals: [] },
+                    { date: new Date('2026-06-18T00:00:00.000Z'), meals: [] },
+                    { date: new Date('2026-06-19T00:00:00.000Z'), meals: [] },
+                    { date: new Date('2026-06-20T00:00:00.000Z'), meals: [] }
+                ]
+            };
+            const targetDate = new Date('2026-06-15T00:00:00.000Z');
+            const result = reanchorDietPlan(misalignedPlan, targetDate);
+
+            expect(result.days[0].date.toISOString().split('T')[0]).toBe('2026-06-15');
+            expect(result.days[1].date.toISOString().split('T')[0]).toBe('2026-06-16');
+            expect(result.days[6].date.toISOString().split('T')[0]).toBe('2026-06-21');
+            expect(result.days[0].meals[0].foodItems[0].name).toBe('Apple');
+        });
     });
 
     describe('parseToLocalDate', () => {
