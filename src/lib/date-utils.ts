@@ -101,3 +101,31 @@ export function reanchorDietPlan(dietPlan: any, targetDate: Date): any {
         days: newDays
     };
 }
+
+/**
+ * Parses a date input (which could be an ISO string, a date-only string, or a Date object)
+ * into a local Date object at 00:00:00 in the browser/runtime's local timezone.
+ * This prevents timezone offsets from shifting the date by a day.
+ */
+export function parseToLocalDate(dateInput?: string | Date | null): Date {
+    if (!dateInput) return new Date();
+
+    if (dateInput instanceof Date) {
+        return new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
+    }
+
+    // It's a string. Split by T to isolate the date portion, then split by -
+    const datePart = dateInput.split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // 0-based month
+        const day = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+    }
+
+    // Fallback
+    const parsed = new Date(dateInput);
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+

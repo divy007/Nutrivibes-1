@@ -6,6 +6,7 @@ import { api, getAuthToken } from '@/lib/api-client';
 import { ClientDietCalendar } from '@/components/client/ClientDietCalendar';
 import { format, addWeeks, subWeeks, startOfWeek } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { parseToLocalDate } from '@/lib/date-utils';
 
 interface MealSlot {
     time: string;
@@ -66,10 +67,10 @@ export default function ClientDietPlanPage() {
 
             if (data && data.weekStartDate) {
                 setWeekPlan({
-                    weekStartDate: new Date(data.weekStartDate),
+                    weekStartDate: parseToLocalDate(data.weekStartDate),
                     days: data.days.map((day: any) => ({
                         ...day,
-                        date: new Date(day.date)
+                        date: parseToLocalDate(day.date)
                     }))
                 });
             } else {

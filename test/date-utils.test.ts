@@ -1,4 +1,4 @@
-import { normalizeDateUTC, getLocalDateString, reanchorDietPlan } from '@/lib/date-utils';
+import { normalizeDateUTC, getLocalDateString, reanchorDietPlan, parseToLocalDate } from '@/lib/date-utils';
 
 describe('date-utils', () => {
     describe('normalizeDateUTC', () => {
@@ -93,6 +93,41 @@ describe('date-utils', () => {
             expect(result.days[6].date.toISOString().split('T')[0]).toBe('2026-06-22');
             expect(result.days[6].status).toBe('NO_DIET');
             expect(result.days[6].meals.length).toBe(0);
+        });
+    });
+
+    describe('parseToLocalDate', () => {
+        it('should parse ISO date-time string into a local Date object corresponding to the date part', () => {
+            const dateStr = '2026-06-25T00:00:00.000Z';
+            const parsed = parseToLocalDate(dateStr);
+            expect(parsed.getFullYear()).toBe(2026);
+            expect(parsed.getMonth()).toBe(5); // June is index 5
+            expect(parsed.getDate()).toBe(25);
+            expect(parsed.getHours()).toBe(0);
+            expect(parsed.getMinutes()).toBe(0);
+        });
+
+        it('should parse YYYY-MM-DD string into a local Date object', () => {
+            const dateStr = '2026-06-25';
+            const parsed = parseToLocalDate(dateStr);
+            expect(parsed.getFullYear()).toBe(2026);
+            expect(parsed.getMonth()).toBe(5);
+            expect(parsed.getDate()).toBe(25);
+        });
+
+        it('should parse Date object into a local Date object with hours/minutes set to 0', () => {
+            const dateObj = new Date(2026, 5, 25, 14, 30, 0);
+            const parsed = parseToLocalDate(dateObj);
+            expect(parsed.getFullYear()).toBe(2026);
+            expect(parsed.getMonth()).toBe(5);
+            expect(parsed.getDate()).toBe(25);
+            expect(parsed.getHours()).toBe(0);
+            expect(parsed.getMinutes()).toBe(0);
+        });
+
+        it('should handle null or undefined input by returning a Date object for today at 00:00:00', () => {
+            const parsed = parseToLocalDate(null);
+            expect(parsed).toBeInstanceOf(Date);
         });
     });
 });

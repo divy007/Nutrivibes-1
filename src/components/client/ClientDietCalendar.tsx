@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { FoodItem } from '@/types';
 import { format, isSameDay, startOfDay, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { parseToLocalDate } from '@/lib/date-utils';
+
 // Meal names by number for display
 const MEAL_NAMES_BY_NUMBER: Record<number, string> = {
   1: 'Early Morning',
@@ -54,10 +56,10 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
     // Generate the 7 days of the current view based on weekPlan.weekStartDate
     const weekDays = useMemo(() => {
         if (!weekPlan) {
-            const start = startOfDay(new Date());
+            const start = parseToLocalDate(new Date());
             return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
         }
-        const start = startOfDay(new Date(weekPlan.weekStartDate));
+        const start = parseToLocalDate(weekPlan.weekStartDate);
         return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
     }, [weekPlan]);
 
@@ -111,7 +113,7 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                 <div className="grid grid-cols-7 gap-4 min-w-[1200px]">
                     {/* Day Columns */}
                     {weekDays.map((date) => {
-                        const dayPlan = weekPlan?.days.find(d => isSameDay(new Date(d.date), date));
+                        const dayPlan = weekPlan?.days.find(d => isSameDay(parseToLocalDate(d.date), date));
                         const isToday = isSameDay(new Date(), date);
                         const isDietPublished = dayPlan?.status === 'PUBLISHED';
 

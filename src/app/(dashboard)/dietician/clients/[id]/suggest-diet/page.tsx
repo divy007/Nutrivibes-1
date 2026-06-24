@@ -33,6 +33,7 @@ import { UpdateMealTimingsModal } from '@/components/dietician/plan/UpdateMealTi
 import { WeekPlan, ClientInfo, FoodItem, DayPlan, MealSlot, MealTiming } from '@/types';
 import { exportToPDF, exportToExcel } from '@/utils/export';
 import { api } from '@/lib/api-client';
+import { parseToLocalDate } from '@/lib/date-utils';
 import { CounsellingDrawer } from '@/components/dietician/client/CounsellingDrawer';
 import { FollowUpNotesSection } from '@/components/dietician/client/FollowUpNotesSection';
 import { FollowUpHistoryDrawer } from '@/components/dietician/client/FollowUpHistoryDrawer';
@@ -119,6 +120,13 @@ const ClinicalAlertBanner = ({ clientInfo }: { clientInfo: ClientInfo | null }) 
     );
 };
 
+const serializeDays = (days: DayPlan[]) => {
+    return days.map(day => ({
+        ...day,
+        date: format(day.date, 'yyyy-MM-dd')
+    }));
+};
+
 export default function SuggestDietPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
 
@@ -198,8 +206,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 setWeekPlan({
                     id: data._id,
                     clientInfo: clientInfo!,
-                    startDate: new Date(data.weekStartDate),
-                    endDate: addDays(new Date(data.weekStartDate), 6),
+                    startDate: parseToLocalDate(data.weekStartDate),
+                    endDate: addDays(parseToLocalDate(data.weekStartDate), 6),
                     days: data.days.map((d: any) => {
                         const mergedMeals = currentTimings.map((timing, idx) => {
                             const existingMeal = d.meals[idx];
@@ -215,7 +223,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
                         return {
                             ...d,
-                            date: new Date(d.date),
+                            date: parseToLocalDate(d.date),
                             meals: mergedMeals,
                             status: d.status || (d.meals.some((m: any) => m.foodItems.length > 0) ? 'NOT_SAVED' : 'NO_DIET')
                         };
@@ -266,10 +274,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 if (data.dietStartDate) {
                     // Weeks are anchored to the dietStartDate's day-of-week
                     // so the same day-of-week always starts a new "diet week"
-                    const dateStr = typeof data.dietStartDate === 'string'
-                        ? data.dietStartDate.split('T')[0]
-                        : new Date(data.dietStartDate).toISOString().split('T')[0];
-                    const dietStart = new Date(dateStr);
+                    const dietStart = parseToLocalDate(data.dietStartDate);
 
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -500,7 +505,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: days
+                days: serializeDays(days)
             });
         } catch (error) {
             console.error('Auto-save failed:', error);
@@ -692,7 +697,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
                 await api.post(`/api/clients/${id}/diet-plan`, {
                     weekStartDate: formattedStartDate,
-                    days: newPlan.days
+                    days: serializeDays(newPlan.days)
                 });
             } catch (error) {
                 alert('Pasted plan successfully but failed to auto-save. Please use "Save as Draft"');
@@ -778,7 +783,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: newDays
+                days: serializeDays(newDays)
             });
             setWeekPlan(prev => prev ? { ...prev, days: newDays } : null);
             setActiveDayMenu(null);
@@ -798,7 +803,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: newDays
+                days: serializeDays(newDays)
             });
             setWeekPlan(prev => prev ? { ...prev, days: newDays } : null);
             setActiveDayMenu(null);
@@ -827,7 +832,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: daysToSave
+                days: serializeDays(daysToSave)
             });
             // Update local state with new statuses
             setWeekPlan(prev => prev ? { ...prev, days: daysToSave } : null);
@@ -870,7 +875,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: newDays
+                days: serializeDays(newDays)
             });
             setWeekPlan(prev => prev ? { ...prev, days: newDays } : null);
             alert('All diets with food have been published and are now visible to the client.');
@@ -906,7 +911,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
             const formattedStartDate = format(targetDateForSave, 'yyyy-MM-dd');
             await api.post(`/api/clients/${id}/diet-plan`, {
                 weekStartDate: formattedStartDate,
-                days: newDays
+                days: serializeDays(newDays)
             });
             alert('Weekly diet plan cleared successfully');
         } catch (error) {
