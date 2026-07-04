@@ -149,6 +149,7 @@ export async function GET(req: Request) {
 
                 if (dietStatus !== 'green') {
                     dietPendingList.push({
+                        id: client._id,
                         name: client.name,
                         color: dietStatus === 'black' ? 'bg-black' : dietStatus === 'red' ? 'bg-rose-500' : 'bg-amber-500',
                         originalColor: dietStatus
@@ -172,6 +173,7 @@ export async function GET(req: Request) {
             expiredClients: totalExpired,
             leadsCount: leadsCount,
             todayFollowUps: activeFollowUps.map((fu: any) => ({
+                id: fu.clientId?._id,
                 name: fu.clientId?.name || 'Unknown Client',
                 color: fu.clientId?.dietStatus ? (
                     fu.clientId.dietStatus === 'green' ? 'bg-emerald-500' :

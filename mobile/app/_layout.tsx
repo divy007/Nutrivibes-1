@@ -68,6 +68,7 @@ function RootLayoutNav() {
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="signup" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(dietician)" options={{ headerShown: false }} />
               <Stack.Screen name="complete-profile" options={{ headerShown: false }} />
               <Stack.Screen name="audit-prompt" options={{ headerShown: false }} />
 

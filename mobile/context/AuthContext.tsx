@@ -52,9 +52,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
             if (token) {
                 setMobileToken(token);
-                const profile: any = await api.get('/api/clients/me');
-
-                setUser(profile);
+                const authUser: any = await api.get('/api/auth/me');
+                
+                if (authUser.role === 'DIETICIAN') {
+                    setUser(authUser);
+                } else {
+                    const profile: any = await api.get('/api/clients/me');
+                    setUser(profile);
+                }
             }
         } catch (error) {
             console.error('SessionProvider: Auth check failed:', error);
@@ -69,17 +74,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (loading) return;
 
-        const inAuthGroup = segments[0] === '(tabs)';
+        const inClientGroup = (segments[0] as string) === '(tabs)';
+        const inDieticianGroup = (segments[0] as string) === '(dietician)';
         const inLoginGroup = segments[0] === 'login';
         const inCompleteProfile = segments[0] === 'complete-profile';
 
-        if (!user && inAuthGroup) {
+        if (!user && (inClientGroup || inDieticianGroup)) {
             router.replace('/login');
-        } else if (user && (inLoginGroup || (inAuthGroup && !user.isProfileComplete))) {
-            if (!user.isProfileComplete && !inCompleteProfile) {
-                router.replace('/complete-profile' as any);
-            } else if (user.isProfileComplete && (inLoginGroup || inCompleteProfile)) {
-                router.replace('/(tabs)' as any);
+        } else if (user) {
+            if (user.role === 'DIETICIAN') {
+                if (inLoginGroup || !inDieticianGroup) {
+                    router.replace('/(dietician)' as any);
+                }
+            } else {
+                if (!user.isProfileComplete && !inCompleteProfile) {
+                    router.replace('/complete-profile' as any);
+                } else if (user.isProfileComplete && (inLoginGroup || inCompleteProfile || inDieticianGroup)) {
+                    router.replace('/(tabs)' as any);
+                }
             }
         }
     }, [user, loading, segments]);
@@ -88,8 +100,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
         await setMobileToken(token);
         try {
-            const profile: any = await api.get('/api/clients/me');
-            setUser(profile);
+            const authUser: any = await api.get('/api/auth/me');
+            if (authUser.role === 'DIETICIAN') {
+                setUser(authUser);
+            } else {
+                const profile: any = await api.get('/api/clients/me');
+                setUser(profile);
+            }
             // Navigation handled by Auth Guard effect
         } catch (err) {
             console.error('Login failed:', err);
@@ -105,8 +122,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const refreshUser = async () => {
         try {
-            const profile: any = await api.get('/api/clients/me');
-            setUser(profile);
+            if (user?.role === 'DIETICIAN') {
+                const authUser: any = await api.get('/api/auth/me');
+                setUser(authUser);
+            } else {
+                const profile: any = await api.get('/api/clients/me');
+                setUser(profile);
+            }
         } catch (error) {
             console.error('Refresh user failed:', error);
         }
