@@ -1,10 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
+// Lazy MongoDB URI check inside connectDB() so build-time imports do not fail
 
 interface MongooseCache {
     conn: typeof mongoose | null;
@@ -22,8 +18,12 @@ if (!cached) {
 }
 
 export async function connectDB() {
-    if (cached!.conn) {
+    const MONGODB_URI = process.env.MONGODB_URI;
+    if (!MONGODB_URI) {
+        throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+    }
 
+    if (cached!.conn) {
         return cached!.conn;
     }
 
@@ -37,7 +37,7 @@ export async function connectDB() {
             family: 4, // Force IPv4 to avoid timeout issues on some networks
         };
 
-        cached!.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+        cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
             console.log('[MONGODB] Connection established successfully');
             return mongoose;
         }).catch(err => {
