@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nutrivibes.mobile",
-      "buildNumber": "31",
+      "buildNumber": "33",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 37,
+      "versionCode": 38,
       "permissions": [],
       "edgeToEdge": true,
       "adaptiveIcon": {
@@ -65,8 +65,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "bb3aba6c-5c17-4268-b0ff-06b468dae030"
+        "projectId": "df2f1954-651f-4728-8fc0-927e63f6073e"
       }
-    }
+    },
+    "owner": "divy007"
   }
 }
