@@ -31,21 +31,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build web app
-        run: npm run build
-
-      - name: Start dev server
-        run: npm run dev &
-        env:
-          PORT: 3000
-
-      - name: Wait for dev server to be ready
-        run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:3000 > /dev/null; then break; fi
-            echo "Waiting for dev server... $i"
-            sleep 2
-          done
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright E2E tests
         run: npx playwright test
