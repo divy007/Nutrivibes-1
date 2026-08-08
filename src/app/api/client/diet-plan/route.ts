@@ -75,6 +75,18 @@ export async function GET(req: Request) {
         // Dynamically re-anchor the plan days to align with the requested week starting date
         const reanchoredPlan = reanchorDietPlan(dietPlan, targetDate);
 
+        // Update read receipt timestamp if published meals exist
+        const hasPublishedMeals = reanchoredPlan.days.some((d: any) => d.status === 'PUBLISHED');
+        let updatedLastViewedAt = dietPlan.lastViewedByClientAt;
+        if (hasPublishedMeals) {
+            updatedLastViewedAt = new Date();
+            try {
+                await DietPlan.findByIdAndUpdate(dietPlan._id, { lastViewedByClientAt: updatedLastViewedAt });
+            } catch (e) {
+                // Ignore save error in view read receipt
+            }
+        }
+
         // Filter to only return PUBLISHED days
         const filteredDays = reanchoredPlan.days.map((day: any) => ({
             ...day,
@@ -84,6 +96,7 @@ export async function GET(req: Request) {
 
         const response = {
             ...reanchoredPlan,
+            lastViewedByClientAt: updatedLastViewedAt,
             days: filteredDays
         };
 

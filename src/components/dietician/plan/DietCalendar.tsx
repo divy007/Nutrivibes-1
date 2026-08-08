@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { WeekPlan, FoodItem, DayPlan } from '@/types';
-import { ChevronLeft, ChevronRight, Plus, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Pencil, Eye, Edit3 } from 'lucide-react';
 import { format, isSameDay, startOfDay, addDays } from 'date-fns';
+import { ClientDietCalendar } from '@/components/client/ClientDietCalendar';
 
 interface DietCalendarProps {
     weekPlan: WeekPlan;
@@ -37,21 +38,59 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
     onMealAdd,
     onWeekChange
 }) => {
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
+
     // Generate the 7 days of the current view based on weekPlan.startDate
     const weekDays = useMemo(() => {
         const start = startOfDay(new Date(weekPlan.startDate));
         return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
     }, [weekPlan.startDate]);
 
-    const getMealForSlot = (dayPlan: DayPlan | undefined, time: string) => {
-        return dayPlan?.meals.find(m => m.time === time);
-    };
+    const clientWeekPlan = useMemo(() => {
+        return {
+            weekStartDate: new Date(weekPlan.startDate),
+            days: (weekPlan.days || []).map((d: any) => ({
+                date: new Date(d.date),
+                meals: d.meals || [],
+                status: d.status || 'NO_DIET'
+            }))
+        };
+    }, [weekPlan]);
 
     return (
         <div className="flex flex-col h-full bg-slate-50">
             {/* Header / Week Navigation */}
             <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm sticky top-0 z-10">
-                <h2 className="text-xl font-bold text-slate-800">Diet Plan</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-bold text-slate-800">Diet Plan</h2>
+                    
+                    {/* View Switcher */}
+                    <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        <button
+                            onClick={() => setViewMode('editor')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                viewMode === 'editor'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Editor Mode
+                        </button>
+                        <button
+                            onClick={() => setViewMode('preview')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                viewMode === 'preview'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <Eye className="w-3.5 h-3.5" />
+                            Customer View
+                        </button>
+                    </div>
+                </div>
+
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => onWeekChange('prev')}
@@ -73,8 +112,18 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
                 </div>
             </div>
 
-            {/* Calendar Grid */}
-            <div className="flex-1 overflow-auto p-4">
+            {viewMode === 'preview' ? (
+                <div className="flex-1 overflow-auto p-4">
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-2 rounded-lg mb-4 flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-amber-600" />
+                        <span className="font-semibold">🔒 Read-Only Customer View: Live client app view (editing disabled). Switch to Editor Mode to make changes.</span>
+                    </div>
+                    <ClientDietCalendar weekPlan={clientWeekPlan} onWeekChange={onWeekChange} />
+                </div>
+            ) : (
+                /* Calendar Grid */
+                <div className="flex-1 overflow-auto p-4">
+
                 <div className="grid grid-cols-7 gap-4 min-w-[1200px]">
                     {/* Day Columns */}
                     {weekDays.map((date) => {
@@ -173,6 +222,8 @@ export const DietCalendar: React.FC<DietCalendarProps> = ({
                     })}
                 </div>
             </div>
+            )}
         </div>
     );
 };
+

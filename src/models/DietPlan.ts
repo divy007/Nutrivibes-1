@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const DietPlanSchema = new mongoose.Schema({
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     weekStartDate: { type: Date, required: true },
+    lastViewedByClientAt: { type: Date },
     days: [{
         date: Date,
         status: { type: String, enum: ['NO_DIET', 'NOT_SAVED', 'PUBLISHED'], default: 'NO_DIET' },

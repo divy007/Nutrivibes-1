@@ -77,21 +77,7 @@ export default function DietPlanScreen() {
 
     useEffect(() => {
         if (user) {
-            // 1. Handle jumping to future diet start date if applicable
-            if (profile?.dietStartDate) {
-                const dietStart = getLocalDateFromStr(profile.dietStartDate);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                if (dietStart > today && !isSameDay(dietStart, selectedDate)) {
-                    setSelectedDate(dietStart);
-                    // Changing selectedDate will trigger weekStart update, 
-                    // which is handled by the effect below.
-                    return;
-                }
-            }
-
-            // 2. Fetch the plan for the current week
+            // Fetch the plan for the current week starting from selectedDate
             fetchDietPlan();
         }
     }, [user, weekStart, profile]);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -6,9 +6,10 @@ import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { startOfWeek, addDays, format, subWeeks, addWeeks } from 'date-fns';
-import { ChevronLeft, ChevronRight, AlertTriangle, Plus, Trash2, Copy, Clipboard, Check, X, Clock, Search } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, AlertTriangle, Plus, Trash2, Copy, Clipboard, Check, X, Clock, Search, Eye, Edit3 } from 'lucide-react-native';
 import { foodItems } from '@/data/foodItems';
 import { parseToLocalDate } from '@/lib/date-utils';
+import ClientDietPreviewCard, { ClientDietPreviewCardRef } from '@/components/dashboard/ClientDietPreviewCard';
 
 // Default meal labels
 const MEAL_LABELS: Record<number, string> = {
@@ -80,6 +81,8 @@ export default function SuggestDietScreen() {
 
   // Planner States
   const [client, setClient] = useState<ClientInfo | null>(null);
+  const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
+  const previewCardRef = useRef<ClientDietPreviewCardRef>(null);
   const [weekStartDate, setWeekStartDate] = useState<Date>(() => {
     return startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
   });
@@ -504,6 +507,9 @@ export default function SuggestDietScreen() {
 
       Alert.alert('Success', 'Weekly diet plan saved and published.');
       fetchPlannerData();
+      if (previewCardRef.current) {
+        previewCardRef.current.refresh();
+      }
     } catch (error) {
       console.error('Failed to publish plan:', error);
       Alert.alert('Error', 'Could not save diet plan.');
@@ -597,6 +603,47 @@ export default function SuggestDietScreen() {
         </View>
       )}
 
+      {/* Mode Switcher */}
+      <View style={styles.modeSwitcherContainer}>
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            viewMode === 'editor' && [styles.activeModeButton, { backgroundColor: theme.brandForest }]
+          ]}
+          onPress={() => setViewMode('editor')}
+        >
+          <Edit3 size={15} color={viewMode === 'editor' ? '#fff' : '#64748b'} />
+          <Text style={[styles.modeButtonText, viewMode === 'editor' && { color: '#fff', fontWeight: '800' }]}>
+            Editor Mode
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            viewMode === 'preview' && [styles.activeModeButton, { backgroundColor: theme.brandForest }]
+          ]}
+          onPress={() => {
+            setViewMode('preview');
+            setTimeout(() => previewCardRef.current?.refresh(), 100);
+          }}
+        >
+          <Eye size={15} color={viewMode === 'preview' ? '#fff' : '#64748b'} />
+          <Text style={[styles.modeButtonText, viewMode === 'preview' && { color: '#fff', fontWeight: '800' }]}>
+            Customer View
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {viewMode === 'preview' ? (
+        <ClientDietPreviewCard
+          ref={previewCardRef}
+          clientId={id as string}
+          clientDietStartDate={client?.dietStartDate}
+          initialWeekStartDate={weekStartDate}
+        />
+      ) : (
+        <>
       {/* Week Selector */}
       <View style={styles.weekSelector}>
         <TouchableOpacity style={styles.weekArrow} onPress={handlePrevWeek}>
@@ -793,6 +840,8 @@ export default function SuggestDietScreen() {
           <Text style={styles.publishBtnText}>Publish Weekly Plan</Text>
         </TouchableOpacity>
       </View>
+        </>
+      )}
 
       {/* MODAL: ADD FOOD */}
       <Modal visible={isAddFoodOpen} animationType="slide" transparent>
@@ -1426,5 +1475,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
+  },
+  modeSwitcherContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e2e8f0',
+    borderRadius: 16,
+    padding: 4,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    gap: 6,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+  },
+  activeModeButton: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  modeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
   },
 });

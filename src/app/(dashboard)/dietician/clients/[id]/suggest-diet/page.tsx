@@ -24,6 +24,7 @@ import {
     X,
     ClipboardPaste,
     Eye,
+    Edit3,
     AlertTriangle
 } from 'lucide-react';
 
@@ -38,6 +39,7 @@ import { CounsellingDrawer } from '@/components/dietician/client/CounsellingDraw
 import { FollowUpNotesSection } from '@/components/dietician/client/FollowUpNotesSection';
 import { FollowUpHistoryDrawer } from '@/components/dietician/client/FollowUpHistoryDrawer';
 import { RecipeDetailDrawer } from '@/components/dietician/recipes/RecipeDetailDrawer';
+import { ClientDietCalendar } from '@/components/client/ClientDietCalendar';
 
 const DEFAULT_MEAL_TIMINGS: MealTiming[] = [
     { mealNumber: 1, time: '06:30' },
@@ -131,6 +133,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     const { id } = use(params);
 
     // --- State ---
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
     const [isCounsellingOpen, setIsCounsellingOpen] = useState(false);
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -978,6 +981,32 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         >
                             <ChevronRight size={24} />
                         </button>
+
+                        {/* Mode Switcher Buttons */}
+                        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4">
+                            <button
+                                onClick={() => setViewMode('editor')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    viewMode === 'editor'
+                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                Editor Mode
+                            </button>
+                            <button
+                                onClick={() => setViewMode('preview')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    viewMode === 'preview'
+                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Eye className="w-3.5 h-3.5" />
+                                Customer View
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -1111,7 +1140,56 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                     </div>
                 </div>
 
-                <ClinicalAlertBanner clientInfo={clientInfo} />
+                {/* Main Content: Editor vs Customer View Preview */}
+                {viewMode === 'preview' ? (
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <div className="bg-sky-50 border border-sky-200 text-sky-800 text-xs px-4 py-2.5 rounded-lg mb-4 flex items-center gap-2 font-semibold">
+                            <Eye className="w-4 h-4 text-sky-600 shrink-0" />
+                            <span>🔒 Read-Only Customer View: Live client app view (editing disabled). Switch to Editor Mode to make changes.</span>
+                        </div>
+
+                        {/* Read Receipt & WhatsApp Share Banner */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <Eye size={18} />
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-tight">Client Read Receipt Status</h4>
+                                    <p className="text-xs font-medium text-slate-600">
+                                        {(weekPlan as any)?.lastViewedByClientAt
+                                            ? `👀 Client opened & viewed DateWithDiet app on ${format(new Date((weekPlan as any).lastViewedByClientAt), 'MMM d, yyyy @ h:mm a')}`
+                                            : '🟡 Published — Awaiting client to open DateWithDiet app'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const clientName = clientInfo?.name || 'Client';
+                                    const text = `Hi ${clientName}! 👋 Your personalized diet plan for this week is now live in your DateWithDiet App. Open the app to view your daily meals!`;
+                                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-2"
+                            >
+                                <span>💬 Share via WhatsApp</span>
+                            </button>
+                        </div>
+
+                        <ClientDietCalendar
+                            weekPlan={{
+                                weekStartDate: weekPlan.startDate,
+                                days: weekPlan.days.map(d => ({
+                                    date: d.date,
+                                    meals: d.meals,
+                                    status: d.status
+                                }))
+                            }}
+                            onWeekChange={(dir) => handleWeekNavigation(dir === 'prev' ? 'PREV' : 'NEXT')}
+                        />
+                    </div>
+                ) : (
+                    <>
+                        <ClinicalAlertBanner clientInfo={clientInfo} />
 
                 {/* Follow Up Notes Section */}
                 <AnimatePresence>
@@ -1123,8 +1201,10 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                         />
                     )}
                 </AnimatePresence>
+                </>
+                )}
 
-                {/* Render Drawer */}
+                {/* Modals & Drawers */}
                 <CounsellingDrawer
                     isOpen={isCounsellingOpen}
                     onClose={() => setIsCounsellingOpen(false)}

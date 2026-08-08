@@ -56,9 +56,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             }
         }
 
+        const previewMode = url.searchParams.get('previewMode');
+
         if (dietPlan) {
             // Dynamically re-anchor the plan days to align with the requested week starting date
             dietPlan = reanchorDietPlan(dietPlan, targetDate);
+
+            if (previewMode === 'client') {
+                const plainPlan = typeof (dietPlan as any).toObject === 'function' ? (dietPlan as any).toObject() : JSON.parse(JSON.stringify(dietPlan));
+                const filteredDays = (plainPlan.days || []).map((day: any) => ({
+                    ...day,
+                    meals: day.status === 'PUBLISHED' ? day.meals : [],
+                    status: day.status === 'PUBLISHED' ? 'PUBLISHED' : 'NO_DIET'
+                }));
+                return NextResponse.json({
+                    ...plainPlan,
+                    days: filteredDays
+                });
+            }
         }
 
         return NextResponse.json(dietPlan || { success: true, message: 'No plan found' });

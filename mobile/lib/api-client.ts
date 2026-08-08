@@ -6,7 +6,7 @@ const AUTH_TOKEN_KEY = 'auth_token_client';
 // API CONFIGURATION
 // ============================================
 const PROD_URL = 'https://www.datewithdiet.in';
-const LOCAL_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.3:3000'; // Fallback to workstation IP
+const LOCAL_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.8:3000'; // Current workstation IP
 
 // Automatically point to production in released builds
 const IS_PROD = !__DEV__;
