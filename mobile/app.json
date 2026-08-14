@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nutrivibes.mobile",
-      "buildNumber": "34",
+      "buildNumber": "35",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.nutrivibes.mobile",
-      "versionCode": 39,
+      "versionCode": 40,
       "permissions": [],
       "edgeToEdge": true,
       "adaptiveIcon": {
