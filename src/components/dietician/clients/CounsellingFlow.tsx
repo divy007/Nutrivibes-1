@@ -134,7 +134,7 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
     const [loadingPlans, setLoadingPlans] = useState(false);
 
     const [formData, setFormData] = useState({
-        gender: initialData?.gender || 'Male',
+        gender: initialData?.gender ? (initialData.gender.charAt(0).toUpperCase() + initialData.gender.slice(1).toLowerCase()) : 'Male',
         maritalStatus: initialData?.maritalStatus || 'Single',
         age: initialData?.age || '',
         country: initialData?.country || 'India',
@@ -353,7 +353,15 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                         <div className="w-full relative">
                             <select
                                 value={formData.country}
-                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                onChange={(e) => {
+                                    const nextCountry = e.target.value;
+                                    setFormData({
+                                        ...formData,
+                                        country: nextCountry,
+                                        state: nextCountry !== 'India' ? '' : formData.state,
+                                        city: nextCountry !== 'India' ? '' : formData.city
+                                    });
+                                }}
                                 className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
                             >
                                 {COUNTRIES.map(c => (
@@ -473,19 +481,31 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                     <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto py-12">
                         <h2 className="text-xl font-bold text-slate-800">What is your State/Province ?</h2>
                         <div className="w-full relative">
-                            <select
-                                value={formData.state}
-                                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
-                            >
-                                <option value="">Select State</option>
-                                {STATES.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ChevronRight className="rotate-90 text-slate-400" />
-                            </div>
+                            {formData.country === 'India' ? (
+                                <>
+                                    <select
+                                        value={formData.state}
+                                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                        className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select State</option>
+                                        {STATES.map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <ChevronRight className="rotate-90 text-slate-400" />
+                                    </div>
+                                </>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={formData.state}
+                                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                    placeholder="Enter State/Province"
+                                    className="w-full p-4 text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none bg-white text-slate-700"
+                                />
+                            )}
                         </div>
                     </div>
                 );
@@ -494,19 +514,31 @@ export const CounsellingFlow: React.FC<CounsellingFlowProps> = ({ onClose, onFin
                     <div className="flex flex-col items-center gap-8 w-full max-w-md mx-auto py-12">
                         <h2 className="text-xl font-bold text-slate-800">What is your City/Town/District ?</h2>
                         <div className="w-full relative">
-                            <select
-                                value={formData.city}
-                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
-                            >
-                                <option value="">Select City</option>
-                                {(CITIES_BY_STATE[formData.state as keyof typeof CITIES_BY_STATE] || []).map(c => (
-                                    <option key={c} value={c}>{c}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ChevronRight className="rotate-90 text-slate-400" />
-                            </div>
+                            {formData.country === 'India' ? (
+                                <>
+                                    <select
+                                        value={formData.city}
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                        className="w-full p-4 text-left text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 outline-none bg-white appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select City</option>
+                                        {(CITIES_BY_STATE[formData.state as keyof typeof CITIES_BY_STATE] || []).map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <ChevronRight className="rotate-90 text-slate-400" />
+                                    </div>
+                                </>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    placeholder="Enter City/Town"
+                                    className="w-full p-4 text-lg font-bold border rounded-lg border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none bg-white text-slate-700"
+                                />
+                            )}
                         </div>
                     </div>
                 );

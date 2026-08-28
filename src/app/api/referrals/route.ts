@@ -3,11 +3,13 @@ import { connectDB } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import User from '@/models/User';
 import mongoose from 'mongoose';
+import { normalizePhoneNumber } from '@/lib/phone-utils';
 
 export async function POST(req: Request) {
     try {
         await connectDB();
-        const { name, phone, referredByClientId } = await req.json();
+        const { name, phone: rawPhone, referredByClientId } = await req.json();
+        const phone = rawPhone ? normalizePhoneNumber(rawPhone) : '';
 
         if (!name || !phone || !referredByClientId) {
             return NextResponse.json(

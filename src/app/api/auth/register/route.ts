@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import Client from '@/models/Client';
 import { generateToken } from '@/lib/auth';
+import { normalizePhoneNumber } from '@/lib/phone-utils';
 
 const registerSchema = z.object({
     name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -30,7 +31,8 @@ export async function POST(req: Request) {
             );
         }
 
-        const { name, email, password, phone } = validationResult.data;
+        const { name, email, password, phone: rawPhone } = validationResult.data;
+        const phone = normalizePhoneNumber(rawPhone);
 
         // Check if user already exists by email or by phone
         const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });

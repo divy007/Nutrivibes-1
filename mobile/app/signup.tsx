@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 export default function SignupScreen() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,9 +28,18 @@ export default function SignupScreen() {
     const handleSignup = async () => {
         if (!name) { setError('Full Name is required'); return; }
         if (!email) { setError('Email Address is required'); return; }
+        if (!confirmEmail) { setError('Please confirm your email address'); return; }
         if (!phone) { setError('Phone Number is required'); return; }
         if (!password) { setError('Password is required'); return; }
         if (!confirmPassword) { setError('Please confirm your password'); return; }
+
+        const emailLower = email.trim().toLowerCase();
+        const confirmEmailLower = confirmEmail.trim().toLowerCase();
+
+        if (emailLower !== confirmEmailLower) {
+            setError('Email addresses do not match');
+            return;
+        }
 
         if (password !== confirmPassword) {
             setError('Passwords do not match');
@@ -120,6 +130,25 @@ export default function SignupScreen() {
                                     onChangeText={setEmail}
                                     autoCapitalize="none"
                                     placeholder="email@example.com"
+                                    placeholderTextColor={theme.brandForest + '80'}
+                                    keyboardType="email-address"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={[styles.label, { color: theme.brandForest }]}>Confirm Email Address</Text>
+                                <Text style={{ color: 'red', marginLeft: 2 }}>*</Text>
+                            </View>
+                            <View style={[styles.inputWrapper, { borderColor: theme.brandForest + '30' }]}>
+                                <Mail size={20} color={theme.brandForest} />
+                                <TextInput
+                                    style={[styles.input, { color: theme.text }]}
+                                    value={confirmEmail}
+                                    onChangeText={setConfirmEmail}
+                                    autoCapitalize="none"
+                                    placeholder="Re-enter email address"
                                     placeholderTextColor={theme.brandForest + '80'}
                                     keyboardType="email-address"
                                 />

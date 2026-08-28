@@ -129,7 +129,7 @@ export default function ClientProfileScreen() {
       <View style={[styles.card, { borderColor: theme.brandForest + '10' }]}>
         <Text style={styles.clientName}>{client.name}</Text>
         <Text style={styles.clientMeta}>
-          {client.gender ? `${client.gender}` : ''}
+          {client.gender ? `${client.gender.charAt(0).toUpperCase()}${client.gender.slice(1)}` : ''}
           {client.dob ? ` • ${format(new Date(client.dob), 'dd MMM yyyy')}` : ''}
         </Text>
 

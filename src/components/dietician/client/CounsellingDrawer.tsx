@@ -127,7 +127,7 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                 age: formData.age,
                 height: formData.height,
                 weight: formData.weight,
-                gender: formData.gender,
+                gender: formData.gender?.toLowerCase(),
                 city: formData.city,
                 state: formData.state,
                 dietStartDate: formData.dietStartDate,
@@ -327,7 +327,28 @@ export function CounsellingDrawer({ isOpen, onClose, clientId, clientData, onUpd
                             <div className="p-4 border-t border-slate-100 space-y-4 animate-in slide-in-from-top-2 duration-200">
                                 <div className="grid grid-cols-2 gap-4">
                                     <InputField label="Age" field="age" type="number" />
-                                    <InputField label="Gender" field="gender" />
+                                    {isEditing ? (
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs font-bold text-slate-400 uppercase">Gender</label>
+                                            <select
+                                                value={formData.gender}
+                                                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                                className="p-2 border rounded-lg text-sm font-medium bg-white border-slate-200 text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500"
+                                            >
+                                                <option value="">Select Gender</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs font-bold text-slate-400 uppercase">Gender</label>
+                                            <p className="text-sm font-medium text-slate-800 break-words py-2 border-b border-transparent">
+                                                {formData.gender ? (formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1).toLowerCase()) : <span className="text-slate-300">-</span>}
+                                            </p>
+                                        </div>
+                                    )}
                                     <InputField label="Country" field="country" />
                                     <InputField
                                         label="Diet Start"

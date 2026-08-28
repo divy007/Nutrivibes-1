@@ -3,6 +3,7 @@ import { connectDB as dbConnect } from '@/lib/mongodb';
 import Client from '@/models/Client';
 import { getAuthUser } from '@/lib/auth';
 import User from '@/models/User';
+import { normalizePhoneNumber } from '@/lib/phone-utils';
 import { normalizeDateUTC } from '@/lib/date-utils';
 import { addDays, format, isBefore } from 'date-fns';
 
@@ -142,7 +143,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, email, password, phone, ...clientData } = body;
+        const { name, email, password, phone: rawPhone, ...clientData } = body;
+        const phone = rawPhone ? normalizePhoneNumber(rawPhone) : undefined;
 
         // Validation: Require either Email or Phone
         if (!email && !phone) {
