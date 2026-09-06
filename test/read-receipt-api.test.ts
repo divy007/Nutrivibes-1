@@ -91,7 +91,9 @@ describe('Read Receipts: GET /api/client/diet-plan', () => {
       lastViewedByClientAt: expect.any(Date),
     }));
 
-    // Verify response contains updated lastViewedByClientAt
+    // Verify response contains updated lastViewedByClientAt and preserved day dates
     expect(data.lastViewedByClientAt).toBeDefined();
+    expect(data.days[0].date).toBeDefined();
+    expect(new Date(data.days[0].date).toISOString()).toBe(new Date('2026-08-03T00:00:00.000Z').toISOString());
   });
 });

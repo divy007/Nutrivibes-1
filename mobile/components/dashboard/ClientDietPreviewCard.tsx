@@ -123,7 +123,10 @@ const ClientDietPreviewCard = forwardRef<ClientDietPreviewCardRef, ClientDietPre
       setRefreshing(false);
     };
 
-    const dayPlan = weekPlan?.days?.find((d: any) => isSameDay(getLocalDateFromStr(d.date), selectedDate));
+    const dayPlan = weekPlan?.days?.find((d: any) => {
+      const rawDate = d?.date || d?._doc?.date;
+      return rawDate ? isSameDay(getLocalDateFromStr(rawDate), selectedDate) : false;
+    });
     const isPublished = dayPlan?.status === 'PUBLISHED';
     const hasAnyPublishedMeals = isPublished && dayPlan?.meals?.some((meal: any) => meal.foodItems?.length > 0);
 

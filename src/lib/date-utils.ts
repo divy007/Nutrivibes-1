@@ -78,7 +78,8 @@ export function reanchorDietPlan(dietPlan: any, targetDate: Date): any {
                 days: healedDays
             };
         }
-        return dietPlan;
+        const plainPlan = typeof dietPlan.toObject === 'function' ? dietPlan.toObject() : dietPlan;
+        return plainPlan;
     }
 
     const newDays = [];

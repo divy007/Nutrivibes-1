@@ -75,8 +75,13 @@ export async function GET(req: Request) {
         // Dynamically re-anchor the plan days to align with the requested week starting date
         const reanchoredPlan = reanchorDietPlan(dietPlan, targetDate);
 
+        // Ensure plan is a plain object before mapping to avoid losing Mongoose schema getters (like date)
+        const plainPlan = typeof (reanchoredPlan as any).toObject === 'function'
+            ? (reanchoredPlan as any).toObject()
+            : JSON.parse(JSON.stringify(reanchoredPlan));
+
         // Update read receipt timestamp if published meals exist
-        const hasPublishedMeals = reanchoredPlan.days.some((d: any) => d.status === 'PUBLISHED');
+        const hasPublishedMeals = (plainPlan.days || []).some((d: any) => d.status === 'PUBLISHED');
         let updatedLastViewedAt = dietPlan.lastViewedByClientAt;
         if (hasPublishedMeals) {
             updatedLastViewedAt = new Date();
@@ -88,14 +93,14 @@ export async function GET(req: Request) {
         }
 
         // Filter to only return PUBLISHED days
-        const filteredDays = reanchoredPlan.days.map((day: any) => ({
+        const filteredDays = (plainPlan.days || []).map((day: any) => ({
             ...day,
             meals: day.status === 'PUBLISHED' ? day.meals : [],
             status: day.status === 'PUBLISHED' ? 'PUBLISHED' : 'NO_DIET'
         }));
 
         const response = {
-            ...reanchoredPlan,
+            ...plainPlan,
             lastViewedByClientAt: updatedLastViewedAt,
             days: filteredDays
         };
