@@ -78,12 +78,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const inDieticianGroup = (segments[0] as string) === '(dietician)';
         const inLoginGroup = segments[0] === 'login';
         const inCompleteProfile = segments[0] === 'complete-profile';
+        const inRecipeGroup = (segments[0] as string) === 'recipe';
 
-        if (!user && (inClientGroup || inDieticianGroup)) {
+        if (!user && (inClientGroup || inDieticianGroup || inRecipeGroup)) {
             router.replace('/login');
         } else if (user) {
             if (user.role === 'DIETICIAN') {
-                if (inLoginGroup || !inDieticianGroup) {
+                if (inLoginGroup || (!inDieticianGroup && !inRecipeGroup)) {
                     router.replace('/(dietician)' as any);
                 }
             } else {

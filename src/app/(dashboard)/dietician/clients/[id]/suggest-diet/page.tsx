@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, use, useRef } from 'react';
-import { format, addDays, addWeeks, subWeeks, startOfWeek } from 'date-fns';
+import { format, addDays, addWeeks, subWeeks, startOfWeek, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft,
     ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
     Calendar,
     Copy,
     Trash2,
@@ -276,29 +278,22 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 }
                 setClientInfo(info);
 
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
                 if (data.dietStartDate) {
-                    // Weeks are anchored to the dietStartDate's day-of-week
-                    // so the same day-of-week always starts a new "diet week"
                     const dietStart = parseToLocalDate(data.dietStartDate);
 
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
-                    if (dietStart <= today) {
-                        // Past or current diet: navigate to the week containing today
-                        // anchored on the same day-of-week as dietStartDate
-                        const startDayIndex = dietStart.getDay();
-                        const currentDayIndex = today.getDay();
-                        const diff = (currentDayIndex - startDayIndex + 7) % 7;
-                        const startOfCurrentWeek = addDays(today, -diff);
-                        setCurrentWeekStart(startOfCurrentWeek);
-                    } else {
-                        // Future diet: jump to diet start date
+                    if (dietStart > today) {
+                        // Future diet (e.g. new client starting next week/tomorrow): jump to diet start date
                         setCurrentWeekStart(dietStart);
+                    } else {
+                        // Ongoing / active diet: immediately start from TODAY's date
+                        setCurrentWeekStart(today);
                     }
                 } else {
-                    // No diet start date — use standard Monday-based week
-                    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+                    // No diet start date: start from today
+                    setCurrentWeekStart(today);
                 }
 
             } catch (error) {
@@ -407,6 +402,16 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     // --- Handlers ---
     const handleWeekNavigation = (direction: 'PREV' | 'NEXT') => {
         setCurrentWeekStart(prev => direction === 'PREV' ? subWeeks(prev, 1) : addWeeks(prev, 1));
+    };
+
+    const handleDayNavigation = (direction: 'PREV' | 'NEXT') => {
+        setCurrentWeekStart(prev => addDays(prev, direction === 'PREV' ? -1 : 1));
+    };
+
+    const handleJumpToToday = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setCurrentWeekStart(today);
     };
 
     const handleAddFood = (dayIndex: number, mealIndex: number, time: string) => {
@@ -987,29 +992,68 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
                 {/* Week Navigation & Context Actions */}
                 <div className="flex items-center justify-between bg-white px-6 py-4 rounded-lg border border-slate-200 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => handleWeekNavigation('PREV')}
-                            className="p-2 hover:bg-slate-50 rounded-full text-slate-400 transition-colors"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 bg-slate-50/80 p-1 rounded-xl border border-slate-200">
+                            {/* 1 Week Back */}
+                            <button
+                                onClick={() => handleWeekNavigation('PREV')}
+                                className="px-2 py-1.5 hover:bg-white hover:text-slate-900 rounded-lg text-slate-500 transition-all border border-transparent hover:border-slate-200 hover:shadow-xs flex items-center gap-0.5 text-xs font-bold"
+                                title="Previous Week (-7 Days)"
+                            >
+                                <ChevronsLeft size={15} />
+                                <span className="hidden sm:inline">1W</span>
+                            </button>
 
-                        <div className="flex items-center gap-3">
-                            <span className="font-bold text-slate-700 text-lg uppercase tracking-tight">
-                                {format(currentWeekStart, 'dd MMM yyyy')} - {format(addDays(currentWeekStart, 6), 'dd MMM yyyy')}
-                            </span>
+                            {/* 1 Day Back */}
+                            <button
+                                onClick={() => handleDayNavigation('PREV')}
+                                className="px-2 py-1.5 hover:bg-white hover:text-slate-900 rounded-lg text-slate-500 transition-all border border-transparent hover:border-slate-200 hover:shadow-xs flex items-center gap-0.5 text-xs font-bold"
+                                title="Previous Day (-1 Day)"
+                            >
+                                <ChevronLeft size={15} />
+                                <span className="hidden sm:inline">1D</span>
+                            </button>
+
+                            {/* Today Quick Jump Button */}
+                            <button
+                                onClick={handleJumpToToday}
+                                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 rounded-lg text-xs font-black border border-emerald-200 transition-all shadow-xs flex items-center gap-1.5"
+                                title="Reset view to Today"
+                            >
+                                <Calendar size={13} className="text-emerald-600" />
+                                <span>Today</span>
+                            </button>
+
+                            {/* Date Range Display */}
+                            <div className="flex items-center px-2">
+                                <span className="font-black text-slate-800 text-sm tracking-tight whitespace-nowrap">
+                                    {format(currentWeekStart, 'EEE, dd MMM')} – {format(addDays(currentWeekStart, 6), 'EEE, dd MMM yyyy')}
+                                </span>
+                            </div>
+
+                            {/* 1 Day Forward */}
+                            <button
+                                onClick={() => handleDayNavigation('NEXT')}
+                                className="px-2 py-1.5 hover:bg-white hover:text-slate-900 rounded-lg text-slate-500 transition-all border border-transparent hover:border-slate-200 hover:shadow-xs flex items-center gap-0.5 text-xs font-bold"
+                                title="Next Day (+1 Day)"
+                            >
+                                <span className="hidden sm:inline">1D</span>
+                                <ChevronRight size={15} />
+                            </button>
+
+                            {/* 1 Week Forward */}
+                            <button
+                                onClick={() => handleWeekNavigation('NEXT')}
+                                className="px-2 py-1.5 hover:bg-white hover:text-slate-900 rounded-lg text-slate-500 transition-all border border-transparent hover:border-slate-200 hover:shadow-xs flex items-center gap-0.5 text-xs font-bold"
+                                title="Next Week (+7 Days)"
+                            >
+                                <span className="hidden sm:inline">1W</span>
+                                <ChevronsRight size={15} />
+                            </button>
                         </div>
 
-                        <button
-                            onClick={() => handleWeekNavigation('NEXT')}
-                            className="p-2 hover:bg-slate-50 rounded-full text-slate-400 transition-colors"
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-
                         {/* Mode Switcher Buttons */}
-                        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4">
+                        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 ml-1">
                             <button
                                 onClick={() => setViewMode('editor')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -1269,11 +1313,21 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                             <div className="flex items-center justify-center">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Day / Timing</span>
                             </div>
-                            {weekPlan.days.map((day, dayIndex) => (
-                                <div key={dayIndex} className={`p-4 bg-white rounded-lg border shadow-sm text-center transition-all relative ${actionState.sourceType === 'col' && actionState.sourceIndex === dayIndex ? 'ring-2 ring-emerald-500 border-emerald-200' : 'border-slate-200'}`}>
-                                    {/* Status Badge */}
-                                    <div className="mb-2">
-                                        <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border shadow-sm ${day.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700 border-emerald-300 ring-1 ring-emerald-500' :
+                            {weekPlan.days.map((day, dayIndex) => {
+                                const isDayToday = isSameDay(new Date(day.date), new Date());
+                                return (
+                                <div key={dayIndex} className={`p-4 bg-white rounded-lg border shadow-sm text-center transition-all relative ${
+                                    isDayToday ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20' :
+                                    actionState.sourceType === 'col' && actionState.sourceIndex === dayIndex ? 'ring-2 ring-emerald-500 border-emerald-200' : 'border-slate-200'
+                                }`}>
+                                    {/* Status Badge & Today Indicator */}
+                                    <div className="mb-2 flex items-center justify-center gap-1.5 flex-wrap">
+                                        {isDayToday && (
+                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                                                ● Today
+                                            </span>
+                                        )}
+                                        <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border shadow-xs ${day.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700 border-emerald-300 ring-1 ring-emerald-500' :
                                             day.status === 'NOT_SAVED' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                                 'bg-slate-100 text-slate-400 border-slate-200'
                                             }`}>
@@ -1284,22 +1338,24 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                     <div className="flex items-center justify-center gap-1 mb-2">
                                         <button
                                             onClick={() => handleAction('copy', 'col', dayIndex)}
-                                            disabled={day.status === 'PUBLISHED'}
-                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'copy' && actionState.sourceIndex === dayIndex ? 'text-emerald-500' : 'text-slate-300'}`}
+                                            title="Copy Day"
+                                            className={`p-1 rounded transition-colors ${actionState.type === 'copy' && actionState.sourceIndex === dayIndex ? 'text-emerald-500 font-bold' : 'hover:bg-slate-50 text-slate-400 hover:text-emerald-600'}`}
                                         >
                                             <Copy size={12} />
                                         </button>
                                         <button
                                             onClick={() => handleAction('swap', 'col', dayIndex)}
                                             disabled={day.status === 'PUBLISHED'}
-                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50'} ${actionState.type === 'swap' && actionState.sourceIndex === dayIndex ? 'text-emerald-500' : 'text-slate-300'}`}
+                                            title={day.status === 'PUBLISHED' ? "Cannot swap published day" : "Swap Day"}
+                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50 text-slate-400 hover:text-emerald-600'} ${actionState.type === 'swap' && actionState.sourceIndex === dayIndex ? 'text-emerald-500' : ''}`}
                                         >
                                             <Repeat size={12} />
                                         </button>
                                         <button
                                             onClick={() => handleAction('delete', 'col', dayIndex)}
                                             disabled={day.status === 'PUBLISHED'}
-                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'}`}
+                                            title={day.status === 'PUBLISHED' ? "Cannot delete published day" : "Delete Day"}
+                                            className={`p-1 rounded transition-colors ${day.status === 'PUBLISHED' ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -1332,8 +1388,8 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                             )}
                                         </div>
                                     </div>
-                                    <div className="text-sm font-bold text-slate-800 uppercase leading-none">{format(day.date, 'EEEE')}</div>
-                                    <div className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">{format(day.date, 'dd MMM')}</div>
+                                    <div className={`text-sm font-black uppercase leading-none ${isDayToday ? 'text-emerald-700' : 'text-slate-800'}`}>{format(day.date, 'EEEE')}</div>
+                                    <div className={`text-[10px] font-bold mt-1 uppercase tracking-tighter ${isDayToday ? 'text-emerald-600' : 'text-slate-400'}`}>{format(day.date, 'dd MMM')}</div>
 
                                     {/* Column Paste Overlay */}
                                     {actionState.type === 'copy' && actionState.sourceType === 'col' && actionState.sourceIndex !== dayIndex && day.status !== 'PUBLISHED' && (
@@ -1346,7 +1402,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                            );})}
                         </div>
 
                         {/* Meal Rows */}

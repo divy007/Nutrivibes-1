@@ -5,8 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '@/lib/api-client';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { startOfWeek, addDays, format, subWeeks, addWeeks } from 'date-fns';
-import { ChevronLeft, ChevronRight, AlertTriangle, Plus, Trash2, Copy, Clipboard, Check, X, Clock, Search, Eye, Edit3 } from 'lucide-react-native';
+import { startOfWeek, addDays, format, subWeeks, addWeeks, isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Calendar, AlertTriangle, Plus, Trash2, Copy, Clipboard, Check, X, Clock, Search, Eye, Edit3 } from 'lucide-react-native';
 import { foodItems } from '@/data/foodItems';
 import { parseToLocalDate } from '@/lib/date-utils';
 import ClientDietPreviewCard, { ClientDietPreviewCardRef } from '@/components/dashboard/ClientDietPreviewCard';
@@ -131,24 +131,23 @@ export default function SuggestDietScreen() {
       const recipeData = await api.get<any>('/api/dietician/recipes?limit=1000');
       setRecipes(recipeData.recipes || []);
 
-      // Determine starting date of the week anchored to client's dietStartDate
+      // Determine starting date of the week anchored to client's dietStartDate or Today
       let computedStartDate = targetDate;
       if (!computedStartDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         if (clientData.dietStartDate) {
           const dietStart = parseToLocalDate(clientData.dietStartDate);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          let startOfCurrentWeek = dietStart;
-          if (dietStart <= today) {
-            const startDayIndex = dietStart.getDay();
-            const currentDayIndex = today.getDay();
-            const diff = (currentDayIndex - startDayIndex + 7) % 7;
-            startOfCurrentWeek = addDays(today, -diff);
+          if (dietStart > today) {
+            // Future diet: start at future dietStartDate
+            computedStartDate = dietStart;
+          } else {
+            // Active / ongoing diet: start on TODAY
+            computedStartDate = today;
           }
-          computedStartDate = startOfCurrentWeek;
         } else {
-          computedStartDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+          computedStartDate = today;
         }
       }
 
@@ -197,6 +196,15 @@ export default function SuggestDietScreen() {
       }
 
       setDaysPlan(initialDays);
+
+      // Auto-focus on Today's day index if present in current view
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const todayIdx = initialDays.findIndex(d => d.date === todayStr);
+      if (todayIdx !== -1) {
+        setSelectedDayIdx(todayIdx);
+      } else {
+        setSelectedDayIdx(0);
+      }
     } catch (error) {
       console.error('Failed to load planner data:', error);
       Alert.alert('Error', 'Could not load weekly diet planner.');
@@ -238,7 +246,7 @@ export default function SuggestDietScreen() {
     return [...recipeResults, ...foodResults].slice(0, 10);
   }, [searchQuery, recipes]);
 
-  // Navigate Weeks
+  // Navigate Weeks & Days
   const handlePrevWeek = () => {
     const newDate = subWeeks(weekStartDate, 1);
     fetchPlannerData(newDate);
@@ -247,6 +255,22 @@ export default function SuggestDietScreen() {
   const handleNextWeek = () => {
     const newDate = addWeeks(weekStartDate, 1);
     fetchPlannerData(newDate);
+  };
+
+  const handlePrevDay = () => {
+    const newDate = addDays(weekStartDate, -1);
+    fetchPlannerData(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = addDays(weekStartDate, 1);
+    fetchPlannerData(newDate);
+  };
+
+  const handleJumpToToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    fetchPlannerData(today);
   };
 
   const handleCloseAddModal = () => {
@@ -660,15 +684,33 @@ export default function SuggestDietScreen() {
         <>
       {/* Week Selector */}
       <View style={styles.weekSelector}>
-        <TouchableOpacity style={styles.weekArrow} onPress={handlePrevWeek}>
-          <ChevronLeft size={20} color={theme.brandForest} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <TouchableOpacity style={[styles.weekArrow, { paddingHorizontal: 6 }]} onPress={handlePrevWeek}>
+            <ChevronsLeft size={16} color={theme.brandForest} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.weekArrow, { paddingHorizontal: 6 }]} onPress={handlePrevDay}>
+            <ChevronLeft size={16} color={theme.brandForest} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.brandForest + '10', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
+          onPress={handleJumpToToday}
+        >
+          <Calendar size={13} color={theme.brandForest} />
+          <Text style={[styles.weekLabel, { fontSize: 12, color: theme.brandForest, fontWeight: '800' }]}>
+            {format(weekStartDate, 'dd MMM')} – {format(addDays(weekStartDate, 6), 'dd MMM yyyy')}
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.weekLabel}>
-          Week of {format(weekStartDate, 'dd MMM yyyy')}
-        </Text>
-        <TouchableOpacity style={styles.weekArrow} onPress={handleNextWeek}>
-          <ChevronRight size={20} color={theme.brandForest} />
-        </TouchableOpacity>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <TouchableOpacity style={[styles.weekArrow, { paddingHorizontal: 6 }]} onPress={handleNextDay}>
+            <ChevronRight size={16} color={theme.brandForest} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.weekArrow, { paddingHorizontal: 6 }]} onPress={handleNextWeek}>
+            <ChevronsRight size={16} color={theme.brandForest} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Day Selector */}
@@ -678,12 +720,14 @@ export default function SuggestDietScreen() {
           const dayName = format(dayDate, 'EEE');
           const isSelected = selectedDayIdx === idx;
           const hasFoods = daysPlan[idx]?.meals?.some(m => m.foodItems.length > 0);
+          const isDayToday = isSameDay(dayDate, new Date());
 
           return (
             <TouchableOpacity
               key={`day-tab-${idx}`}
               style={[
                 styles.dayTab,
+                isDayToday && !isSelected && { borderColor: theme.brandForest, borderWidth: 1.5 },
                 isSelected && [styles.selectedDayTab, { backgroundColor: theme.brandForest }]
               ]}
               onPress={() => setSelectedDayIdx(idx)}
@@ -694,7 +738,10 @@ export default function SuggestDietScreen() {
               <Text style={[styles.daySubText, isSelected && { color: 'rgba(255,255,255,0.7)' }]}>
                 {format(dayDate, 'd')}
               </Text>
-              {hasFoods && (
+              {isDayToday && (
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: isSelected ? '#fff' : theme.brandForest, marginTop: 2 }} />
+              )}
+              {hasFoods && !isDayToday && (
                 <View style={[styles.indicatorDot, { backgroundColor: isSelected ? '#fff' : theme.brandForest }]} />
               )}
             </TouchableOpacity>
@@ -810,14 +857,22 @@ export default function SuggestDietScreen() {
                       <TouchableOpacity 
                         style={{ flex: 1 }} 
                         disabled={!effectiveRecipeId} 
+                        activeOpacity={0.7}
                         onPress={() => effectiveRecipeId && router.push(`/recipe/${effectiveRecipeId}` as any)}
                       >
-                        <Text style={[
-                          styles.foodName, 
-                          effectiveRecipeId && { textDecorationLine: 'underline', textDecorationStyle: 'dotted' }
-                        ]}>
-                          {food.name}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <Text style={[
+                            styles.foodName, 
+                            effectiveRecipeId && { textDecorationLine: 'underline', textDecorationStyle: 'dotted' }
+                          ]}>
+                            {food.name}
+                          </Text>
+                          {effectiveRecipeId && (
+                            <View style={styles.recipeTag}>
+                              <Text style={styles.recipeTagText}>Recipe</Text>
+                            </View>
+                          )}
+                        </View>
                         {food.quantity && (
                           <Text style={styles.foodQty}>{food.quantity}</Text>
                         )}

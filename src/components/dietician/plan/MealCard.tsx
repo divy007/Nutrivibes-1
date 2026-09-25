@@ -65,31 +65,35 @@ export const MealCard: React.FC<MealCardProps> = ({
                         {time}
                     </span>
                 </div>
-                {!disabled && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {hasFood && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onCopy?.(); }}
                             title="Copy slot"
-                            className={`p-1.5 rounded-md transition-colors ${isActiveCopy ? 'bg-emerald-100 text-emerald-600' : 'text-slate-300 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
+                            className={`p-1.5 rounded-md transition-colors ${isActiveCopy ? 'bg-emerald-100 text-emerald-600' : 'text-slate-400 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
                         >
                             <Copy size={13} />
                         </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onSwap?.(); }}
-                            title="Swap slot"
-                            className={`p-1.5 rounded-md transition-colors ${isActiveSwap ? 'bg-emerald-100 text-emerald-600' : 'text-slate-300 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
-                        >
-                            <Repeat size={13} />
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-                            title="Clear slot"
-                            className="p-1.5 rounded-md text-slate-300 hover:bg-white hover:text-red-500 transition-colors hover:shadow-sm"
-                        >
-                            <Trash2 size={13} />
-                        </button>
-                    </div>
-                )}
+                    )}
+                    {!disabled && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onSwap?.(); }}
+                                title="Swap slot"
+                                className={`p-1.5 rounded-md transition-colors ${isActiveSwap ? 'bg-emerald-100 text-emerald-600' : 'text-slate-300 hover:bg-white hover:text-emerald-500 hover:shadow-sm'}`}
+                            >
+                                <Repeat size={13} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+                                title="Clear slot"
+                                className="p-1.5 rounded-md text-slate-300 hover:bg-white hover:text-red-500 transition-colors hover:shadow-sm"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Content */}
