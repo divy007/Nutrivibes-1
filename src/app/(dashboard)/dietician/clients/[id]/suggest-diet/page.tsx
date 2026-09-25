@@ -209,6 +209,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                 // If plan exists, use it and merge with current structure to ensure all rows appear
                 setWeekPlan({
                     id: data._id,
+                    lastViewedByClientAt: data.lastViewedByClientAt || null,
                     clientInfo: clientInfo!,
                     startDate: parseToLocalDate(data.weekStartDate),
                     endDate: addDays(parseToLocalDate(data.weekStartDate), 6),

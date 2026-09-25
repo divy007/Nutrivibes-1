@@ -106,6 +106,7 @@ export interface WeekPlan {
     startDate: Date;
     endDate: Date;
     days: DayPlan[];
+    lastViewedByClientAt?: Date | string | null;
 }
 
 // Authentication Interfaces
