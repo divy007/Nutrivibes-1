@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Recipe from '@/models/Recipe';
+import { linkRecipeToDietPlans } from '@/lib/recipe-sync';
 
 export async function GET(req: NextRequest) {
     try {
@@ -80,6 +81,14 @@ export async function POST(req: NextRequest) {
         };
 
         const recipe = await Recipe.create(cleanData);
+        const createdRecipe = Array.isArray(recipe) ? recipe[0] : recipe;
+
+        // Auto-link this new recipe to any matching food items in existing diet plans
+        if (createdRecipe) {
+            linkRecipeToDietPlans(user._id, createdRecipe as any).catch((err) => {
+                console.error('Failed to auto-link recipe to diet plans:', err);
+            });
+        }
 
         return NextResponse.json(recipe, { status: 201 });
     } catch (error: any) {

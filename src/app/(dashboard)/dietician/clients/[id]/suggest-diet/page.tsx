@@ -142,6 +142,21 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
     // --- Recipe Drawer State ---
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
     const [isRecipeDrawerOpen, setIsRecipeDrawerOpen] = useState(false);
+    const [allRecipes, setAllRecipes] = useState<any[]>([]);
+
+    useEffect(() => {
+        const loadRecipes = async () => {
+            try {
+                const res = await api.get<any>('/api/dietician/recipes?limit=1000');
+                if (res?.recipes) {
+                    setAllRecipes(res.recipes);
+                }
+            } catch (err) {
+                console.error('Failed to load recipes in suggest-diet:', err);
+            }
+        };
+        loadRecipes();
+    }, []);
 
 
     // --- State ---
@@ -911,12 +926,22 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
 
 
     const handleFoodClick = async (item: FoodItem) => {
-        if (!item.recipeId) return;
+        let targetRecipeId = item.recipeId;
 
-        // Optimistic check: if we somehow had full recipe data on item, use it (unlikely with current model)
-        // Otherwise fetch
+        // Fallback: Check if item matches any recipe by name in allRecipes
+        if (!targetRecipeId && item.name) {
+            const matched = allRecipes.find(
+                (r: any) => r.name?.trim().toLowerCase() === item.name?.trim().toLowerCase()
+            );
+            if (matched) {
+                targetRecipeId = matched._id;
+            }
+        }
+
+        if (!targetRecipeId) return;
+
         try {
-            const data = await api.get<any>(`/api/dietician/recipes/${item.recipeId}`);
+            const data = await api.get<any>(`/api/dietician/recipes/${targetRecipeId}`);
             setSelectedRecipe(data);
             setIsRecipeDrawerOpen(true);
         } catch (error) {
@@ -1185,6 +1210,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                 }))
                             }}
                             onWeekChange={(dir) => handleWeekNavigation(dir === 'prev' ? 'PREV' : 'NEXT')}
+                            onFoodClick={handleFoodClick}
                         />
                     </div>
                 ) : (
@@ -1371,6 +1397,7 @@ export default function SuggestDietPage({ params }: { params: Promise<{ id: stri
                                             isPasteMode={actionState.type === 'copy' && actionState.sourceType === 'slot'}
                                             disabled={day.status === 'PUBLISHED'}
                                             onFoodClick={handleFoodClick}
+                                            allRecipes={allRecipes}
                                         />
                                     );
                                 })}

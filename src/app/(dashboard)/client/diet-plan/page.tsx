@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api, getAuthToken } from '@/lib/api-client';
 import { ClientDietCalendar } from '@/components/client/ClientDietCalendar';
+import { RecipeDetailDrawer } from '@/components/dietician/recipes/RecipeDetailDrawer';
 import { format, addWeeks, subWeeks, startOfWeek } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { parseToLocalDate } from '@/lib/date-utils';
@@ -31,6 +32,15 @@ export default function ClientDietPlanPage() {
     const [loading, setLoading] = useState(true);
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(new Date());
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+    const [isRecipeDrawerOpen, setIsRecipeDrawerOpen] = useState(false);
+
+    const handleFoodClick = (item: any) => {
+        if (item.recipeId) {
+            setSelectedRecipe({ _id: item.recipeId, name: item.name });
+            setIsRecipeDrawerOpen(true);
+        }
+    };
 
     // Initialize view to the current week
     useEffect(() => {
@@ -173,6 +183,13 @@ export default function ClientDietPlanPage() {
                 weekPlan={weekPlan}
                 onWeekChange={handleWeekChange}
                 loading={loading}
+                onFoodClick={handleFoodClick}
+            />
+
+            <RecipeDetailDrawer
+                recipe={selectedRecipe}
+                isOpen={isRecipeDrawerOpen}
+                onClose={() => setIsRecipeDrawerOpen(false)}
             />
         </div>
     );

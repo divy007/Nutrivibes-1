@@ -16,6 +16,7 @@ interface MealCardProps {
     isPasteMode?: boolean;
     disabled?: boolean;
     onFoodClick?: (item: FoodItem) => void;
+    allRecipes?: any[];
 }
 
 export const MealCard: React.FC<MealCardProps> = ({
@@ -32,7 +33,8 @@ export const MealCard: React.FC<MealCardProps> = ({
     isActiveSwap,
     isPasteMode,
     disabled,
-    onFoodClick
+    onFoodClick,
+    allRecipes
 }) => {
     const hasFood = foodItems.length > 0;
 
@@ -94,28 +96,36 @@ export const MealCard: React.FC<MealCardProps> = ({
             <div className="p-4 flex-1 flex flex-col">
                 {hasFood ? (
                     <ul className="space-y-3 mb-4">
-                        {foodItems.map((item, index) => (
-                            <li
-                                key={`${item.id}-${index}`}
-                                className={`flex items-start text-sm ${onFoodClick && item.recipeId ? 'cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 py-0.5 transition-colors' : ''}`}
-                                onClick={(e) => {
-                                    if (onFoodClick && item.recipeId) {
-                                        e.stopPropagation();
-                                        onFoodClick(item);
-                                    }
-                                }}
-                            >
-                                <span
-                                    className="mr-2 mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: disabled ? '#cbd5e1' : '#9c6644' }} // Grey if disabled, Warm Brown if active
-                                />
-                                <div className="text-slate-700 leading-snug flex-1 min-w-0">
-                                    <span className={`font-medium break-words ${disabled ? 'text-slate-400' : ''} ${item.recipeId ? 'underline decoration-dotted decoration-slate-400 underline-offset-2' : ''}`}>
-                                        {item.name}
-                                    </span>
-                                </div>
-                            </li>
-                        ))}
+                        {foodItems.map((item, index) => {
+                            const isRecipe = Boolean(
+                                item.recipeId ||
+                                item.isRecipe ||
+                                (allRecipes && allRecipes.some(r => r.name?.trim().toLowerCase() === item.name?.trim().toLowerCase()))
+                            );
+
+                            return (
+                                <li
+                                    key={`${item.id}-${index}`}
+                                    className={`flex items-start text-sm ${onFoodClick && isRecipe ? 'cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 py-0.5 transition-colors' : ''}`}
+                                    onClick={(e) => {
+                                        if (onFoodClick && isRecipe) {
+                                            e.stopPropagation();
+                                            onFoodClick(item);
+                                        }
+                                    }}
+                                >
+                                    <span
+                                        className="mr-2 mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: disabled ? '#cbd5e1' : '#9c6644' }} // Grey if disabled, Warm Brown if active
+                                    />
+                                    <div className="text-slate-700 leading-snug flex-1 min-w-0">
+                                        <span className={`font-medium break-words ${disabled ? 'text-slate-400' : ''} ${isRecipe ? 'underline decoration-dotted decoration-slate-400 underline-offset-2' : ''}`}>
+                                            {item.name}
+                                        </span>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 ) : (
                     <div className="flex-1 flex items-center justify-center text-slate-400 text-sm italic min-h-[80px]">

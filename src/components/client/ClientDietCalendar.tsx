@@ -46,12 +46,14 @@ interface ClientDietCalendarProps {
     weekPlan: ClientWeekPlan | null;
     onWeekChange: (direction: 'prev' | 'next') => void;
     loading?: boolean;
+    onFoodClick?: (item: FoodItem) => void;
 }
 
 export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
     weekPlan,
     onWeekChange,
-    loading = false
+    loading = false,
+    onFoodClick
 }) => {
     // Generate the 7 days of the current view based on weekPlan.weekStartDate
     const weekDays = useMemo(() => {
@@ -176,17 +178,29 @@ export const ClientDietCalendar: React.FC<ClientDietCalendarProps> = ({
                                                     <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
                                                         {hasFood ? (
                                                             <ul className="list-disc list-inside space-y-1">
-                                                                {slot.foodItems.map((item, idx) => (
-                                                                    <li key={idx} className="text-xs text-slate-700 leading-tight">
-                                                                        <span className="font-medium">{item.name}</span>
-                                                                        {item.portion && (
-                                                                            <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
-                                                                        )}
-                                                                        {item.quantity && (
-                                                                            <span className="text-slate-500 text-[10px] ml-1">- {item.quantity}</span>
-                                                                        )}
-                                                                    </li>
-                                                                ))}
+                                                                {slot.foodItems.map((item, idx) => {
+                                                                    const isRecipe = Boolean(item.recipeId || item.isRecipe);
+                                                                    return (
+                                                                        <li key={idx} className="text-xs text-slate-700 leading-tight">
+                                                                            <span
+                                                                                className={`font-medium ${isRecipe ? 'underline decoration-dotted decoration-slate-400 underline-offset-2 text-emerald-800' : ''} ${onFoodClick && isRecipe ? 'cursor-pointer hover:text-emerald-600' : ''}`}
+                                                                                onClick={() => {
+                                                                                    if (onFoodClick && isRecipe) {
+                                                                                        onFoodClick(item);
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                {item.name}
+                                                                            </span>
+                                                                            {item.portion && (
+                                                                                <span className="text-slate-500 text-[10px] ml-1">({item.portion})</span>
+                                                                            )}
+                                                                            {item.quantity && (
+                                                                                <span className="text-slate-500 text-[10px] ml-1">- {item.quantity}</span>
+                                                                            )}
+                                                                        </li>
+                                                                    );
+                                                                })}
                                                             </ul>
                                                         ) : (
                                                             <div className="h-full flex items-center justify-center">

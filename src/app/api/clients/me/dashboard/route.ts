@@ -13,6 +13,7 @@ import { getAuthPayload } from '@/lib/auth';
 import { startOfDay, startOfWeek } from 'date-fns';
 import { calculateCycleStatus } from '@/lib/cycle-utils';
 import { normalizeDateUTC } from '@/lib/date-utils';
+import { syncDietPlanWithRecipes } from '@/lib/recipe-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,13 +56,18 @@ export async function GET(req: Request) {
         // Process diet plan to only show PUBLISHED items
         let processedDietPlan = null;
         if (dietPlan) {
-            const filteredDays = dietPlan.days.map((day: any) => ({
+            let enrichedPlan = dietPlan;
+            if (client.dieticianId) {
+                enrichedPlan = await syncDietPlanWithRecipes(dietPlan, client.dieticianId);
+            }
+            const plainPlan = typeof enrichedPlan.toObject === 'function' ? enrichedPlan.toObject() : enrichedPlan;
+            const filteredDays = (plainPlan.days || []).map((day: any) => ({
                 ...day,
                 meals: day.status === 'PUBLISHED' ? day.meals : [],
                 status: day.status === 'PUBLISHED' ? 'PUBLISHED' : 'NO_DIET'
             }));
             processedDietPlan = {
-                ...dietPlan.toObject(),
+                ...plainPlan,
                 days: filteredDays
             };
         }

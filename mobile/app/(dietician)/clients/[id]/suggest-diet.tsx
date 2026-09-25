@@ -501,11 +501,17 @@ export default function SuggestDietScreen() {
     try {
       const formattedStartDate = format(weekStartDate, 'yyyy-MM-dd');
       
-      // Serialize plan to published status for saved days
+      // Serialize plan to published status for saved days, auto-upgrading any matching recipes
       const requestDays = daysPlan.map(day => ({
         date: day.date,
         status: day.meals.some(m => m.foodItems.length > 0) ? 'PUBLISHED' : 'NO_DIET',
-        meals: day.meals
+        meals: day.meals.map(m => ({
+          ...m,
+          foodItems: m.foodItems.map(f => {
+            const matching = !f.recipeId ? recipes.find(r => r.name?.trim().toLowerCase() === f.name?.trim().toLowerCase()) : null;
+            return matching ? { ...f, recipeId: matching._id, isRecipe: true } : f;
+          })
+        }))
       }));
 
       await api.post(`/api/clients/${id}/diet-plan`, {
@@ -792,31 +798,38 @@ export default function SuggestDietScreen() {
             {/* Food items inside slot */}
             <View style={styles.foodList}>
               {meal.foodItems.length > 0 ? (
-                meal.foodItems.map((food: FoodItem, idx: number) => (
-                  <View key={food.id + '-' + idx} style={styles.foodItemRow}>
-                    <View style={styles.foodDot} />
-                    <TouchableOpacity 
-                      style={{ flex: 1 }} 
-                      disabled={!food.recipeId} 
-                      onPress={() => food.recipeId && router.push(`/recipe/${food.recipeId}` as any)}
-                    >
-                      <Text style={[
-                        styles.foodName, 
-                        food.recipeId && { textDecorationLine: 'underline', textDecorationStyle: 'dotted' }
-                      ]}>
-                        {food.name}
-                      </Text>
-                      {food.quantity && (
-                        <Text style={styles.foodQty}>{food.quantity}</Text>
-                      )}
-                    </TouchableOpacity>
-                    {!isPublished && (
-                      <TouchableOpacity onPress={() => handleDeleteFood(meal.mealNumber, food.id)}>
-                        <Trash2 size={14} color="#ef4444" />
+                meal.foodItems.map((food: FoodItem, idx: number) => {
+                  const matchingRecipe = !food.recipeId
+                    ? recipes.find(r => r.name?.trim().toLowerCase() === food.name?.trim().toLowerCase())
+                    : null;
+                  const effectiveRecipeId = food.recipeId || matchingRecipe?._id;
+
+                  return (
+                    <View key={food.id + '-' + idx} style={styles.foodItemRow}>
+                      <View style={styles.foodDot} />
+                      <TouchableOpacity 
+                        style={{ flex: 1 }} 
+                        disabled={!effectiveRecipeId} 
+                        onPress={() => effectiveRecipeId && router.push(`/recipe/${effectiveRecipeId}` as any)}
+                      >
+                        <Text style={[
+                          styles.foodName, 
+                          effectiveRecipeId && { textDecorationLine: 'underline', textDecorationStyle: 'dotted' }
+                        ]}>
+                          {food.name}
+                        </Text>
+                        {food.quantity && (
+                          <Text style={styles.foodQty}>{food.quantity}</Text>
+                        )}
                       </TouchableOpacity>
-                    )}
-                  </View>
-                ))
+                      {!isPublished && (
+                        <TouchableOpacity onPress={() => handleDeleteFood(meal.mealNumber, food.id)}>
+                          <Trash2 size={14} color="#ef4444" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })
               ) : (
                 <Text style={styles.emptySlotText}>No foods assigned yet</Text>
               )}

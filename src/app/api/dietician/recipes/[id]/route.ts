@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Recipe from '@/models/Recipe';
+import { linkRecipeToDietPlans } from '@/lib/recipe-sync';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -70,6 +71,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         if (!recipe) {
             return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
         }
+
+        // Auto-link any matching food items in diet plans with updated recipe name
+        linkRecipeToDietPlans(user._id, recipe).catch((err) => {
+            console.error('Failed to auto-link updated recipe to diet plans:', err);
+        });
 
         return NextResponse.json(recipe);
     } catch (error) {

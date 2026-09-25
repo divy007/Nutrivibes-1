@@ -5,6 +5,7 @@ import Client from '@/models/Client';
 import { format } from 'date-fns';
 import { verifyToken } from '@/lib/auth';
 import { normalizeDateUTC, reanchorDietPlan } from '@/lib/date-utils';
+import { syncDietPlanWithRecipes } from '@/lib/recipe-sync';
 
 export async function GET(req: Request) {
     await dbConnect();
@@ -76,9 +77,14 @@ export async function GET(req: Request) {
         const reanchoredPlan = reanchorDietPlan(dietPlan, targetDate);
 
         // Ensure plan is a plain object before mapping to avoid losing Mongoose schema getters (like date)
-        const plainPlan = typeof (reanchoredPlan as any).toObject === 'function'
+        let plainPlan = typeof (reanchoredPlan as any).toObject === 'function'
             ? (reanchoredPlan as any).toObject()
             : JSON.parse(JSON.stringify(reanchoredPlan));
+
+        // Automatically link recipes by dish name from dietician's recipe library
+        if (client.dieticianId) {
+            plainPlan = await syncDietPlanWithRecipes(plainPlan, client.dieticianId);
+        }
 
         // Update read receipt timestamp if published meals exist
         const hasPublishedMeals = (plainPlan.days || []).some((d: any) => d.status === 'PUBLISHED');

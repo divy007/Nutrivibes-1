@@ -3,6 +3,7 @@ import { connectDB as dbConnect } from '@/lib/mongodb';
 import DietPlan from '@/models/DietPlan';
 import { startOfWeek, format } from 'date-fns';
 import { normalizeDateUTC, reanchorDietPlan } from '@/lib/date-utils';
+import { syncDietPlanWithRecipes } from '@/lib/recipe-sync';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
@@ -62,6 +63,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             // Dynamically re-anchor the plan days to align with the requested week starting date
             dietPlan = reanchorDietPlan(dietPlan, targetDate);
 
+            // Automatically link recipes by dish name from dietician's recipe library
+            const dieticianId = client.dieticianId || (user.role === 'DIETICIAN' ? user._id : undefined);
+            if (dieticianId) {
+                dietPlan = await syncDietPlanWithRecipes(dietPlan, dieticianId);
+            }
+
             if (previewMode === 'client') {
                 const plainPlan = typeof (dietPlan as any).toObject === 'function' ? (dietPlan as any).toObject() : JSON.parse(JSON.stringify(dietPlan));
                 const filteredDays = (plainPlan.days || []).map((day: any) => ({
@@ -95,6 +102,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             ...day,
             date: normalizeDateUTC(day.date)
         }));
+
+        // Link recipes before saving
+        const Client = (await import('@/models/Client')).default;
+        const client = await Client.findById(id).select('dieticianId').lean();
+        if (client?.dieticianId) {
+            await syncDietPlanWithRecipes({ days: normalizedDays }, client.dieticianId);
+        }
 
         const dietPlan = await DietPlan.findOneAndUpdate(
             { clientId: id, weekStartDate: normalizeDateUTC(weekStartDate) },
