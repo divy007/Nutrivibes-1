@@ -44,6 +44,9 @@ const mockPlanObj = {
 jest.mock('@/models/DietPlan', () => ({
   __esModule: true,
   default: {
+    find: jest.fn().mockImplementation(() => ({
+      sort: jest.fn().mockResolvedValue([mockPlanObj]),
+    })),
     findOne: jest.fn().mockImplementation(() => mockPlanObj),
   },
 }));

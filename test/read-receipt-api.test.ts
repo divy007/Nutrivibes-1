@@ -59,6 +59,9 @@ jest.mock('@/models/Client', () => ({
 jest.mock('@/models/DietPlan', () => ({
   __esModule: true,
   default: {
+    find: jest.fn().mockImplementation(() => ({
+      sort: jest.fn().mockResolvedValue([mockDietPlanDoc]),
+    })),
     findOne: jest.fn().mockImplementation(() => mockDietPlanDoc),
     findByIdAndUpdate: jest.fn().mockImplementation((id, update) => {
       if (update.lastViewedByClientAt) {
