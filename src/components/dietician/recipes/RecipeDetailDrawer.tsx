@@ -95,20 +95,20 @@ export function RecipeDetailDrawer({ recipe: initialRecipe, isOpen, onClose }: R
                             {/* Ingredients */}
                             <div>
                                 <h3 className="text-sm font-black text-slate-800 mb-3 border-b border-slate-100 pb-2">Ingredients:</h3>
-                                <ul className="space-y-2">
+                                <ul className="space-y-1.5">
                                     {recipe.ingredients?.map((ing, i) => {
                                         const isHeader = ing.trim().endsWith(':');
                                         if (isHeader) {
                                             return (
-                                                <div key={i} className="text-sm font-bold text-slate-800 pt-2 pb-1">
+                                                <div key={i} className={`text-[15px] font-bold text-slate-800 ${i > 0 ? 'pt-3' : 'pt-1'} pb-1`}>
                                                     {ing}
                                                 </div>
                                             );
                                         }
                                         return (
-                                            <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-600 pl-1">
-                                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                                                {ing}
+                                            <li key={i} className="flex items-start gap-2.5 text-sm font-medium text-slate-700 pl-1 py-0.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
+                                                <span className="leading-relaxed">{ing}</span>
                                             </li>
                                         );
                                     })}
@@ -121,29 +121,23 @@ export function RecipeDetailDrawer({ recipe: initialRecipe, isOpen, onClose }: R
                             {/* Instructions */}
                             <div>
                                 <h3 className="text-sm font-black text-slate-800 mb-3 border-b border-slate-100 pb-2">Instructions:</h3>
-                                <div className="space-y-4">
-                                    {(() => {
-                                        let stepCount = 0;
-                                        return recipe.instructions?.map((inst, i) => {
-                                            const isHeader = inst.trim().endsWith(':');
-                                            if (isHeader) {
-                                                return (
-                                                    <div key={i} className="text-sm font-bold text-slate-800 pt-2 pb-1">
-                                                        {inst}
-                                                    </div>
-                                                );
-                                            }
-                                            stepCount++;
+                                <div className="space-y-1.5">
+                                    {recipe.instructions?.map((inst, i) => {
+                                        const isHeader = inst.trim().endsWith(':');
+                                        if (isHeader) {
                                             return (
-                                                <div key={i} className="flex gap-3 text-sm text-slate-600">
-                                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 text-slate-500 font-bold text-xs flex items-center justify-center border border-slate-200">
-                                                        {stepCount}
-                                                    </span>
-                                                    <p className="leading-relaxed">{inst}</p>
+                                                <div key={i} className={`text-[15px] font-bold text-slate-800 ${i > 0 ? 'pt-4' : 'pt-1'} pb-1`}>
+                                                    {inst}
                                                 </div>
                                             );
-                                        });
-                                    })()}
+                                        }
+                                        return (
+                                            <div key={i} className="flex items-start gap-2.5 pl-1 py-0.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
+                                                <p className="text-sm font-medium text-slate-700 leading-relaxed">{inst}</p>
+                                            </div>
+                                        );
+                                    })}
                                     {(!recipe.instructions || recipe.instructions.length === 0) && (
                                         <p className="text-xs text-slate-400 italic">No instructions listed</p>
                                     )}

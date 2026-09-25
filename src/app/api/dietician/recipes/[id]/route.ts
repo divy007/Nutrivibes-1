@@ -40,9 +40,30 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const body = await req.json();
         await connectDB();
 
+        const cleanBody = {
+            ...body,
+            ...(typeof body.name === 'string' && { name: body.name.trim() }),
+            ...(typeof body.cookingTime === 'string' && { cookingTime: body.cookingTime.trim() }),
+            ...(typeof body.totalTime === 'string' && { totalTime: body.totalTime.trim() }),
+            ...(typeof body.servingSize === 'string' && { servingSize: body.servingSize.trim() }),
+            ...(typeof body.note === 'string' && { note: body.note.trim() }),
+            ...(Array.isArray(body.ingredients) && {
+                ingredients: body.ingredients
+                    .flatMap((i: any) => typeof i === 'string' ? i.split(/[#\n]+/) : [])
+                    .map((i: string) => i.trim())
+                    .filter((i: string) => i !== '')
+            }),
+            ...(Array.isArray(body.instructions) && {
+                instructions: body.instructions
+                    .flatMap((i: any) => typeof i === 'string' ? i.split(/[#\n]+/) : [])
+                    .map((i: string) => i.trim())
+                    .filter((i: string) => i !== '')
+            })
+        };
+
         const recipe = await Recipe.findOneAndUpdate(
             { _id: id, dieticianId: user._id },
-            body,
+            cleanBody,
             { new: true, runValidators: true }
         );
 

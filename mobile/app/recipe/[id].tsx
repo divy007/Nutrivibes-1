@@ -140,18 +140,19 @@ export default function RecipeDetailScreen() {
 
                         {expanded.instructions && (
                             <View style={[styles.card, { backgroundColor: '#FFF', borderColor: theme.brandSage + '20' }]}>
-                                {recipe.instructions.map((inst: string, i: number) => {
+                                {recipe.instructions?.map((inst: string, i: number) => {
                                     const isHeader = inst.trim().endsWith(':');
-                                    return (
-                                        <View key={i} style={[styles.instructionRow, isHeader && styles.instructionHeaderRow]}>
-                                            {isHeader ? (
+                                    if (isHeader) {
+                                        return (
+                                            <View key={i} style={[styles.instructionHeaderRow, i > 0 && { marginTop: 14 }]}>
                                                 <Text style={[styles.instructionHeaderText, { color: theme.brandForest }]}>{inst}</Text>
-                                            ) : (
-                                                <View style={{ flexDirection: 'row', gap: 12 }}>
-                                                    <Text style={[styles.stepNumber, { color: theme.brandSage }]}>{i + 1}</Text>
-                                                    <Text style={[styles.instructionText, { color: theme.text }]}>{inst}</Text>
-                                                </View>
-                                            )}
+                                            </View>
+                                        );
+                                    }
+                                    return (
+                                        <View key={i} style={styles.bulletInstructionRow}>
+                                            <View style={[styles.bullet, { backgroundColor: theme.brandSage }]} />
+                                            <Text style={[styles.instructionText, { color: theme.text }]}>{inst}</Text>
                                         </View>
                                     );
                                 })}
@@ -292,6 +293,7 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
+        marginTop: 8,
     },
     instructionRow: {
         marginBottom: 16,
@@ -299,6 +301,13 @@ const styles = StyleSheet.create({
     instructionHeaderRow: {
         marginTop: 8,
         marginBottom: 8,
+    },
+    bulletInstructionRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 12,
+        marginBottom: 10,
+        paddingLeft: 4,
     },
     instructionHeaderText: {
         fontSize: 16,

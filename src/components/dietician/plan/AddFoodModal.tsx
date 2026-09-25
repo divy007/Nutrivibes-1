@@ -80,51 +80,65 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
 
     const filteredSuggestions = useMemo(() => {
         if (!searchTerm) return [];
-        const term = searchTerm.toLowerCase();
+        const term = searchTerm.toLowerCase().trim();
 
         // Search both lists
-        const recipes = allRecipes.filter(item =>
-            item.name.toLowerCase().includes(term)
-        ).slice(0, 5);
+        const recipes = allRecipes
+            .filter(item => item.name.toLowerCase().includes(term))
+            .slice(0, 5)
+            .map(item => ({
+                ...item,
+                id: item._id,
+                recipeId: item._id,
+                isRecipe: true,
+                category: 'recipe'
+            }));
 
         // Filter out foods that have the same name as a recipe we found
-        const recipeNames = new Set(recipes.map(r => r.name.toLowerCase()));
+        const recipeNames = new Set(recipes.map(r => r.name.toLowerCase().trim()));
 
-        const foods = foodItems.filter(item =>
-            item.name.toLowerCase().includes(term) && !recipeNames.has(item.name.toLowerCase())
-        ).slice(0, 5);
+        const foods = foodItems
+            .filter(item => item.name.toLowerCase().includes(term) && !recipeNames.has(item.name.toLowerCase().trim()))
+            .slice(0, 5)
+            .map(item => ({
+                ...item,
+                isRecipe: false
+            }));
 
         // Combine them
         return [...recipes, ...foods];
     }, [searchTerm, allRecipes]);
 
     const handleAddToList = () => {
-        if (!searchTerm && !selectedFood) return;
+        if (!searchTerm.trim() && !selectedFood) return;
 
         let itemToAdd: FoodItem;
 
         // "Generic Logic": Check if we have a recipe for this name, regardless of source
-        const nameToCheck = selectedFood ? selectedFood.name : searchTerm;
-        const matchingRecipe = allRecipes.find(r => r.name.toLowerCase() === nameToCheck.toLowerCase());
+        const nameToCheck = (selectedFood ? selectedFood.name : searchTerm).trim();
+        const matchingRecipe = allRecipes.find(r => r.name.toLowerCase().trim() === nameToCheck.toLowerCase());
 
         if (matchingRecipe) {
             // Auto-upgrade to recipe
             itemToAdd = {
                 id: matchingRecipe._id,
                 name: matchingRecipe.name,
-                category: mealCategory as any || 'snack',
+                category: mealCategory as any || 'recipe',
                 portion: '1 serving',
                 quantity: quantity || '1 serving',
                 recipeId: matchingRecipe._id,
                 isRecipe: true,
             };
         } else if (selectedFood) {
-            itemToAdd = selectedFood;
+            itemToAdd = {
+                ...selectedFood,
+                quantity: quantity || selectedFood.quantity || '1 serving'
+            };
         } else {
             // Manual entry logic (for custom text that isn't in suggestions)
             itemToAdd = {
                 id: `custom-${Date.now()}`,
-                name: searchTerm,
+                name: searchTerm.trim(),
                 category: mealCategory as any || 'snack',
                 portion: '1 serving',
                 quantity: quantity || '1 serving',
@@ -223,7 +237,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                             {showSuggestions && filteredSuggestions.length > 0 && (
                                 <div className="absolute top-[52px] left-0 right-0 z-50 bg-white border border-slate-100 rounded-xl shadow-2xl py-2 overflow-hidden max-h-[300px] overflow-y-auto">
                                     {filteredSuggestions.map((item: any) => {
-                                        const isRecipeItem = !!item.ingredients;
+                                        const isRecipeItem = !!item.isRecipe || !!item.recipeId || allRecipes.some(r => r._id === (item._id || item.id));
                                         return (
                                             <button
                                                 key={item.id || item._id}
@@ -231,12 +245,12 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                                                     let food: FoodItem;
                                                     if (isRecipeItem) {
                                                         food = {
-                                                            id: item._id,
+                                                            id: item._id || item.id,
                                                             name: item.name,
-                                                            category: mealCategory as any || 'snack',
+                                                            category: mealCategory as any || 'recipe',
                                                             portion: '1 serving',
                                                             quantity: '1 serving',
-                                                            recipeId: item._id,
+                                                            recipeId: item._id || item.id,
                                                             isRecipe: true,
                                                         };
                                                     } else {

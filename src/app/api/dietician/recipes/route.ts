@@ -57,16 +57,36 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
+        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+            return NextResponse.json({ error: 'Recipe name is required' }, { status: 400 });
+        }
+
         await connectDB();
 
-        const recipe = await Recipe.create({
+        const cleanData = {
             ...body,
+            name: body.name.trim(),
+            cookingTime: typeof body.cookingTime === 'string' ? body.cookingTime.trim() : body.cookingTime,
+            totalTime: typeof body.totalTime === 'string' ? body.totalTime.trim() : body.totalTime,
+            servingSize: typeof body.servingSize === 'string' ? body.servingSize.trim() : body.servingSize,
+            note: typeof body.note === 'string' ? body.note.trim() : body.note,
+            ingredients: Array.isArray(body.ingredients)
+                ? body.ingredients.flatMap((i: any) => typeof i === 'string' ? i.split(/[#\n]+/) : []).map((i: string) => i.trim()).filter((i: string) => i !== '')
+                : [],
+            instructions: Array.isArray(body.instructions)
+                ? body.instructions.flatMap((i: any) => typeof i === 'string' ? i.split(/[#\n]+/) : []).map((i: string) => i.trim()).filter((i: string) => i !== '')
+                : [],
             dieticianId: user._id
-        });
+        };
+
+        const recipe = await Recipe.create(cleanData);
 
         return NextResponse.json(recipe, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating recipe:', error);
+        if (error.name === 'ValidationError') {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

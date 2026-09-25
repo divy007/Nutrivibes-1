@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ChevronLeft, Plus, Trash2, Save, Loader2, Info } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Eye, XCircle, RotateCw } from 'lucide-react';
 import { api } from '@/lib/api-client';
 
 export default function EditRecipePage() {
@@ -12,26 +12,66 @@ export default function EditRecipePage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // Form state
     const [formData, setFormData] = useState({
         name: '',
         cookingTime: '',
         totalTime: '',
+        servingSize: '',
         language: 'English',
-        ingredients: [''] as string[],
-        instructions: [''] as string[],
+        note: '',
+        instructionsRaw: '',
+        instructionsFormatted: '',
+        ingredientsRaw: '',
+        ingredientsFormatted: '',
     });
+
+    // Preview toggles (matching reference image eye / x buttons)
+    const [previewInstructions, setPreviewInstructions] = useState(false);
+    const [previewIngredients, setPreviewIngredients] = useState(false);
+
+    // Helper: split text by '#' or newlines into clean items
+    const parseHashSeparated = (text: string): string[] => {
+        return text
+            .split(/[#\n]+/)
+            .map((item) => item.trim().replace(/^(\d+[\.\)]|[•\-\*])\s*/, '').trim())
+            .filter((item) => item.length > 0);
+    };
+
+    // Helper: convert items array into formatting string with bullets only everywhere
+    const formatToFormattingString = (items: string[]): string => {
+        return items
+            .map((item, idx) => {
+                if (item.endsWith(':')) {
+                    return idx === 0 ? item : `\n${item}`;
+                }
+                return `• ${item}`;
+            })
+            .join('\n');
+    };
 
     useEffect(() => {
         const fetchRecipe = async () => {
             try {
                 const data = await api.get<any>(`/api/dietician/recipes/${id}`);
+                const instructionsList: string[] = Array.isArray(data.instructions) ? data.instructions : [];
+                const ingredientsList: string[] = Array.isArray(data.ingredients) ? data.ingredients : [];
+
+                const instructionsHasHeaders = instructionsList.some((item) => item.endsWith(':'));
+                const ingredientsHasHeaders = ingredientsList.some((item) => item.endsWith(':'));
+
                 setFormData({
-                    name: data.name,
+                    name: data.name || '',
                     cookingTime: data.cookingTime || '',
                     totalTime: data.totalTime || '',
+                    servingSize: data.servingSize || '',
                     language: data.language || 'English',
-                    ingredients: data.ingredients && data.ingredients.length > 0 ? data.ingredients : [''],
-                    instructions: data.instructions && data.instructions.length > 0 ? data.instructions : [''],
+                    note: data.note || '',
+                    instructionsRaw: instructionsHasHeaders ? instructionsList.join('\n') : instructionsList.join('#'),
+                    instructionsFormatted: formatToFormattingString(instructionsList),
+                    ingredientsRaw: ingredientsHasHeaders ? ingredientsList.join('\n') : ingredientsList.join('#'),
+                    ingredientsFormatted: formatToFormattingString(ingredientsList),
                 });
             } catch (error) {
                 console.error('Failed to fetch recipe:', error);
@@ -45,34 +85,112 @@ export default function EditRecipePage() {
     }, [id]);
 
     const handleInputChange = (field: string, value: string) => {
-        setFormData({ ...formData, [field]: value });
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const updatedArray = (field: 'ingredients' | 'instructions', index: number, value: string) => {
-        const newArray = [...formData[field]];
-        newArray[index] = value;
-        setFormData({ ...formData, [field]: newArray });
+    // Handle raw instructions input & auto-generate formatting string
+    const handleInstructionsRawChange = (text: string) => {
+        const items = parseHashSeparated(text);
+        const formatted = formatToFormattingString(items);
+        setFormData((prev) => ({
+            ...prev,
+            instructionsRaw: text,
+            instructionsFormatted: formatted,
+        }));
     };
 
-    const addItem = (field: 'ingredients' | 'instructions') => {
-        setFormData({ ...formData, [field]: [...formData[field], ''] });
+    // Handle editing instructions formatting string directly (two-way sync)
+    const handleInstructionsFormattedChange = (formattedText: string) => {
+        const items = formattedText
+            .split('\n')
+            .map((line) => line.trim().replace(/^(\d+[\.\)]|[•\-\*])\s*/, '').trim())
+            .filter((line) => line.length > 0);
+        const hasHeaders = items.some((item) => item.endsWith(':'));
+        const raw = hasHeaders ? items.join('\n') : items.join('#');
+        setFormData((prev) => ({
+            ...prev,
+            instructionsFormatted: formattedText,
+            instructionsRaw: raw,
+        }));
     };
 
-    const removeItem = (field: 'ingredients' | 'instructions', index: number) => {
-        const newArray = [...formData[field]];
-        newArray.splice(index, 1);
-        setFormData({ ...formData, [field]: newArray });
+    // Handle raw ingredients input & auto-generate formatting string
+    const handleIngredientsRawChange = (text: string) => {
+        const items = parseHashSeparated(text);
+        const formatted = formatToFormattingString(items);
+        setFormData((prev) => ({
+            ...prev,
+            ingredientsRaw: text,
+            ingredientsFormatted: formatted,
+        }));
     };
+
+    // Handle editing ingredients formatting string directly (two-way sync)
+    const handleIngredientsFormattedChange = (formattedText: string) => {
+        const items = formattedText
+            .split('\n')
+            .map((line) => line.trim().replace(/^(\d+[\.\)]|[•\-\*])\s*/, '').trim())
+            .filter((line) => line.length > 0);
+        const hasHeaders = items.some((item) => item.endsWith(':'));
+        const raw = hasHeaders ? items.join('\n') : items.join('#');
+        setFormData((prev) => ({
+            ...prev,
+            ingredientsFormatted: formattedText,
+            ingredientsRaw: raw,
+        }));
+    };
+
+    // Sync formatting string back from raw
+    const syncInstructions = () => {
+        const items = parseHashSeparated(formData.instructionsRaw);
+        setFormData((prev) => ({
+            ...prev,
+            instructionsFormatted: formatToFormattingString(items),
+        }));
+    };
+
+    const syncIngredients = () => {
+        const items = parseHashSeparated(formData.ingredientsRaw);
+        setFormData((prev) => ({
+            ...prev,
+            ingredientsFormatted: formatToFormattingString(items),
+        }));
+    };
+
+    // Extract final array of strings for database submission
+    const extractItems = (raw: string, formatted: string): string[] => {
+        if (raw.trim()) {
+            return parseHashSeparated(raw);
+        }
+        if (formatted.trim()) {
+            return formatted
+                .split('\n')
+                .map((line) => line.trim().replace(/^(\d+[\.\)]|[•\-\*])\s*/, '').trim())
+                .filter((line) => line.length > 0);
+        }
+        return [];
+    };
+
+    const parsedInstructions = parseHashSeparated(formData.instructionsRaw);
+    const parsedIngredients = parseHashSeparated(formData.ingredientsRaw);
 
     const handleSubmit = async () => {
-        if (!formData.name) return alert('Recipe Name is required');
+        if (!formData.name.trim()) return alert('Recipe Name is required');
+
+        const finalIngredients = extractItems(formData.ingredientsRaw, formData.ingredientsFormatted);
+        const finalInstructions = extractItems(formData.instructionsRaw, formData.instructionsFormatted);
 
         setSaving(true);
         try {
             const cleanData = {
-                ...formData,
-                ingredients: formData.ingredients.filter((i) => i.trim() !== ''),
-                instructions: formData.instructions.filter((i) => i.trim() !== ''),
+                name: formData.name.trim(),
+                cookingTime: formData.cookingTime.trim(),
+                totalTime: formData.totalTime.trim(),
+                servingSize: formData.servingSize.trim(),
+                language: formData.language,
+                note: formData.note.trim(),
+                ingredients: finalIngredients,
+                instructions: finalInstructions,
             };
 
             await api.put(`/api/dietician/recipes/${id}`, cleanData);
@@ -88,7 +206,7 @@ export default function EditRecipePage() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
             </div>
         );
     }
@@ -110,13 +228,15 @@ export default function EditRecipePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column: Basic Info */}
+                {/* Left Column: Basic Details */}
                 <div className="bg-white p-8 rounded-[24px] border border-slate-100 shadow-sm space-y-6 h-fit">
                     <h2 className="text-lg font-bold text-slate-700 mb-2">Basic Details</h2>
 
                     {/* Name */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Name <span className="text-rose-500">*</span></label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Name <span className="text-rose-500">*</span>
+                        </label>
                         <input
                             type="text"
                             placeholder="Enter recipe name"
@@ -132,7 +252,7 @@ export default function EditRecipePage() {
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cooking Time</label>
                             <input
                                 type="text"
-                                placeholder="e.g. 15 mins"
+                                placeholder="Enter recipe cooking time"
                                 value={formData.cookingTime}
                                 onChange={(e) => handleInputChange('cookingTime', e.target.value)}
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
@@ -143,7 +263,7 @@ export default function EditRecipePage() {
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Time</label>
                             <input
                                 type="text"
-                                placeholder="e.g. 45 mins"
+                                placeholder="Enter recipe total time"
                                 value={formData.totalTime}
                                 onChange={(e) => handleInputChange('totalTime', e.target.value)}
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
@@ -151,114 +271,300 @@ export default function EditRecipePage() {
                         </div>
                     </div>
 
-                    {/* Language */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Language */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                Language <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                                value={formData.language}
+                                onChange={(e) => handleInputChange('language', e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all appearance-none"
+                            >
+                                <option value="English">English</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Gujarati">Gujarati</option>
+                            </select>
+                        </div>
+                        {/* Serving Size */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Serving Size</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. 1 bowl / 150g"
+                                value={formData.servingSize}
+                                onChange={(e) => handleInputChange('servingSize', e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Chef's Note */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Language <span className="text-rose-500">*</span></label>
-                        <select
-                            value={formData.language}
-                            onChange={(e) => handleInputChange('language', e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all appearance-none"
-                        >
-                            <option value="English">English</option>
-                            <option value="Hindi">Hindi</option>
-                            <option value="Gujarati">Gujarati</option>
-                        </select>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chef's Note</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Add any dietary advice, tips, or notes for clients..."
+                            value={formData.note}
+                            onChange={(e) => handleInputChange('note', e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all placeholder:font-medium placeholder:text-slate-400 resize-none"
+                        />
                     </div>
                 </div>
 
                 {/* Right Column: Instructions & Ingredients */}
-                <div className="space-y-8">
+                <div className="space-y-6">
 
-                    {/* Instructions */}
-                    <div className="bg-white p-8 rounded-[24px] border border-slate-100 shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                                Instructions
+                    {/* 1. Add Instructions */}
+                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-bold text-slate-800">
+                                Add Instructions:
+                            </label>
+                            <div className="flex items-center gap-2">
+                                {/* Info Tooltip */}
                                 <div className="group relative">
-                                    <Info size={14} className="text-slate-300 cursor-help" />
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-[10px] p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                        Add steps one by one. Empty lines will be removed automatically.
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold font-serif cursor-help shadow-sm">
+                                        i
+                                    </div>
+                                    <div className="absolute right-0 bottom-full mb-2 w-64 bg-slate-800 text-white text-[11px] p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 leading-relaxed">
+                                        Type instructions separated by <strong>#</strong> or new lines. Strings ending with <strong>:</strong> (e.g. <code>Prepare the Dough:</code>) will be bold section headers without bullets.
                                     </div>
                                 </div>
-                            </h2>
+
+                                {/* Preview / Edit Toggle Button */}
+                                {previewInstructions ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewInstructions(false)}
+                                        className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                        title="Close preview (switch to edit)"
+                                    >
+                                        <XCircle size={20} className="fill-orange-50 stroke-orange-500" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewInstructions(true)}
+                                        className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                        title="Preview formatted instructions"
+                                    >
+                                        <Eye size={20} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-3">
-                            {formData.instructions.map((instruction, index) => (
-                                <div key={index} className="flex gap-2">
-                                    <span className="flex-shrink-0 w-6 h-10 flex items-center justify-center text-xs font-bold text-slate-300 bg-slate-50 rounded-lg">{index + 1}</span>
-                                    <textarea
-                                        rows={2}
-                                        placeholder={`Step ${index + 1}`}
-                                        value={instruction}
-                                        onChange={(e) => updatedArray('instructions', index, e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all resize-none"
-                                    />
-                                    {formData.instructions.length > 1 && (
-                                        <button
-                                            onClick={() => removeItem('instructions', index)}
-                                            className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors h-10 w-10 flex items-center justify-center"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <button
-                            onClick={() => addItem('instructions')}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={16} /> Add Step
-                        </button>
+                        {previewInstructions ? (
+                            /* Preview Mode (Bullets only everywhere, bold headers for colons) */
+                            <div className="w-full min-h-[120px] p-4 bg-white border border-slate-200 rounded-xl overflow-y-auto max-h-[280px]">
+                                {parsedInstructions.length > 0 ? (
+                                    <div className="space-y-1">
+                                        {parsedInstructions.map((instruction, idx) => {
+                                            const isHeader = instruction.endsWith(':');
+
+                                            if (isHeader) {
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={`font-bold text-slate-800 text-[15px] ${idx > 0 ? 'mt-4 pt-1' : 'mt-0'} mb-1`}
+                                                    >
+                                                        {instruction}
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <div key={idx} className="flex items-start gap-2.5 pl-1 py-0.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
+                                                    <span className="text-sm font-medium text-slate-700 leading-relaxed">
+                                                        {instruction}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 italic">No instructions entered yet</p>
+                                )}
+                            </div>
+                        ) : (
+                            /* Edit Mode */
+                            <textarea
+                                rows={4}
+                                placeholder="Add instructions with # or new lines (e.g. Prepare the Dough:#Add bajra flour#Knead dough)"
+                                value={formData.instructionsRaw}
+                                onChange={(e) => handleInstructionsRawChange(e.target.value)}
+                                className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:text-slate-400 resize-y min-h-[110px]"
+                            />
+                        )}
                     </div>
 
-                    {/* Ingredients */}
-                    <div className="bg-white p-8 rounded-[24px] border border-slate-100 shadow-sm">
-                        <h2 className="text-lg font-bold text-slate-700 mb-6">Ingredients</h2>
-                        <div className="space-y-3">
-                            {formData.ingredients.map((ingredient, index) => (
-                                <div key={index} className="flex gap-2">
-                                    <div className="flex-shrink-0 w-2 h-10 flex items-center justify-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-200"></div>
+                    {/* 2. Add Instructions Formatting String */}
+                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-bold text-slate-800">
+                                Add Instructions Formatting String:
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <div className="group relative">
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold font-serif cursor-help shadow-sm">
+                                        i
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. 2 cups Rice"
-                                        value={ingredient}
-                                        onChange={(e) => updatedArray('ingredients', index, e.target.value)}
-                                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition-all"
-                                    />
-                                    {formData.ingredients.length > 1 && (
-                                        <button
-                                            onClick={() => removeItem('ingredients', index)}
-                                            className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors h-10 w-10 flex items-center justify-center"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
+                                    <div className="absolute right-0 bottom-full mb-2 w-56 bg-slate-800 text-white text-[11px] p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 leading-relaxed">
+                                        Auto-generated formatted instructions string. You can edit this directly or sync from raw text.
+                                    </div>
                                 </div>
-                            ))}
+                                <button
+                                    type="button"
+                                    onClick={syncInstructions}
+                                    className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                    title="Sync from raw instructions"
+                                >
+                                    <RotateCw size={17} />
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => addItem('ingredients')}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold text-sm hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={16} /> Add Ingredient
-                        </button>
+
+                        <textarea
+                            rows={4}
+                            placeholder="Add formatting string"
+                            value={formData.instructionsFormatted}
+                            onChange={(e) => handleInstructionsFormattedChange(e.target.value)}
+                            className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:text-slate-400 resize-y min-h-[110px]"
+                        />
+                    </div>
+
+                    {/* 3. Add Ingredients */}
+                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-bold text-slate-800">
+                                Add Ingredients:
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <div className="group relative">
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold font-serif cursor-help shadow-sm">
+                                        i
+                                    </div>
+                                    <div className="absolute right-0 bottom-full mb-2 w-64 bg-slate-800 text-white text-[11px] p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 leading-relaxed">
+                                        Type ingredients separated by <strong>#</strong> or new lines. Strings ending with <strong>:</strong> will be bold section headers without bullets.
+                                    </div>
+                                </div>
+
+                                {previewIngredients ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewIngredients(false)}
+                                        className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                        title="Close preview (switch to edit)"
+                                    >
+                                        <XCircle size={20} className="fill-orange-50 stroke-orange-500" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewIngredients(true)}
+                                        className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                        title="Preview formatted ingredients"
+                                    >
+                                        <Eye size={20} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {previewIngredients ? (
+                            /* Preview Mode (Bullets only everywhere, bold headers for colons) */
+                            <div className="w-full min-h-[120px] p-4 bg-white border border-slate-200 rounded-xl overflow-y-auto max-h-[280px]">
+                                {parsedIngredients.length > 0 ? (
+                                    <div className="space-y-1">
+                                        {parsedIngredients.map((ingredient, idx) => {
+                                            const isHeader = ingredient.endsWith(':');
+
+                                            if (isHeader) {
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={`font-bold text-slate-800 text-[15px] ${idx > 0 ? 'mt-4 pt-1' : 'mt-0'} mb-1`}
+                                                    >
+                                                        {ingredient}
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <div key={idx} className="flex items-start gap-2.5 pl-1 py-0.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
+                                                    <span className="text-sm font-medium text-slate-700 leading-relaxed">
+                                                        {ingredient}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 italic">No ingredients entered yet</p>
+                                )}
+                            </div>
+                        ) : (
+                            /* Edit Mode */
+                            <textarea
+                                rows={4}
+                                placeholder="Add ingredients with # or new lines (e.g. For Dough:#Bajra flour#Warm water)"
+                                value={formData.ingredientsRaw}
+                                onChange={(e) => handleIngredientsRawChange(e.target.value)}
+                                className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:text-slate-400 resize-y min-h-[110px]"
+                            />
+                        )}
+                    </div>
+
+                    {/* 4. Add Ingredients Formatting String */}
+                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-bold text-slate-800">
+                                Add Ingrdients Formatting String:
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <div className="group relative">
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold font-serif cursor-help shadow-sm">
+                                        i
+                                    </div>
+                                    <div className="absolute right-0 bottom-full mb-2 w-56 bg-slate-800 text-white text-[11px] p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 leading-relaxed">
+                                        Auto-generated formatted ingredients string. You can edit this directly or sync from raw text.
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={syncIngredients}
+                                    className="text-orange-500 hover:text-orange-600 transition-transform active:scale-95"
+                                    title="Sync from raw ingredients"
+                                >
+                                    <RotateCw size={17} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea
+                            rows={4}
+                            placeholder="Add formatting string"
+                            value={formData.ingredientsFormatted}
+                            onChange={(e) => handleIngredientsFormattedChange(e.target.value)}
+                            className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-300 transition-all placeholder:text-slate-400 resize-y min-h-[110px]"
+                        />
                     </div>
 
                 </div>
             </div>
 
-            {/* Footer / Submit */}
+            {/* Footer / Submit (Matching Reference Orange Button) */}
             <div className="mt-8 flex justify-end">
                 <button
                     onClick={handleSubmit}
                     disabled={saving}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-12 rounded-xl text-lg flex items-center gap-3 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3.5 px-10 rounded-xl text-base flex items-center gap-2.5 transition-all shadow-md shadow-orange-100 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                    {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                     Update Recipe
                 </button>
             </div>

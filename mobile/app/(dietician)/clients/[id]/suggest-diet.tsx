@@ -249,21 +249,30 @@ export default function SuggestDietScreen() {
     fetchPlannerData(newDate);
   };
 
+  const handleCloseAddModal = () => {
+    setIsAddFoodOpen(false);
+    setSearchQuery('');
+    setQty('1 serving');
+    setSelectedFood(null);
+    setSelectedDays([]);
+    setRepeatStrategy('date');
+  };
+
   // Add Food Item to Meal Slot
   const handleAddFoodSubmit = () => {
-    if (!selectedFood && !searchQuery) return;
+    if (!selectedFood && !searchQuery.trim()) return;
 
     let itemToAdd: FoodItem;
 
     // Check if the typed query or selected food matches any recipe by name
-    const nameToCheck = selectedFood ? selectedFood.name : searchQuery;
+    const nameToCheck = (selectedFood ? selectedFood.name : searchQuery).trim();
     const matchingRecipe = recipes.find(
-      r => r.name.toLowerCase().trim() === nameToCheck.toLowerCase().trim()
+      r => r.name.toLowerCase().trim() === nameToCheck.toLowerCase()
     );
 
     if (matchingRecipe) {
       itemToAdd = {
-        id: matchingRecipe._id,
+        id: `${matchingRecipe._id}-${Date.now()}`,
         name: matchingRecipe.name,
         category: 'recipe',
         portion: '1 serving',
@@ -272,12 +281,16 @@ export default function SuggestDietScreen() {
         isRecipe: true,
       };
     } else if (selectedFood) {
-      itemToAdd = { ...selectedFood, quantity: qty };
+      itemToAdd = {
+        ...selectedFood,
+        id: `${selectedFood.id}-${Date.now()}`,
+        quantity: qty
+      };
     } else {
       // Custom generic entry
       itemToAdd = {
         id: `custom-${Date.now()}`,
-        name: searchQuery,
+        name: searchQuery.trim(),
         category: 'custom',
         portion: '1 serving',
         quantity: qty
@@ -312,12 +325,7 @@ export default function SuggestDietScreen() {
       });
     });
 
-    // Reset states
-    setIsAddFoodOpen(false);
-    setSearchQuery('');
-    setQty('1 serving');
-    setSelectedFood(null);
-    setSelectedDays([]);
+    handleCloseAddModal();
   };
 
   // Delete Food Item from slot
@@ -820,6 +828,11 @@ export default function SuggestDietScreen() {
                 style={[styles.addFoodBtn, { borderColor: theme.brandForest + '25' }]}
                 onPress={() => {
                   setActiveMealNum(meal.mealNumber);
+                  setSearchQuery('');
+                  setQty('1 serving');
+                  setSelectedFood(null);
+                  setSelectedDays([]);
+                  setRepeatStrategy('date');
                   setIsAddFoodOpen(true);
                 }}
               >
@@ -853,7 +866,7 @@ export default function SuggestDietScreen() {
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Food to Meal {activeMealNum}</Text>
-              <TouchableOpacity onPress={() => setIsAddFoodOpen(false)}>
+              <TouchableOpacity onPress={handleCloseAddModal}>
                 <X size={20} color="#000" />
               </TouchableOpacity>
             </View>

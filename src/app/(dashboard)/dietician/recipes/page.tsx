@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Loader2, MoreHorizontal, ChefHat, Edit, Eye } from 'lucide-react';
+import { Search, Plus, Loader2, MoreHorizontal, ChefHat, Edit, Eye, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
 
 import { RecipeDetailDrawer } from '@/components/dietician/recipes/RecipeDetailDrawer';
+import { BulkRecipeModal } from '@/components/dietician/recipes/BulkRecipeModal';
 
 interface Recipe {
     _id: string;
@@ -25,6 +26,7 @@ export default function RecipesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
     // Pagination State
     const [pagination, setPagination] = useState({
@@ -97,13 +99,22 @@ export default function RecipesPage() {
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">Manage your recipe collection ({pagination.total} Total)</p>
                 </div>
-                <Link
-                    href="/dietician/recipes/add"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-100"
-                >
-                    <Plus size={18} strokeWidth={3} />
-                    Add Recipes
-                </Link>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsBulkModalOpen(true)}
+                        className="bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-all shadow-sm"
+                    >
+                        <Sparkles size={18} className="text-emerald-500" />
+                        Bulk Load
+                    </button>
+                    <Link
+                        href="/dietician/recipes/add"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-100"
+                    >
+                        <Plus size={18} strokeWidth={3} />
+                        Add Recipes
+                    </Link>
+                </div>
             </div>
 
             {/* Search Bar */}
@@ -220,6 +231,12 @@ export default function RecipesPage() {
                 recipe={selectedRecipe}
                 isOpen={!!selectedRecipe}
                 onClose={() => setSelectedRecipe(null)}
+            />
+
+            <BulkRecipeModal
+                isOpen={isBulkModalOpen}
+                onClose={() => setIsBulkModalOpen(false)}
+                onRecipeAdded={() => fetchRecipes(1, searchQuery)}
             />
         </div>
     );
