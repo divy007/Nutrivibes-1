@@ -65,6 +65,19 @@ export async function GET(req: Request) {
             }
         }
 
+        // 4. Fallback: If no plan exists for requested week, find nearest upcoming published plan
+        let isFallbackUpcoming = false;
+        if (!dietPlan) {
+            dietPlan = await DietPlan.findOne({
+                clientId: client._id,
+                'days.status': 'PUBLISHED',
+                weekStartDate: { $gte: targetDate }
+            }).sort({ weekStartDate: 1 });
+            if (dietPlan) {
+                isFallbackUpcoming = true;
+            }
+        }
+
         if (!dietPlan) {
             return NextResponse.json({
                 success: true,
@@ -73,8 +86,9 @@ export async function GET(req: Request) {
             });
         }
 
-        // Dynamically re-anchor the plan days to align with the requested week starting date
-        const reanchoredPlan = reanchorDietPlan(dietPlan, targetDate);
+        // Dynamically re-anchor the plan days
+        const anchorDate = isFallbackUpcoming && dietPlan.weekStartDate ? normalizeDateUTC(dietPlan.weekStartDate) : targetDate;
+        const reanchoredPlan = reanchorDietPlan(dietPlan, anchorDate);
 
         // Ensure plan is a plain object before mapping to avoid losing Mongoose schema getters (like date)
         let plainPlan = typeof (reanchoredPlan as any).toObject === 'function'

@@ -48,6 +48,7 @@ export default function DietPlanScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
+    const [hasAutoJumped, setHasAutoJumped] = useState(false);
     const isFocused = useIsFocused();
 
     const colorScheme = useColorScheme();
@@ -56,6 +57,20 @@ export default function DietPlanScreen() {
     const getLocalDateFromStr = (dateStr: any) => {
         return parseToLocalDate(dateStr);
     };
+
+    // Auto-navigate to upcoming diet start date if diet starts in future
+    useEffect(() => {
+        if (profile?.dietStartDate && !hasAutoJumped) {
+            const dietStart = getLocalDateFromStr(profile.dietStartDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (dietStart > today) {
+                setSelectedDate(dietStart);
+            }
+            setHasAutoJumped(true);
+        }
+    }, [profile?.dietStartDate, hasAutoJumped]);
 
 
     const weekStart = React.useMemo(() => {
@@ -90,6 +105,14 @@ export default function DietPlanScreen() {
 
             if (data && data.days) {
                 setWeekPlan(data);
+                if (data.weekStartDate) {
+                    const planStart = getLocalDateFromStr(data.weekStartDate);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (planStart > today && selectedDate < planStart) {
+                        setSelectedDate(planStart);
+                    }
+                }
             } else {
                 setWeekPlan({
                     weekStartDate: weekStart,
@@ -207,6 +230,36 @@ export default function DietPlanScreen() {
                         {isPublished ? '✓ Plan Published by Dietician' : '○ No plan for today'}
                     </Text>
                 </View>
+
+                {!isPublished && profile?.dietStartDate && getLocalDateFromStr(profile.dietStartDate) > selectedDate && (
+                    <TouchableOpacity
+                        onPress={() => setSelectedDate(getLocalDateFromStr(profile.dietStartDate))}
+                        style={{
+                            marginHorizontal: 16,
+                            marginBottom: 16,
+                            padding: 14,
+                            backgroundColor: '#ecfdf5',
+                            borderColor: '#a7f3d0',
+                            borderWidth: 1,
+                            borderRadius: 12,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10
+                        }}
+                        activeOpacity={0.8}
+                    >
+                        <CalendarIcon size={22} color="#059669" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: '#065f46' }}>
+                                Diet Starts {format(getLocalDateFromStr(profile.dietStartDate), 'EEEE, MMM d')}
+                            </Text>
+                            <Text style={{ fontSize: 11, color: '#047857', marginTop: 2 }}>
+                                Tap here to preview your upcoming meals.
+                            </Text>
+                        </View>
+                        <ChevronRight size={18} color="#059669" />
+                    </TouchableOpacity>
+                )}
 
                 {hasAnyPublishedMeals ? (
                     dayPlan.meals.map((mealEntry: any, index: number) => {
